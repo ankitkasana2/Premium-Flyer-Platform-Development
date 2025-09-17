@@ -2,16 +2,16 @@ import Link from "next/link"
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t border-border mt-20">
+    <footer className="bg-card border-t border-border mt-10">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-4 col-span-2 md:col-span-1">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">F</span>
+                <span className="text-primary-foreground font-bold text-lg">G</span>
               </div>
-              <span className="text-xl font-bold text-card-foreground">Flyers</span>
+              <span className="text-xl font-bold text-card-foreground">Grodify</span>
             </div>
             <p className="text-muted-foreground text-sm">
               Premium digital flyer templates for nightclubs, lounges, and events.
@@ -22,6 +22,9 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-card-foreground">Quick Links</h3>
             <div className="space-y-2">
+              <Link href="/flyers" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+                How It Works
+              </Link>
               <Link href="/flyers" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 Browse Flyers
               </Link>
@@ -80,7 +83,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center">
-          <p className="text-muted-foreground text-sm">© 2024 Flyers. All rights reserved.</p>
+          <p className="text-muted-foreground text-sm">© 2024 Grodify. All rights reserved.</p>
         </div>
       </div>
     </footer>

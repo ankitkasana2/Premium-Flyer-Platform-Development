@@ -17,23 +17,10 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">F</span>
+              <span className="text-primary-foreground font-bold text-lg">G</span>
             </div>
-            <span className="text-xl font-bold text-foreground">Flyers</span>
+            <span className="text-xl font-bold text-foreground">Grodify</span>
           </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/flyers" className="text-foreground hover:text-primary transition-colors">
-              Browse Flyers
-            </Link>
-            <Link href="/categories" className="text-foreground hover:text-primary transition-colors">
-              Categories
-            </Link>
-            <Link href="/pricing" className="text-foreground hover:text-primary transition-colors">
-              Pricing
-            </Link>
-          </nav>
 
           {/* Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
@@ -45,9 +32,6 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <ShoppingCart className="w-5 h-5" />
-            </Button>
             <div className="hidden md:flex">
               <UserMenu />
             </div>

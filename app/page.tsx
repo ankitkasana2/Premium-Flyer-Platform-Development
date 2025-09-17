@@ -24,14 +24,28 @@ export default function HomePage() {
       {/* Featured Flyers */}
       <FlyersSection type={'feature'} />
 
-      {/* Featured Categories */}
-     <FeaturedCategories/>
+     
 
-      {/* Recently Added */}
-      <FlyersSection type={'recentlyAdd'} />
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     
       {/* Features Section */}
-      <section className="py-20 px-4">
+      {/* <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Why Choose Grodify?</h2>
@@ -90,10 +104,10 @@ export default function HomePage() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Pricing Preview */}
-      <section className="py-20 px-4 bg-card/50">
+      {/* <section className="py-20 px-4 bg-card/50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Simple, Transparent Pricing</h2>
@@ -134,7 +148,7 @@ export default function HomePage() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <Footer />
     </div>
