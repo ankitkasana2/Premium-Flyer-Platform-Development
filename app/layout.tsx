@@ -7,6 +7,8 @@ import { Suspense } from "react"
 import { AuthProvider } from "@/lib/auth"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
+import "react-multi-carousel/lib/styles.css"
+
 
 export const metadata: Metadata = {
   title: "Flyers - Premium Digital Flyers",

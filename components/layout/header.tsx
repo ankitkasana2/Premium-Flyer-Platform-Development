@@ -30,8 +30,22 @@ export function Header() {
             </div>
           </div>
 
+          {/* links  */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link href="/categories" className="text-foreground hover:text-primary transition-colors">
+              Categories
+            </Link>
+            <Link href="/pricing" className="text-foreground hover:text-primary transition-colors">
+              Pricing
+            </Link>
+          </nav>
+
+
           {/* User Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-5">
+            <div className="hidden md:flex hover:bg-none cursor-pointer">
+              <ShoppingCart className="w-6 h-6" />
+            </div>
             <div className="hidden md:flex">
               <UserMenu />
             </div>

@@ -22,7 +22,16 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Featured Flyers */}
-      <FlyersSection type={'feature'} />
+      <FlyersSection type={'recently'} />
+
+      {/* Featured Flyers */}
+      <FlyersSection type={'basic'} />
+
+      {/* Featured Flyers */}
+      <FlyersSection type={'ladies'} />
+
+      {/* Featured Flyers */}
+      <FlyersSection type={'brunch'} />
 
      
 

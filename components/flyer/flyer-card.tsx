@@ -38,8 +38,8 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
   }
 
   return (
-    <Card
-      className="group bg-card border-border overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20"
+    <div
+      className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 hover:scale-102 hover:shadow-xl hover:shadow-primary/20 cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -48,52 +48,34 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
           src={flyer.imageUrl || "/placeholder.svg"}
           alt={flyer.name}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-110"
+          className="object-cover transition-transform duration-300 group-hover:scale-102"
         />
 
-        {/* Overlay on hover */}
-        <div
-          className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="absolute inset-0 flex items-center justify-center space-x-2">
-            <Button size="sm" variant="secondary" onClick={() => onPreview?.(flyer)}>
-              <Eye className="w-4 h-4 mr-1" />
-              Preview
-            </Button>
-            <Button size="sm" onClick={() => onAddToCart?.(flyer)}>
-              <ShoppingCart className="w-4 h-4 mr-1" />
-              Add to Cart
-            </Button>
-          </div>
-        </div>
-
         {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
+        {/* <div className="absolute top-2 left-2 flex flex-col gap-1">
           {flyer.isRecentlyAdded && (
             <Badge variant="secondary" className="text-xs">
               New
             </Badge>
           )}
           {flyer.isFeatured && <Badge className="text-xs">Featured</Badge>}
-        </div>
+        </div> */}
 
         {/* Favorite button */}
-        <Button
-          size="icon"
-          variant="ghost"
-          className="absolute top-2 right-2 bg-black/20 hover:bg-black/40"
+        <div
+          className="absolute top-2 right-2"
           onClick={handleToggleFavorite}
         >
-          <Heart className={`w-4 h-4 ${isFavorited ? "fill-primary text-primary" : "text-white"}`} />
-        </Button>
+          <Heart className={`w-6 h-6 ${isFavorited ? "fill-primary text-primary" : "text-red-700"}`} />
+        </div>
 
         {/* Price badge */}
-        <div className="absolute bottom-2 right-2">
-          <Badge className={getPriceColor(flyer.priceType)}>${flyer.price}</Badge>
+        <div className="absolute bottom-4 right-2">
+          <Badge className='bg-primary text-foreground border-primary/20 px-3 py-1 shadow-lg shadow-black/50'>${flyer.price}</Badge>
         </div>
       </div>
 
-      <CardContent className="p-4">
+      {/* <CardContent className="p-4">
         <h3 className="font-semibold text-card-foreground mb-1 text-balance">{flyer.name}</h3>
         <p className="text-sm text-muted-foreground mb-2">{flyer.category}</p>
 
@@ -107,7 +89,7 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
           </div>
           <span className="text-xs text-muted-foreground">{flyer.hasPhotos ? "With Photos" : "No Photos"}</span>
         </div>
-      </CardContent>
-    </Card>
+      </CardContent> */}
+    </div>
   )
 }
