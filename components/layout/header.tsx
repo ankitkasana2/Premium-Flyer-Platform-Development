@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { UserMenu } from "@/components/auth/user-menu"
+import UserMenu from "@/components/auth/user-menu"
 import { Search, ShoppingCart, Menu, X } from "lucide-react"
 
 export function Header() {

@@ -35,9 +35,9 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
     //  = SAMPLE_FLYERS.filter((flyer) => flyer.isRecentlyAdded).slice(0, 4)
     return (
         <section className="py-7 px-5">
-            <div className='flex flex-col gap-5 px-5'>
-
-                <div className='text-2xl md:text-3xl font-bold text-foreground'>
+            <div className='flex flex-col gap-1'>
+                {/* title  */}
+                <div className='text-xl md:text-2xl font-semibold text-foreground'>
                     <h3>{title}</h3>
                 </div>
 

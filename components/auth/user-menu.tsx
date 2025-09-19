@@ -15,16 +15,19 @@ import { useAuth } from "@/lib/auth"
 import { AuthModal } from "./auth-modal"
 import { User, Settings, Heart, ShoppingBag, LogOut, CreditCard } from "lucide-react"
 import Link from "next/link"
+import { observer } from "mobx-react-lite"
+import { useStore } from "@/stores/StoreProvider"
 
-export function UserMenu() {
+const UserMenu = () => {
+  const { authStore } = useStore()
   const { user, signOut } = useAuth()
-  const [showAuthModal, setShowAuthModal] = useState(false)
+
 
   if (!user) {
     return (
       <>
-        <Button onClick={() => setShowAuthModal(true)}>Sign In</Button>
-        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+        <Button onClick={() => authStore.handleAuthModal()}>Sign In</Button>
+        <AuthModal isOpen={authStore.authModal} onClose={() => authStore.handleAuthModal()} />
       </>
     )
   }
@@ -43,58 +46,63 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger >
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={'naman'} />
             <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(user.name)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-popover border-border" align="end" forceMount>
+      <DropdownMenuContent className="w-56 bg-[#0f0f0f] border-0 shadow-lg" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col gap-2">
             <p className="text-sm font-medium leading-none text-popover-foreground">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+        <DropdownMenuItem className="p-0">
+          <Link href="/profile" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+            <User className="h-4 w-4 text-white" />
+            <span>Profile ankit</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/orders" className="cursor-pointer">
-            <ShoppingBag className="mr-2 h-4 w-4" />
+
+        <DropdownMenuItem className="p-0">
+          <Link href="/orders" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+            <ShoppingBag className=" h-4 w-4" />
             <span>My Orders</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/favorites" className="cursor-pointer">
-            <Heart className="mr-2 h-4 w-4" />
+        <DropdownMenuItem className="p-0">
+          <Link href="/favorites" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+            <Heart className=" h-4 w-4" />
             <span>Favorites</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/billing" className="cursor-pointer">
-            <CreditCard className="mr-2 h-4 w-4" />
+        <DropdownMenuItem className="p-0">
+          <Link href="/billing" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+            <CreditCard className=" h-4 w-4" />
             <span>Billing</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
+        <DropdownMenuItem className="p-0">
+          <Link href="/settings" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+            <Settings className=" h-4 w-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer p-0">
+          <div className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-1 rounded-sm">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sign out</span>
+          </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+
+export default observer(UserMenu)

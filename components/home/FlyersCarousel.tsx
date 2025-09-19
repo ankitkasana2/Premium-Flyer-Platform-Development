@@ -11,15 +11,15 @@ const responsive = {
   },
   desktop: {
     breakpoint: { max: 3000, min: 1024 },
-    items: 4,
+    items: 5,
   },
   tablet: {
     breakpoint: { max: 1024, min: 640 },
-    items: 2,
+    items: 3,
   },
   mobile: {
     breakpoint: { max: 640, min: 0 },
-    items: 1,
+    items: 2,
   },
 }
 
@@ -31,7 +31,7 @@ export function FlyersCarousel({ flyers }: { flyers: any[] }) {
       // autoPlaySpeed={3000}
       keyBoardControl
       arrows
-      containerClass="py-4"
+      containerClass="py-5"
       itemClass="px-2"
     >
       {flyers.map((flyer) => (

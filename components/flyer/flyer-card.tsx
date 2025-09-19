@@ -39,7 +39,7 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
 
   return (
     <div
-      className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 hover:scale-102 hover:shadow-xl hover:shadow-primary/20 cursor-pointer"
+      className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20 cursor-pointer w-56 sm:w-60"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -66,7 +66,7 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
           className="absolute top-2 right-2"
           onClick={handleToggleFavorite}
         >
-          <Heart className={`w-6 h-6 ${isFavorited ? "fill-primary text-primary" : "text-red-700"}`} />
+          <Heart className={`w-5 h-5 ${isFavorited ? "fill-primary text-primary" : "text-red-700"}`} />
         </div>
 
         {/* Price badge */}

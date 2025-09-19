@@ -8,6 +8,8 @@ import { AuthProvider } from "@/lib/auth"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 import "react-multi-carousel/lib/styles.css"
+import { StoreProvider } from "@/stores/StoreProvider"
+import { Header } from "@/components/layout/header"
 
 
 export const metadata: Metadata = {
@@ -25,7 +27,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <AuthProvider>
           <Suspense fallback={null}>
-            {children}
+             <StoreProvider>{children}</StoreProvider>
             <Toaster />
             <Analytics />
           </Suspense>
