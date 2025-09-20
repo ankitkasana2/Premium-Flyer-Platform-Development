@@ -10,6 +10,7 @@ import "./globals.css"
 import "react-multi-carousel/lib/styles.css"
 import { StoreProvider } from "@/stores/StoreProvider"
 import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
 
 
 export const metadata: Metadata = {
@@ -27,7 +28,11 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <AuthProvider>
           <Suspense fallback={null}>
-             <StoreProvider>{children}</StoreProvider>
+            <StoreProvider>
+              <Header/>
+              {children}
+              <Footer/>
+            </StoreProvider>
             <Toaster />
             <Analytics />
           </Suspense>

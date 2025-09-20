@@ -9,7 +9,7 @@ import { SAMPLE_FLYERS } from "@/lib/types"
 import Link from "next/link"
 import { type } from 'os'
 import { useState } from 'react'
-import FilterBar from './FilterBar'
+import FilterBar from '../categories/FilterBar'
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Carousel,

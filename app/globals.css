@@ -143,3 +143,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #dc2626;
 }
+
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}

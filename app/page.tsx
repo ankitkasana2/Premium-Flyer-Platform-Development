@@ -16,8 +16,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-
       {/* Hero Section */}
       <HeroSection />
 
@@ -158,8 +156,6 @@ export default function HomePage() {
           </div>
         </div>
       </section> */}
-
-      <Footer />
     </div>
   )
 }

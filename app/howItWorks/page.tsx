@@ -64,7 +64,6 @@ export default function HowItWorksPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-        <Header />
       {/* Hero Section */}
       <section className="relative py-20 px-4 text-center">
         <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-transparent" />
