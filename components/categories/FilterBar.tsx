@@ -3,14 +3,19 @@ import React, { useState, useEffect } from 'react'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { FLYER_CATEGORIES } from "@/lib/types"
+import { observer } from "mobx-react-lite"
+import { useStore } from "@/stores/StoreProvider"
+import { toJS } from 'mobx'
 
 const pricing = [
-    { id: '1', label: '10' },
-    { id: '2', label: '15' },
-    { id: '3', label: '45' },
+    { id: 'price1', label: '10' },
+    { id: 'price2', label: '15' },
+    { id: 'price3', label: '45' },
 ]
 
 const FilterBar = () => {
+
+    const { authStore, filterBarStore } = useStore()
 
     const [selected, setSelected] = useState<string[]>([])
 
@@ -19,6 +24,20 @@ const FilterBar = () => {
             prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
         )
     }
+
+     const togglePrice = (id: string) => {
+        setSelected((prev) =>
+            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+        )
+
+        filterBarStore.priceFilter(id)
+    }
+
+    useEffect(() => {
+     console.log("price",toJS(filterBarStore.price))
+    }, [toJS(filterBarStore.price)])
+    
+    
 
 
     return (
@@ -29,13 +48,13 @@ const FilterBar = () => {
                 <div className='p-2  rounded-md bg-gray-800/15 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)] max-h-40 overflow-y-auto hide-scrollbar'>
                     <ul className="space-y-3">
                         {FLYER_CATEGORIES.map((cat) => (
-                            <li key={cat.id} className="flex items-center gap-3">
+                            <li key={cat.name} className="flex items-center gap-3">
                                 <Checkbox
-                                    id={cat.id}
-                                    checked={selected.includes(cat.id)}
-                                    onCheckedChange={() => toggleCategory(cat.id)}
+                                    id={cat.name}
+                                    checked={selected.includes(cat.name)}
+                                    onCheckedChange={() => toggleCategory(cat.name)}
                                 />
-                                <Label className='font-light' htmlFor={cat.id}>{cat.name}</Label>
+                                <Label className='font-light' htmlFor={cat.name}>{cat.name}</Label>
                             </li>
                         ))}
                     </ul>
@@ -48,13 +67,13 @@ const FilterBar = () => {
                 <div className='p-2 rounded-md bg-gray-700/15 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)]'>
                     <ul className="space-y-3">
                         {pricing.map((price) => (
-                            <li key={price.id} className="flex items-center gap-3">
+                            <li key={price.label} className="flex items-center gap-3">
                                 <Checkbox
-                                    id={price.id}
-                                    checked={selected.includes(price.id)}
-                                    onCheckedChange={() => toggleCategory(price.id)}
+                                    id={price.label}
+                                    checked={selected.includes(price.label)}
+                                    onCheckedChange={() => togglePrice(price.label)}
                                 />
-                                <Label className='font-light' htmlFor={price.id}>{price.label}</Label>
+                                <Label className='font-light' htmlFor={price.label}>{price.label}</Label>
                             </li>
                         ))}
                     </ul>
@@ -67,18 +86,18 @@ const FilterBar = () => {
                 <div className='p-2  rounded-md bg-gray-700/15 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)]'>
                     <ul className="space-y-3">
 
-                            <li  className="flex items-center gap-3">
-                                <Checkbox
-                                    id='info'
-                                />
-                                <Label className='font-light' htmlFor='info'>Info Only</Label>
-                            </li>
-                            <li  className="flex items-center gap-3">
-                                <Checkbox
-                                    id='photos'
-                                />
-                                <Label className='font-light' htmlFor='photos'>With Photos</Label>
-                            </li>
+                        <li className="flex items-center gap-3">
+                            <Checkbox
+                                id='info'
+                            />
+                            <Label className='font-light' htmlFor='info'>Info Only</Label>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <Checkbox
+                                id='photos'
+                            />
+                            <Label className='font-light' htmlFor='photos'>With Photos</Label>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -86,4 +105,4 @@ const FilterBar = () => {
     )
 }
 
-export default FilterBar
+export default observer(FilterBar)

@@ -25,23 +25,27 @@ import { FlyersCarousel } from './FlyersCarousel'
 
 type FlyersSectionProps = {
     type: String,
+    price: String,
 }
 
 const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
 
-    const [title, setTitle] = useState(type === 'recently' ? 'Recently Added' : type === 'basic' ? 'Basic Flyers' : type === 'ladies' ? 'Ladies Night' : type === 'brunch' ? 'Brunch Flyers' : 'Featured Flyers')
+    const [title, setTitle] = useState(type === 'recently' ? 'Recently Added' : type === 'basic' ? 'Basic Flyers' : type === 'ladies' ? 'Ladies Night' : type === 'brunch' ? 'Brunch Flyers' : type === 'Halloween' ? 'Halloween' : type === 'Christmas' ? 'Christmas' : type === "Valentine" ? "Valentine's" : type === "Summer Parties" ? "Summer Parties" : '')
 
-    const Flyers = SAMPLE_FLYERS
+
+    const [Flyers, setFlyers] = useState(type === 'recently' ? SAMPLE_FLYERS.filter(fly=>{return fly.isRecentlyAdded == true}) : type === 'Halloween' ? SAMPLE_FLYERS.filter(fly=>{return fly.category == 'Halloween'}) : type === 'ladies' ? SAMPLE_FLYERS.filter(fly=>{return fly.category == 'Ladies Night'}) : type === 'brunch' ? SAMPLE_FLYERS.filter(fly=>{return fly.category == 'Brunch'}) : type === 'Christmas' ? SAMPLE_FLYERS.filter(fly=>{return fly.category == 'Christmas'}) : type === "Valentine" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "Valentine's"}) : type === "Summer Parties" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "Summer Parties"}) : type === "Neon Parties" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "Neon Parties"}) : type === "EDM/DJs" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "EDM/DJs"}) : type === "Hookah Nights" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "Hookah Nights"}) : type === "Game Night" ? SAMPLE_FLYERS.filter(fly=>{return fly.category == "Game Night"}) :   []  )
+
+   
     //  = SAMPLE_FLYERS.filter((flyer) => flyer.isRecentlyAdded).slice(0, 4)
     return (
-        <section className="py-7 px-5">
+        <section className="py-3 px-5">
             <div className='flex flex-col gap-1'>
                 {/* title  */}
                 <div className='text-xl md:text-2xl font-semibold text-foreground'>
                     <h3>{title}</h3>
                 </div>
 
-                <div className='col-span-8'>
+                <div className='col-span-8 '>
                     <FlyersCarousel flyers={Flyers} />
                 </div>
 

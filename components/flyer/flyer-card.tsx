@@ -38,21 +38,23 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
   }
 
   return (
-   <div
-  className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20 cursor-pointer w-44 sm:w-52 md:w-52 lg:w-58"
-  onMouseEnter={() => setIsHovered(true)}
-  onMouseLeave={() => setIsHovered(false)}
->
-  <div className="relative aspect-[3/4] overflow-hidden">
-    <Image
-      src={flyer.imageUrl || "/placeholder.svg"}
-      alt={flyer.name}
-      fill
-      className="object-cover transition-transform duration-300 group-hover:scale-102"
-    />
-    {/* Favorite & Price badges */}
-  </div>
-</div>
+    <div
+      className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 
+             hover:scale-105 hover:shadow-xl hover:shadow-primary/20 cursor-pointer 
+             flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%]"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative aspect-[3/4] overflow-hidden">
+        <Image
+          src={flyer.imageUrl || "/placeholder.svg"}
+          alt={flyer.name}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-102"
+        />
+        {/* Favorite & Price badges */}
+      </div>
+    </div>
 
   )
 }

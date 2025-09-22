@@ -23,7 +23,7 @@ export default function HomePage() {
       <FlyersSection type={'recently'} />
 
       {/* Featured Flyers */}
-      <FlyersSection type={'basic'} />
+      <FlyersSection type={'Halloween'} />
 
       {/* Featured Flyers */}
       <FlyersSection type={'ladies'} />
@@ -31,7 +31,11 @@ export default function HomePage() {
       {/* Featured Flyers */}
       <FlyersSection type={'brunch'} />
 
-     
+
+      <FlyersSection type={'Christmas'} />
+
+
+      <FlyersSection type={'Valentine'} />
 
 
 
@@ -43,14 +47,6 @@ export default function HomePage() {
 
 
 
-
-
-
-
-
-
-
-     
       {/* Features Section */}
       {/* <section className="py-20 px-4">
         <div className="container mx-auto">

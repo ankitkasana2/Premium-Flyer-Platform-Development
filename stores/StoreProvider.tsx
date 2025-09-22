@@ -3,14 +3,17 @@
 import React, { createContext, useContext, useRef } from "react"
 import { FavoritesStore } from "./FavoritesStore"
 import { AuthStore } from "./AuthStore"
+import { FilterBarStore } from "./FilterBarStore"
 
 export class RootStore {
   favoritesStore: FavoritesStore
-   authStore: AuthStore
+  authStore: AuthStore
+  filterBarStore: FilterBarStore
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
     this.authStore = new AuthStore()
+    this.filterBarStore = new FilterBarStore
   }
 }
 

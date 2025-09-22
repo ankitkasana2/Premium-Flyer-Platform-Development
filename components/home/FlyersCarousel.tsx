@@ -1,53 +1,40 @@
 "use client"
 
-import React from "react"
-import Carousel from "react-multi-carousel"
-import "react-multi-carousel/lib/styles.css"
+import * as React from "react"
 import { FlyerCard } from "@/components/flyer/flyer-card"
-import { usePathname } from "next/navigation" 
-
-
-
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 export function FlyersCarousel({ flyers }: { flyers: any[] }) {
-
-  const pathname = usePathname()
-
-
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 3000 },
-      items: 5,
-    },
-    desktop: {
-      breakpoint: { max: 3000, min: 1024 },
-      items: pathname == '/' ? 5 : 4,
-    },
-    tablet: {
-      breakpoint: { max: 1024, min: 640 },
-      items: 4,
-    },
-    mobile: {
-      breakpoint: { max: 640, min: 0 },
-      items: 2,
-    },
-  }
-
-
-
   return (
-    <Carousel
-      responsive={responsive}
-      // autoPlay
-      // autoPlaySpeed={3000}
-      keyBoardControl
-      arrows
-      containerClass="py-5"
-      itemClass="px-2"
-    >
-      {flyers.map((flyer) => (
-        <FlyerCard key={flyer.id} flyer={flyer} />
-      ))}
-    </Carousel>
+    <div className="py-2 relative">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="gap-2 py-2 px-1">
+          {flyers.map((flyer) => (
+            <CarouselItem
+              key={flyer.id}
+              className="flex-[0_0_auto] w-[230px]" // each card ~250px wide, adjusts to screen
+            >
+              <FlyerCard flyer={flyer} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+
+        {/* Navigation buttons inside */}
+        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
+      </Carousel>
+    </div>
   )
 }
