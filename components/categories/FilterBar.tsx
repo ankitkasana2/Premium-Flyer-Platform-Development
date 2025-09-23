@@ -32,10 +32,6 @@ const FilterBar = () => {
 
         filterBarStore.priceFilter(id)
     }
-
-    useEffect(() => {
-     console.log("price",toJS(filterBarStore.price))
-    }, [toJS(filterBarStore.price)])
     
     
 

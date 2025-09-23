@@ -5,38 +5,38 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FlyerCard } from "@/components/flyer/flyer-card"
 import { Star, Zap, Clock, Shield } from "lucide-react"
-import { SAMPLE_FLYERS } from "@/lib/types"
+import { SAMPLE_FLYERS, FLYER_CATEGORIES } from "@/lib/types"
 import Link from "next/link"
 import FlyersSection from "@/components/home/FlyersSection"
 import HeroSection from "@/components/home/HeroSection"
 import FeaturedCategories from "@/components/home/FeaturedCategories"
+import { observer } from "mobx-react-lite"
+import { useStore } from "@/stores/StoreProvider"
+import { toJS } from "mobx"
+import React from "react"
 
-export default function HomePage() {
+ type HomeSectionProps = {
+    type: {
+        id: string;
+        name: string;
+        slug: string;
+        homePage: boolean;
+    };
 
+}
+
+
+
+const HomePage: React.FC<HomeSectionProps> =()=> {
+
+  const categories = FLYER_CATEGORIES.filter(cat => cat.homePage == true)
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Featured Flyers */}
-      <FlyersSection type={'recently'} />
-
-      {/* Featured Flyers */}
-      <FlyersSection type={'Halloween'} />
-
-      {/* Featured Flyers */}
-      <FlyersSection type={'ladies'} />
-
-      {/* Featured Flyers */}
-      <FlyersSection type={'brunch'} />
-
-
-      <FlyersSection type={'Christmas'} />
-
-
-      <FlyersSection type={'Valentine'} />
-
+      {categories&&categories.map(cat => (<FlyersSection key={cat.id} type={cat} />))}
 
 
 
@@ -155,3 +155,9 @@ export default function HomePage() {
     </div>
   )
 }
+
+export default HomePage;
+
+
+
+

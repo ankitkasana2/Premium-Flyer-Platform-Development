@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FLYER_CATEGORIES } from "@/lib/types"
+import { FLYER_CATEGORIES, SAMPLE_FLYERS } from "@/lib/types"
 import Link from "next/link"
 import FilterBar from "@/components/categories/FilterBar"
 import FlyersSection from "@/components/home/FlyersSection"
@@ -11,13 +11,17 @@ import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
 import { useEffect, useState } from "react"
+  
 
-function CategoriesPage() {
+
+
+
+const CategoriesPage = ()=> {
 
 
   const { authStore, filterBarStore } = useStore()
   const [filter, setFilter] = useState({
-    price : [],
+    price: [],
     category: '',
     type: ''
   })
@@ -28,7 +32,9 @@ function CategoriesPage() {
   //   price: toJS(filterBarStore.price)     // update price
   // }));
   // }, [toJS(filterBarStore.price)])
-  
+
+  const categories = FLYER_CATEGORIES.find(cat => cat.name == 'Recently Added')
+
 
 
 
@@ -43,7 +49,7 @@ function CategoriesPage() {
       {/* carsoul bar  */}
       <div className="col-span-9 ">
         {/* Featured Flyers */}
-        <FlyersSection type={'recently'} price={''}/>
+        {categories && <FlyersSection type={categories} />}
       </div>
     </section>
   )
