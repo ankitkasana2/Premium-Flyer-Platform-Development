@@ -88,29 +88,40 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
 
 
     useEffect(() => {
-     console.log(searchParams)
+        console.log(searchParams)
     }, [filter])
-    
 
 
 
 
-
-
-    return (
-        <section className="py-3 px-5">
+    return (<>
+        {type.name == 'Premium Flyers' ? <section className="my-3 py-1 px-5 bg-[#FFB8053D]">
             <div className='flex flex-col gap-1'>
                 {/* title  */}
-                <div className='text-lg md:text-xl font-semibold text-foreground'>
-                    <Link href={`/categories?${type.slug}`}>{type.name}</Link>
+                <div className='text-sm md:text-xl font-bold text-foreground'>
+                    <Link href={`/categories?slug=${type.slug}`}>{type.name}</Link>
                 </div>
 
                 <div className='col-span-8 '>
                     <FlyersCarousel flyers={Flyers} />
                 </div>
-
             </div>
         </section>
+            :
+            <section className="py-1 px-5">
+                <div className='flex flex-col gap-1'>
+                    {/* title  */}
+                    <div className='text-sm md:text-lg font-semibold text-foreground'>
+                        <Link href={`/categories?slug=${type.slug}`}>{type.name}</Link>
+                    </div>
+
+                    <div className='col-span-8 '>
+                        <FlyersCarousel flyers={Flyers} />
+                    </div>
+                </div>
+            </section>
+        }
+    </>
     )
 }
 

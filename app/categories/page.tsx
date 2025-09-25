@@ -11,29 +11,34 @@ import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
 import { useEffect, useState } from "react"
-  
+import FlyersCategorySection from "@/components/categories/FlyersCategorySection"
+import { useSearchParams } from "next/navigation"
 
 
 
+const CategoriesPage = () => {
 
-const CategoriesPage = ()=> {
-
-
-  const { authStore, filterBarStore } = useStore()
+  const searchParams = useSearchParams()
+  const { authStore, filterBarStore, categoryStore } = useStore()
   const [filter, setFilter] = useState({
     price: [],
     category: '',
     type: ''
   })
 
-  // useEffect(() => {
-  //   setFilter(prev => ({
-  //   ...prev,      // keep existing category and type
-  //   price: toJS(filterBarStore.price)     // update price
-  // }));
-  // }, [toJS(filterBarStore.price)])
 
-  const categories = FLYER_CATEGORIES.find(cat => cat.name == 'Recently Added')
+  useEffect(() => {
+    const value = searchParams.get('slug')
+    if (searchParams.size == 0) {
+      categoryStore.setFlyer('Recently Added')
+    }else{
+      categoryStore.setFlyer(value? value : '')
+    }
+  }, [searchParams])
+
+
+
+
 
 
 
@@ -42,14 +47,14 @@ const CategoriesPage = ()=> {
   return (
     <section className="min-h-[150vh] bg-background grid grid-cols-11">
       {/* filter bar  */}
-      <div className="col-span-2 sticky top-16 h-screen bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-r border-border z-50 shadow-lg">
+      <div className="col-span-2 sticky top-16 h-screen bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-50 shadow-lg">
         <FilterBar />
       </div>
 
       {/* carsoul bar  */}
       <div className="col-span-9 ">
         {/* Featured Flyers */}
-        {categories && <FlyersSection type={categories} />}
+        <FlyersCategorySection />
       </div>
     </section>
   )

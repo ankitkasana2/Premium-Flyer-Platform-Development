@@ -4,16 +4,19 @@ import React, { createContext, useContext, useRef } from "react"
 import { FavoritesStore } from "./FavoritesStore"
 import { AuthStore } from "./AuthStore"
 import { FilterBarStore } from "./FilterBarStore"
+import { CategoryStore } from "./CategoryStore"
 
 export class RootStore {
   favoritesStore: FavoritesStore
   authStore: AuthStore
   filterBarStore: FilterBarStore
+  categoryStore : CategoryStore
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
     this.authStore = new AuthStore()
-    this.filterBarStore = new FilterBarStore
+    this.filterBarStore = new FilterBarStore()
+    this.categoryStore = new CategoryStore()
   }
 }
 

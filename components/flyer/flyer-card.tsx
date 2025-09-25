@@ -26,14 +26,11 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
 
   const getPriceColor = (priceType: string) => {
     switch (priceType) {
-      case "basic":
-        return "bg-green-500/10 text-green-400 border-green-500/20"
-      case "regular":
-        return "bg-blue-500/10 text-blue-400 border-blue-500/20"
+
       case "premium":
-        return "bg-primary/10 text-primary border-primary/20"
+        return "bg-[#FFB700CF] text-[#FFF] border border-[#FFB70033] "
       default:
-        return "bg-muted text-muted-foreground"
+        return "bg-primary/80 border-primary/20"
     }
   }
 
@@ -52,7 +49,32 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-102"
         />
-        {/* Favorite & Price badges */}
+        {/* Favorite button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="absolute top-2 right-2 bg-black/20 hover:bg-black/40 hover:cursor-pointer"
+          onClick={handleToggleFavorite}
+        >
+          <Heart className={`w-6 h-6 ${isFavorited ? "fill-primary text-primary" : "text-white"}`} />
+        </Button>
+
+        {/* Price badge */}
+        <div className="absolute bottom-2 right-2">
+          <Badge className={`${getPriceColor(flyer.priceType)} shadow-[0_0_10px_3px_rgba(0,0,0,0.6)]`}>${flyer.price}</Badge>
+        </div>
+
+        {/* Premium Ribbon */}
+        {flyer.priceType === "premium" && (
+          <div className="absolute top-0 left-0 w-22 h-20 overflow-hidden">
+            <div className="absolute top-5 -left-5 w-25 bg-[#FFB700] text-black  text-xs font-bold text-center 
+                    shadow-[0_0_5px_rgba(0,0,0,0.5)] transform -rotate-45 ">
+              Premium
+            </div>
+          </div>
+        )}
+
+
       </div>
     </div>
 

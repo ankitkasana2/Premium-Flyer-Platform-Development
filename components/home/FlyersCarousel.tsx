@@ -12,7 +12,7 @@ import {
 
 export function FlyersCarousel({ flyers }: { flyers: any[] }) {
   return (
-    <div className="py-2 relative">
+    <div className=" relative">
       <Carousel
         opts={{
           align: "start",
