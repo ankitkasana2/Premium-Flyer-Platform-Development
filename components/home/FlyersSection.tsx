@@ -91,14 +91,14 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
         console.log(searchParams)
     }, [filter])
 
-
+    // #0059ff  #ffb700 gold
 
 
     return (<>
-        {type.name == 'Premium Flyers' ? <section className="my-3 py-1 px-5 bg-[#FFB8053D]">
+        {type.name == 'Premium Flyers' ? <section className="my-2 py-4 px-5  bg-[#ffb700]/30 shadow-[0_0_30px_15px_rgba(0,0,0,1)] " >
             <div className='flex flex-col gap-1'>
                 {/* title  */}
-                <div className='text-sm md:text-xl font-bold text-foreground'>
+                <div className='text-sm md:text-xl  font-bold '>
                     <Link href={`/categories?slug=${type.slug}`}>{type.name}</Link>
                 </div>
 

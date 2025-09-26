@@ -15,19 +15,19 @@ import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
 import React from "react"
 
- type HomeSectionProps = {
-    type: {
-        id: string;
-        name: string;
-        slug: string;
-        homePage: boolean;
-    };
+type HomeSectionProps = {
+  type: {
+    id: string;
+    name: string;
+    slug: string;
+    homePage: boolean;
+  };
 
 }
 
 
 
-const HomePage: React.FC<HomeSectionProps> =()=> {
+const HomePage: React.FC<HomeSectionProps> = () => {
 
   const categories = FLYER_CATEGORIES.filter(cat => cat.homePage == true)
 
@@ -36,7 +36,7 @@ const HomePage: React.FC<HomeSectionProps> =()=> {
       {/* Hero Section */}
       <HeroSection />
 
-      {categories&&categories.map(cat => (<FlyersSection key={cat.id} type={cat} />))}
+      {categories && categories.map(cat => (<FlyersSection key={cat.id} type={cat} />))}
 
 
 
