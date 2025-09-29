@@ -6,20 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import UserMenu from "@/components/auth/user-menu"
 import { Search, ShoppingCart, Menu, X } from "lucide-react"
+import Image from "next/image"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-[500] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className=" w-full px-2 sm:px-4">
+        <div className="flex items-center w-full justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">G</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">Grodify</span>
+            <Image src='/logo.png' height={10} alt="Logo" width={10} className="w-24 sm:w-32 md:w-36  " />
           </Link>
 
           {/* Search Bar */}

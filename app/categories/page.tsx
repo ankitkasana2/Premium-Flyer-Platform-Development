@@ -38,12 +38,6 @@ const CategoriesPage = () => {
 
 
 
-
-
-
-
-
-
   return (
     <section className="min-h-[150vh] bg-background grid grid-cols-11">
       {/* filter bar  */}

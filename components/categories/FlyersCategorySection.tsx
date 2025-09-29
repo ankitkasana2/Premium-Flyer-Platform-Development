@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { FLYER_CATEGORIES, SAMPLE_FLYERS } from "@/lib/types"
 import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
-import { toJS } from 'mobx'
+import { toJS, reaction } from 'mobx'
 import { FlyerCard } from '../flyer/flyer-card'
 
 
@@ -39,9 +39,18 @@ const FlyersCategorysection = () => {
 
     const flyers = categoryStore.flyers
 
+    // useeffect 
     useEffect(() => {
+        const disposer = reaction(
+            () => toJS(filterBarStore.price),  // observe this value
+            (price) => {
+                
+                categoryStore.setFlyerByFilter(price); // or any function you want to run
+            }
+        );
 
-    }, [])
+        return () => disposer(); // cleanup on unmount
+    }, [filterBarStore, categoryStore]);
 
 
 

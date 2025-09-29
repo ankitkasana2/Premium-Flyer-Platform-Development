@@ -23,6 +23,7 @@ export class CategoryStore {
         makeAutoObservable(this)
     }
 
+    // set initinal flyer 
     setFlyer(cat: string) {
         if (cat == 'Recently Added' || cat == 'recently-added') {
             this.flyers = SAMPLE_FLYERS.filter(fly => fly.isRecentlyAdded == true)
@@ -41,6 +42,41 @@ export class CategoryStore {
             this.flyers = SAMPLE_FLYERS.filter(fly => fly.category == FLYER_CATEGORIES.find(categ => categ.slug == cat)?.name)
         }
     }
+
+
+    // handle filter 
+    setFlyerByFilter(val: string[]) {
+        // Start from flyers of the currently selected category
+        let filteredFlyers = this.flyers;
+
+        if (val.length === 0) {
+            // No filters selected, show all flyers in current category
+            filteredFlyers = this.getFlyersByCategory(this.category);
+        } else {
+            // Filter current category flyers based on selected priceType
+            filteredFlyers = this.getFlyersByCategory(this.category)
+                .filter(flyer => val.includes(flyer.priceType));
+        }
+
+        this.flyers = filteredFlyers;
+    }
+
+
+    // get flyers according to category
+    getFlyersByCategory(cat: string) {
+        if (cat === 'Recently Added' || cat === 'recently-added') {
+            return SAMPLE_FLYERS.filter(fly => fly.isRecentlyAdded);
+        } else if (cat === 'premium-flyers') {
+            return SAMPLE_FLYERS.filter(fly => fly.priceType === 'premium');
+        } else if (cat === 'basic-flyers') {
+            return SAMPLE_FLYERS.filter(fly => fly.priceType === 'basic');
+        } else {
+            const catName = FLYER_CATEGORIES.find(c => c.slug === cat)?.name;
+            return SAMPLE_FLYERS.filter(fly => fly.category === catName);
+        }
+    }
+
+
 
 
 }

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -6,12 +7,9 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="space-y-4 col-span-2 md:col-span-1">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">G</span>
-              </div>
-              <span className="text-xl font-bold text-card-foreground">Grodify</span>
+          <div className="flex flex-col col-span-2 md:col-span-1">
+            <div className="flex space-x-2">
+              <Image src='/logo.png' alt="logo" width={10} height={10} className="w-48 object-contain block"/>
             </div>
             <p className="text-muted-foreground text-sm">
               Premium digital flyer templates for nightclubs, lounges, and events.

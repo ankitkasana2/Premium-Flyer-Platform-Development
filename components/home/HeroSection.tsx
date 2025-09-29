@@ -23,7 +23,7 @@ const HeroSection = () => {
                     <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-snug tracking-wider flex flex-col">
                         HALLOWEEN <span className='text-2xl md:text-3xl'> PARTY </span>
                     </h1>
-                    <Button size={'sm'} className="hover:cursor-pointer hover:scale-105 duration-300 w-[120px] tracking-[.1000rem] shadow-lg shadow-black/50]">
+                    <Button size={'sm'} className="hover:cursor-pointer hover:scale-105 duration-300 w-[120px] tracking-[.1000rem] bg-primary shadow-lg shadow-black/50]">
                         GET IT
                     </Button>
                 </div>

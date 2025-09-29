@@ -8,9 +8,9 @@ import { useStore } from "@/stores/StoreProvider"
 import { toJS } from 'mobx'
 
 const pricing = [
-    { id: 'price1', label: '10' },
-    { id: 'price2', label: '15' },
-    { id: 'price3', label: '45' },
+    { id: 'basic', label: '10' },
+    { id: 'regular', label: '15' },
+    { id: 'premium', label: '40' },
 ]
 
 const FilterBar = () => {
@@ -66,8 +66,8 @@ const FilterBar = () => {
                             <li key={price.label} className="flex items-center gap-3">
                                 <Checkbox
                                     id={price.label}
-                                    checked={selected.includes(price.label)}
-                                    onCheckedChange={() => togglePrice(price.label)}
+                                    checked={selected.includes(price.id)}
+                                    onCheckedChange={() => togglePrice(price.id)}
                                 />
                                 <Label className='font-light' htmlFor={price.label}>{price.label}</Label>
                             </li>
