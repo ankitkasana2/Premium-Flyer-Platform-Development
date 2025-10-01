@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Eye, ShoppingCart } from "lucide-react"
 import type { Flyer } from "@/lib/types"
+import Link from "next/link"
 
 interface FlyerCardProps {
   flyer: Flyer
@@ -35,7 +36,7 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
   }
 
   return (
-    <div
+    <Link href={`/flyer/${flyer.id}`}><div
       className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 
              hover:scale-105 hover:shadow-xl hover:shadow-primary/20 cursor-pointer 
              flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_20%]"
@@ -76,7 +77,7 @@ export function FlyerCard({ flyer, onPreview, onAddToCart, onToggleFavorite }: F
 
 
       </div>
-    </div>
+    </div></Link>
 
   )
 }
