@@ -2,16 +2,23 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Upload, Calendar, Clock, MapPin, Music, User, Sparkles, Check } from "lucide-react"
+import { Plus, Upload, CalendarIcon, Clock, MapPin, Music, User, Sparkles, Check } from "lucide-react"
 import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
 
 type Flyer = {
   id: string
@@ -26,13 +33,38 @@ type Flyer = {
   isFeatured?: boolean
 };
 
+function formatDate(date: Date | undefined) {
+  if (!date) {
+    return ""
+  }
+
+  return date.toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
+}
+
+function isValidDate(date: Date | undefined) {
+  if (!date) {
+    return false
+  }
+  return !isNaN(date.getTime())
+}
+
+
 
 const EventBookingForm = () => {
 
   const { authStore, filterBarStore, FlyerStore } = useStore()
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined)
   const [eventTitle, setEventTitle] = useState("")
-  const [date, setDate] = useState("")
+  const [date, setDate] = useState<Date | undefined>(
+    new Date("2025-06-01")
+  )
+  const [value, setValue] = useState(formatDate(date))
+  const [month, setMonth] = useState<Date | undefined>(date)
+  const [open, setOpen] = useState(false)
   const [startTime, setStartTime] = useState("")
   const [location, setLocation] = useState("")
   const [djName, setDjName] = useState("")
@@ -46,7 +78,68 @@ const EventBookingForm = () => {
   const [deliveryTime, setDeliveryTime] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [djImage, setDjImage] = useState<string | null>(null)
+  const [djImage2, setDjImage2] = useState<string | null>(null)
   const [hostImage, setHostImage] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [fileName2, setFileName2] = useState<string | null>(null)
+  const [presenting, setPresenting] = useState('')
+  const [information, setInformation] = useState('')
+  const [address, setAddress] = useState('')
+  const [djList, setDjList] = useState<{ name: string; image: string | null }[]>([
+    { name: "", image: null },
+    { name: "", image: null },
+  ])
+
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0] || null
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        setDjList(prev => {
+          const newList = [...prev]
+          newList[index].image = reader.result as string
+          return newList
+        })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const name = e.target.value
+    setDjList(prev => {
+      const newList = [...prev]
+      newList[index].name = name
+      return newList
+    })
+  }
+
+  const handleRemoveImage = (index: number) => {
+    setDjList(prev => {
+      const newList = [...prev]
+      newList[index].image = null
+      return newList
+    })
+  }
+
+  const handleAddField = () => {
+    setDjList(prev => [...prev, { name: "", image: null }])
+  }
+
+  const handleRemoveField = (index: number) => {
+    setDjList(prev => prev.filter((_, i) => i !== index))
+  }
+
+
+
+
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) setFileName(file.name)
+  }
 
 
   useEffect(() => {
@@ -89,98 +182,65 @@ const EventBookingForm = () => {
     setIsSubmitting(false)
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "dj" | "host") => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (type === "dj") {
-          setDjImage(reader.result as string)
-        } else {
-          setHostImage(reader.result as string)
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-  }
+  // const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "dj" | "host") => {
+  //   const file = e.target.files?.[0]
+  //   if (file) {
+  //     const reader = new FileReader()
+  //     reader.onloadend = () => {
+  //       if (type === "dj") {
+  //         setDjImage(reader.result as string)
+  //       } else {
+  //         setHostImage(reader.result as string)
+  //       }
+  //     }
+  //     reader.readAsDataURL(file)
+  //   }
+  // }
 
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="grid lg:grid-cols-2 gap-8 p-4 md:p-8 max-w-[1600px] mx-auto">
         {/* Left Side - Event Flyer */}
         <div className="space-y-8">
-          <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden border-2 border-red-600/40 glow-effect transition-all duration-300 hover:border-red-600/60">
+          <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden border-1 border-primary glow-effect transition-all duration-300 hover:border-primary">
             <div className="absolute inset-0 bg-[url('/spooky-halloween-party-atmosphere.jpg')] bg-cover bg-center opacity-20" />
 
-            <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-red-600/60 rounded-tl-2xl" />
-            <div className="absolute top-0 right-0 w-20 h-20 border-t-4 border-r-4 border-red-600/60 rounded-tr-2xl" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 border-b-4 border-l-4 border-red-600/60 rounded-bl-2xl" />
-            <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-red-600/60 rounded-br-2xl" />
+            <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-primary rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 w-20 h-20 border-t-4 border-r-4 border-primary rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 border-b-4 border-l-4 border-primary rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-primary rounded-br-2xl" />
 
             <div className="relative p-8 md:p-12 space-y-8">
               <div className="space-y-2 float-effect">
                 <h1
-                  className="text-6xl md:text-7xl font-bold text-white leading-none tracking-tight drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                  className="text-2xl md:text-4xl font-bold text-white leading-none tracking-tight drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
                   style={{ fontFamily: "Impact, sans-serif" }}
                 >
                   It's Spooky
                   <br />
                   Season
                 </h1>
-                <Sparkles className="w-8 h-8 text-red-500 animate-pulse" />
+                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
               </div>
 
-              <div className="aspect-[3/4] bg-gradient-to-b from-orange-600/20 to-purple-600/20 rounded-xl flex items-center justify-center border-2 border-red-600/40 overflow-hidden transition-all duration-300 hover:border-red-600/70 hover:scale-[1.02]">
+              <div className="aspect-[3/4] bg-gradient-to-b from-orange-600/20 to-purple-600/20 rounded-xl flex items-center justify-center border-2 border-primary overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
                   src={flyer?.imageUrl}
                   alt="Event promotional image"
                   className="w-full h-full object-cover"
                 />
               </div>
-
-              {/* <div className="flex items-baseline gap-4">
-                <span className="text-7xl md:text-8xl font-bold text-red-500 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)]">
-                  10
-                </span>
-                <span className="text-7xl md:text-8xl font-bold text-red-500 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)]">
-                  03
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <p className="text-white font-semibold">18+ OPEN 10PM</p>
-                <p className="text-gray-300">VIBES: ZCS 76 SA86</p>
-                <p className="text-gray-300">LHLT DJNQNS DBQN R16QUENTSN16.COM</p>
-              </div>
-
-              <div className="space-y-1 bg-black/40 p-4 rounded-lg border border-red-600/30">
-                <p className="text-2xl font-bold text-red-500 flex items-center gap-2">
-                  <Music className="w-6 h-6" />
-                  MUSIC BY
-                </p>
-                <p className="text-xl text-white">DJ GALO</p>
-                <p className="text-xl text-white">DJ BELMOR</p>
-              </div>
-
-              <div className="text-4xl font-bold tracking-wider">
-                W<span className="inline-block">⊕</span>RLD
-              </div>
-
-              <div className="pt-4">
-                <p className="text-xs text-gray-400">UPLQZ SEGT REALITIQN ZA SB</p>
-                <p className="text-xs text-gray-400">LQHM1 DAHE 950 DP2B8</p>
-              </div> */}
             </div>
           </div>
 
           {/* Similar Flyers */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold text-red-500">Similar Flyers</h3>
+            <h3 className="text-2xl font-bold">Similar Flyers</h3>
             <div className="grid grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="aspect-[3/4] bg-gradient-to-br from-orange-900/30 to-purple-900/30 rounded-lg border-2 border-red-600/30 overflow-hidden transition-all duration-300 hover:border-red-600/70 hover:scale-105 cursor-pointer"
+                  className="aspect-[3/4] bg-gradient-to-br from-orange-900/30 to-purple-900/30 rounded-lg border-2 border-primary overflow-hidden transition-all duration-300 hover:border-primary hover:scale-105 cursor-pointer"
                 >
                   <img
                     src={`/halloween-party-flyer-.jpg?height=400&width=300&query=halloween+party+flyer+${i}`}
@@ -194,17 +254,39 @@ const EventBookingForm = () => {
         </div>
 
         {/* Right Side - Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Event Details Section */}
-          <div className="space-y-6 bg-gradient-to-br from-red-950/20 to-black p-6 rounded-2xl border-2 border-red-600/30">
-            <h2 className="text-4xl font-bold text-red-500 flex items-center gap-3">
-              <Calendar className="w-8 h-8" />
+          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-6 rounded-2xl 
+          border-1 border-primary">
+            <h2 className="text-xl font-bold  flex items-center gap-3">
+              <CalendarIcon className="w-4 h-4" />
               Event Details
             </h2>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="eventTitle" className="text-red-400 text-sm mb-2 block font-semibold">
+            <div className=" grid grid-cols-2 gap-6">
+              {/* presenting  */}
+              <div className="col-span-1">
+                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                  Presenting *
+                </Label>
+                <Input
+                  id="presenting"
+                  value={presenting}
+                  onChange={(e) => setPresenting(e.target.value)}
+                  required
+                  className="bg-gray-950 border border-gray-800 text-white
+             placeholder:text-gray-600 rounded-lg h-10
+             shadow-md
+             focus-visible:!ring-0 focus-visible:!outline-none
+             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+             transition-all duration-300"
+                  placeholder="Presenting..."
+                />
+              </div>
+
+              {/* main titile  */}
+              <div className="col-span-1">
+                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
                   Event Title *
                 </Label>
                 <Input
@@ -212,153 +294,243 @@ const EventBookingForm = () => {
                   value={eventTitle}
                   onChange={(e) => setEventTitle(e.target.value)}
                   required
-                  className="bg-black/60 border-2 border-red-600/50 text-white placeholder:text-gray-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-lg h-12 transition-all duration-300"
+                  className="bg-gray-950 border border-gray-800 text-white
+             placeholder:text-gray-600 rounded-lg h-10
+             shadow-md
+             focus-visible:!ring-0 focus-visible:!outline-none
+             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+             transition-all duration-300"
                   placeholder="Enter event name..."
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label
-                    htmlFor="date"
-                    className="text-red-400 text-sm mb-2 block font-semibold flex items-center gap-2"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Date *
-                  </Label>
+              {/* date  */}
+              <div>
+                <Label
+                  htmlFor="date"
+                  className=" text-sm mb-2 font-semibold flex items-center gap-2"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  Date *
+                </Label>
+                <div className="relative flex gap-2">
                   <Input
                     id="date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                    className="bg-black/60 border-2 border-red-600/50 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-lg h-12 transition-all duration-300"
+                    value={value}
+                    placeholder="June 01, 2025"
+                    className="bg-gray-950 border border-gray-800 text-white
+             placeholder:text-gray-600 rounded-lg h-10
+             shadow-md
+             focus-visible:!ring-0 focus-visible:!outline-none
+             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+             transition-all duration-300"
+                    onChange={(e) => {
+                      const date = new Date(e.target.value)
+                      setValue(e.target.value)
+                      if (isValidDate(date)) {
+                        setDate(date)
+                        setMonth(date)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault()
+                        setOpen(true)
+                      }
+                    }}
                   />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="startTime"
-                    className="text-red-400 text-sm mb-2 block font-semibold flex items-center gap-2"
-                  >
-                    <Clock className="w-4 h-4" />
-                    Start Time *
-                  </Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    required
-                    className="bg-black/60 border-2 border-red-600/50 text-white placeholder:text-gray-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-lg h-12 transition-all duration-300"
-                  />
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <div
+                        id="date-picker"
+                        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                      >
+                        <CalendarIcon className="size-3.5" />
+                        <span className="sr-only">Select date</span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto overflow-hidden p-0"
+                      align="end"
+                      alignOffset={-8}
+                      sideOffset={10}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        captionLayout="dropdown"
+                        month={month}
+                        onMonthChange={setMonth}
+                        onSelect={(date) => {
+                          setDate(date)
+                          setValue(formatDate(date))
+                          setOpen(false)
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
-              <div>
-                <Label
-                  htmlFor="location"
-                  className="text-red-400 text-sm mb-2 block font-semibold flex items-center gap-2"
-                >
-                  <MapPin className="w-4 h-4" />
-                  Location *
+              {/* flyer information  */}
+              <div className="col-span-2">
+                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                  Flyer Information
                 </Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                <Textarea
+                  id="information"
+                  value={information}
+                  onChange={(e) => setInformation(e.target.value)}
                   required
-                  className="bg-black/60 border-2 border-red-600/50 text-white placeholder:text-gray-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-lg h-12 transition-all duration-300"
-                  placeholder="Enter venue address..."
+                  className="bg-gray-950 border border-gray-800 text-white
+             placeholder:text-gray-600 rounded-lg h-10
+             shadow-md
+             focus-visible:!ring-0 focus-visible:!outline-none
+             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+             transition-all duration-300"
+                  placeholder="Enter flyer information..."
                 />
+              </div>
+
+              {/* address and phone  */}
+              <div className="col-span-2">
+                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                  Address & Phone no. *
+                </Label>
+                <Textarea
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                  className="bg-gray-950 border border-gray-800 text-white
+             placeholder:text-gray-600 rounded-lg h-10
+             shadow-md
+             focus-visible:!ring-0 focus-visible:!outline-none
+             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+             transition-all duration-300"
+                  placeholder="Enter address & phone number..."
+                />
+              </div>
+
+              {/* file upload button  */}
+              <div className="col-span-1">
+                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                  Venue Logo
+                </Label>
+                <div className="flex flex-col gap-2">
+                  {/* hidden file input */}
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+
+                  {/* Shadcn Button triggers file input */}
+                  <Button
+                    variant="outline"
+                    size={'lg'}
+                    className="flex items-center gap-2 border-primary text-primary hover:!bg-gray-950 hover:text-primary"
+                    onClick={() => inputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload File
+                  </Button>
+
+                  {/* Optional: show selected file name */}
+                  {fileName && (
+                    <p className="text-sm text-muted-foreground truncate max-w-xs">
+                      {fileName}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Additional Information Section */}
-          <div className="space-y-6 bg-gradient-to-br from-red-950/20 to-black p-6 rounded-2xl border-2 border-red-600/30">
-            <h2 className="text-3xl font-bold text-red-500">Additional Information</h2>
+          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-6 
+          rounded-2xl border-1 border-primary">
+            <h2 className="text-xl font-bold ">DJ & Artist</h2>
 
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-white text-base font-semibold flex items-center gap-2">
-                    <Music className="w-5 h-5 text-red-500" />
-                    Main DJ or Artist
-                  </Label>
-                  <label htmlFor="dj-upload" className="cursor-pointer">
-                    <div className="flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors">
-                      <span className="text-sm font-semibold">Upload Image</span>
-                      <Upload className="w-4 h-4" />
+
+            {djList.map((dj, index) => (
+              <div key={index} className="grid grid-cols-2 gap-6 mb-4">
+                <div className="col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <Music className="w-4 h-4 text-theme" />
+                      Main DJ or Artist
+                    </Label>
+
+                    <div className="flex items-center gap-4">
+                      {/* Upload */}
+                      <label htmlFor={`dj-upload-${index}`} className="cursor-pointer">
+                        <div className="flex items-center gap-2 text-primary">
+                          <span className="text-sm font-semibold">Upload Image</span>
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <input
+                          id={`dj-upload-${index}`}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, index)}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {/* Remove Field Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveField(index)}
+                        className="text-red-500 text-sm hover:underline"
+                      >
+                        Remove Field
+                      </button>
                     </div>
-                    <input
-                      id="dj-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, "dj")}
-                      className="hidden"
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-950 border-2 border-primary rounded-lg p-3 transition-all duration-300 h-12 hover:border-primary hover:ring-2 hover:ring-primary">
+                    {dj.image && (
+                      <>
+                        <img
+                          src={dj.image}
+                          alt="DJ"
+                          className="w-8 h-8 rounded-full object-fill border-2 border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="text-primary text-sm hover:underline"
+                        >
+                          Remove Image
+                        </button>
+                      </>
+                    )}
+
+                    <Input
+                      value={dj.name}
+                      onChange={(e) => handleNameChange(e, index)}
+                      placeholder="Enter DJ name..."
+                      className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
                     />
-                  </label>
-                </div>
-                <div className="flex items-center gap-3 bg-black/60 border-2 border-red-600/50 rounded-lg p-3 transition-all duration-300 hover:border-red-600/70">
-                  {djImage && (
-                    <img
-                      src={djImage || "/placeholder.svg"}
-                      alt="DJ"
-                      className="w-10 h-10 rounded-full object-cover border-2 border-red-500"
-                    />
-                  )}
-                  <Input
-                    value={djName}
-                    onChange={(e) => setDjName(e.target.value)}
-                    placeholder="Enter DJ name..."
-                    className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                  />
-                  <span className="text-gray-500 text-sm whitespace-nowrap">
-                    {djImage ? "Image uploaded" : "No file chosen"}
-                  </span>
+
+                    <span className="text-gray-500 text-sm whitespace-nowrap">
+                      {dj.image ? "Image uploaded" : "No file chosen"}
+                    </span>
+                  </div>
                 </div>
               </div>
+            ))}
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-white text-base font-semibold flex items-center gap-2">
-                    <User className="w-5 h-5 text-red-500" />
-                    Host
-                  </Label>
-                  <label htmlFor="host-upload" className="cursor-pointer">
-                    <div className="flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors">
-                      <span className="text-sm font-semibold">Upload Image</span>
-                      <Upload className="w-4 h-4" />
-                    </div>
-                    <input
-                      id="host-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, "host")}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-                <div className="flex items-center gap-3 bg-black/60 border-2 border-red-600/50 rounded-lg p-3 transition-all duration-300 hover:border-red-600/70">
-                  {hostImage && (
-                    <img
-                      src={hostImage || "/placeholder.svg"}
-                      alt="Host"
-                      className="w-10 h-10 rounded-full object-cover border-2 border-red-500"
-                    />
-                  )}
-                  <Input
-                    value={hostName}
-                    onChange={(e) => setHostName(e.target.value)}
-                    placeholder="Enter host name..."
-                    className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                  />
-                  <span className="text-gray-500 text-sm whitespace-nowrap">
-                    {hostImage ? "Image uploaded" : "No file chosen"}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <Button type="button" onClick={handleAddField} className="mt-2">
+              Add More
+            </Button>
+
+
+
+
           </div>
 
           {/* Extras Section */}
