@@ -216,9 +216,7 @@ const EventBookingForm = () => {
                   className="text-2xl md:text-4xl font-bold text-white leading-none tracking-tight drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
                   style={{ fontFamily: "Impact, sans-serif" }}
                 >
-                  It's Spooky
-                  <br />
-                  Season
+                 {flyer?.name}
                 </h1>
                 <Sparkles className="w-8 h-8 text-primary animate-pulse" />
               </div>
