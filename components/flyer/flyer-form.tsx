@@ -1,103 +1,109 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Plus, Upload, CalendarIcon, Clock, MapPin, Music, User, Sparkles, Check } from "lucide-react"
-import { observer } from "mobx-react-lite"
-import { useStore } from "@/stores/StoreProvider"
-import { toJS } from "mobx"
-import { Calendar } from "@/components/ui/calendar"
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Plus,
+  Upload,
+  CalendarIcon,
+  Clock,
+  MapPin,
+  Music,
+  User,
+  Sparkles,
+  Check,
+} from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useStore } from "@/stores/StoreProvider";
+import { toJS } from "mobx";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import SponsorsBlock from "../orer-form/sponser"
-import ExtrasBlock from "../orer-form/extra-block"
-import DeliveryTimeBlock from "../orer-form/delivery-time-block"
-import { FlyersCarousel } from "../home/FlyersCarousel"
-
+} from "@/components/ui/popover";
+import SponsorsBlock from "../orer-form/sponser";
+import ExtrasBlock from "../orer-form/extra-block";
+import DeliveryTimeBlock from "../orer-form/delivery-time-block";
+import { FlyersCarousel } from "../home/FlyersCarousel";
+import HostSection from "../orer-form/host-block";
 
 type Flyer = {
-  id: string
-  name: string
-  category: string
-  price: number
-  priceType: "basic" | "regular" | "premium"
-  hasPhotos: boolean
-  imageUrl: string
-  tags: string[]
-  isRecentlyAdded?: boolean
-  isFeatured?: boolean
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  priceType: "basic" | "regular" | "premium";
+  hasPhotos: boolean;
+  imageUrl: string;
+  tags: string[];
+  isRecentlyAdded?: boolean;
+  isFeatured?: boolean;
 };
 
 function formatDate(date: Date | undefined) {
   if (!date) {
-    return ""
+    return "";
   }
 
   return date.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
-  })
+  });
 }
 
 function isValidDate(date: Date | undefined) {
   if (!date) {
-    return false
+    return false;
   }
-  return !isNaN(date.getTime())
+  return !isNaN(date.getTime());
 }
 
-
-
 const EventBookingForm = () => {
-
-  const { authStore, filterBarStore, FlyerFormStore } = useStore()
-  const [flyer, setFlyer] = useState<Flyer | undefined>(undefined)
-  const [eventTitle, setEventTitle] = useState("")
-  const [date, setDate] = useState<Date | undefined>(
-    new Date("2025-06-01")
-  )
-  const [value, setValue] = useState(formatDate(date))
-  const [month, setMonth] = useState<Date | undefined>(date)
-  const [open, setOpen] = useState(false)
-  const [startTime, setStartTime] = useState("")
-  const [location, setLocation] = useState("")
-  const [djName, setDjName] = useState("")
-  const [hostName, setHostName] = useState("")
-  const [note, setNote] = useState("")
+  const { authStore, filterBarStore, FlyerFormStore } = useStore();
+  const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
+  const [eventTitle, setEventTitle] = useState("");
+  const [date, setDate] = useState<Date | undefined>(new Date("2025-06-01"));
+  const [value, setValue] = useState(formatDate(date));
+  const [month, setMonth] = useState<Date | undefined>(date);
+  const [open, setOpen] = useState(false);
+  const [startTime, setStartTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [djName, setDjName] = useState("");
+  const [hostName, setHostName] = useState("");
+  const [note, setNote] = useState("");
   const [extras, setExtras] = useState({
     bottle: false,
     food: false,
     animation: false,
-  })
-  const [deliveryTime, setDeliveryTime] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [hostImage, setDjImage] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [fileName2, setFileName2] = useState<string | null>(null)
-  const [presenting, setPresenting] = useState('')
-  const [information, setInformation] = useState('')
-  const [address, setAddress] = useState('')
-  const [djList, setDjList] = useState<{ name: string; image: string | null }[]>([
+  });
+  const [deliveryTime, setDeliveryTime] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hostImage, setDjImage] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileName2, setFileName2] = useState<string | null>(null);
+  const [presenting, setPresenting] = useState("");
+  const [information, setInformation] = useState("");
+  const [address, setAddress] = useState("");
+  const [djList, setDjList] = useState<
+    { name: string; image: string | null }[]
+  >([
     { name: "", image: null },
     { name: "", image: null },
-  ])
+  ]);
   const [host, setHost] = useState<{ name: string; image: string | null }[]>([
     { name: "", image: null },
-  ])
+  ]);
 
-
-  // for host 
+  // for host
   const handleFileUploadHost = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (!file) return;
@@ -109,81 +115,78 @@ const EventBookingForm = () => {
     reader.readAsDataURL(file);
   };
 
-
-  // for artist 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0] || null
+  // for artist
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const file = e.target.files?.[0] || null;
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = () => {
-        setDjList(prev => {
-          const newList = [...prev]
-          newList[index].image = reader.result as string
-          return newList
-        })
-      }
-      reader.readAsDataURL(file)
+        setDjList((prev) => {
+          const newList = [...prev];
+          newList[index].image = reader.result as string;
+          return newList;
+        });
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const name = e.target.value
-    setDjList(prev => {
-      const newList = [...prev]
-      newList[index].name = name
-      return newList
-    })
-  }
+  const handleNameChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const name = e.target.value;
+    setDjList((prev) => {
+      const newList = [...prev];
+      newList[index].name = name;
+      return newList;
+    });
+  };
 
   const handleRemoveImage = (index: number) => {
-    setDjList(prev => {
-      const newList = [...prev]
-      newList[index].image = null
-      return newList
-    })
-  }
+    setDjList((prev) => {
+      const newList = [...prev];
+      newList[index].image = null;
+      return newList;
+    });
+  };
 
   const handleAddField = () => {
-    setDjList(prev => [...prev, { name: "", image: null }])
-  }
+    setDjList((prev) => [...prev, { name: "", image: null }]);
+  };
 
   const handleRemoveField = (index: number) => {
-    setDjList(prev => prev.filter((_, i) => i !== index))
-  }
-
-
-
-
+    setDjList((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) setFileName(file.name)
-  }
-
+    const file = e.target.files?.[0];
+    if (file) setFileName(file.name);
+  };
 
   useEffect(() => {
     // whenever store.flyer changes, update local state
-    setFlyer(FlyerFormStore.flyer ?? undefined)
-  }, [FlyerFormStore.flyer])
-
-
-
+    setFlyer(FlyerFormStore.flyer ?? undefined);
+  }, [FlyerFormStore.flyer]);
 
   const calculateTotal = () => {
-    let total = 0
-    if (extras.bottle) total += 10
-    if (extras.food) total += 15
-    if (extras.animation) total += 20
-    if (deliveryTime === "3days") total += 20
-    if (deliveryTime === "24hours") total += 40
-    return total
-  }
+    let total = 0;
+    if (extras.bottle) total += 10;
+    if (extras.food) total += 15;
+    if (extras.animation) total += 20;
+    if (deliveryTime === "3days") total += 20;
+    if (deliveryTime === "24hours") total += 40;
+    return total;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log("[v0] Form submitted:", {
       eventTitle,
@@ -196,42 +199,46 @@ const EventBookingForm = () => {
       deliveryTime,
       note,
       total: calculateTotal(),
-    })
+    });
 
-    setIsSubmitting(false)
-  }
-
-
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="grid lg:grid-cols-2 gap-8 p-4 md:p-8 max-w-[1600px] mx-auto">
+      <div className="grid lg:grid-cols-2 gap-8 p-3 md:p-5 max-w-[1600px] mx-auto">
         {/* Left Side - Event Flyer */}
         <div className="space-y-6">
           <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden border-1 border-primary glow-effect transition-all duration-300 hover:border-primary">
-
-
-            <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-primary rounded-tl-2xl" />
-            <div className="absolute top-0 right-0 w-20 h-20 border-t-4 border-r-4 border-primary rounded-tr-2xl" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 border-b-4 border-l-4 border-primary rounded-bl-2xl" />
-            <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-primary rounded-br-2xl" />
+            <div className="absolute top-0 left-0 w-18 h-20 border-t-4 border-l-4 border-primary rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 w-18 h-20 border-t-4 border-r-4 border-primary rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 w-18 h-20 border-b-4 border-l-4 border-primary rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 w-20 h-18 border-b-4 border-r-4 border-primary rounded-br-2xl" />
 
             <div className="relative p-3 md:p-6 space-y-4">
               <div className="space-y-2 float-effect">
                 <h1
-                  className="text-xl md:text-3xl font-bold text-white leading-none tracking-tight drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
-                  style={{ fontFamily: "Impact, sans-serif" }}
+                  className="text-xl md:text-2xl font-bold text-white "
+                  
                 >
                   {flyer?.name}
                 </h1>
               </div>
 
-              <div className="aspect-[3/4]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
+              <div className="aspect-[4/5]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
                   src={flyer?.imageUrl}
                   alt="Event promotional image"
                   className="w-full h-full object-cover"
                 />
+              </div>
+
+              {/* price  */}
+              {/* Price Section */}
+              <div className="flex ">
+                <span className="text-sm font-semibold text-white border-1 border-primary px-4 py-1 rounded-md shadow-md">
+                  ${flyer?.price}
+                </span>
               </div>
             </div>
           </div>
@@ -240,8 +247,10 @@ const EventBookingForm = () => {
         {/* Right Side - Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Event Details Section */}
-          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl 
-          border-1 border-gray-800">
+          <div
+            className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl 
+          border-1 border-gray-800"
+          >
             <h2 className="text-xl font-bold  flex items-center gap-3">
               <CalendarIcon className="w-4 h-4" />
               Event Details
@@ -250,7 +259,10 @@ const EventBookingForm = () => {
             <div className=" grid grid-cols-2 gap-6">
               {/* presenting  */}
               <div className="col-span-1">
-                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                <Label
+                  htmlFor="eventTitle"
+                  className="text-sm mb-2 block font-semibold"
+                >
                   Presenting *
                 </Label>
                 <Input
@@ -270,7 +282,10 @@ const EventBookingForm = () => {
 
               {/* main titile  */}
               <div className="col-span-1">
-                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                <Label
+                  htmlFor="eventTitle"
+                  className="text-sm mb-2 block font-semibold"
+                >
                   Event Title *
                 </Label>
                 <Input
@@ -309,17 +324,17 @@ const EventBookingForm = () => {
              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
              transition-all duration-300"
                     onChange={(e) => {
-                      const date = new Date(e.target.value)
-                      setValue(e.target.value)
+                      const date = new Date(e.target.value);
+                      setValue(e.target.value);
                       if (isValidDate(date)) {
-                        setDate(date)
-                        setMonth(date)
+                        setDate(date);
+                        setMonth(date);
                       }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown") {
-                        e.preventDefault()
-                        setOpen(true)
+                        e.preventDefault();
+                        setOpen(true);
                       }
                     }}
                   />
@@ -346,9 +361,9 @@ const EventBookingForm = () => {
                         month={month}
                         onMonthChange={setMonth}
                         onSelect={(date) => {
-                          setDate(date)
-                          setValue(formatDate(date))
-                          setOpen(false)
+                          setDate(date);
+                          setValue(formatDate(date));
+                          setOpen(false);
                         }}
                       />
                     </PopoverContent>
@@ -358,7 +373,10 @@ const EventBookingForm = () => {
 
               {/* flyer information  */}
               <div className="col-span-2">
-                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                <Label
+                  htmlFor="eventTitle"
+                  className="text-sm mb-2 block font-semibold"
+                >
                   Flyer Information
                 </Label>
                 <Textarea
@@ -378,7 +396,10 @@ const EventBookingForm = () => {
 
               {/* address and phone  */}
               <div className="col-span-2">
-                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                <Label
+                  htmlFor="eventTitle"
+                  className="text-sm mb-2 block font-semibold"
+                >
                   Address & Phone no. *
                 </Label>
                 <Input
@@ -398,7 +419,10 @@ const EventBookingForm = () => {
 
               {/* file upload button  */}
               <div className="col-span-1">
-                <Label htmlFor="eventTitle" className="text-sm mb-2 block font-semibold">
+                <Label
+                  htmlFor="eventTitle"
+                  className="text-sm mb-2 block font-semibold"
+                >
                   Venue Logo
                 </Label>
                 <div className="flex flex-col gap-2">
@@ -414,7 +438,7 @@ const EventBookingForm = () => {
                   {/* Shadcn Button triggers file input */}
                   <Button
                     variant="outline"
-                    size={'lg'}
+                    size={"lg"}
                     className="flex items-center gap-2 border-primary text-primary hover:!bg-gray-950 hover:text-primary"
                     onClick={() => inputRef.current?.click()}
                   >
@@ -434,8 +458,10 @@ const EventBookingForm = () => {
           </div>
 
           {/* Additional Information Section */}
-          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
-          rounded-2xl border-1 border-gray-800">
+          <div
+            className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
+          rounded-2xl border-1 border-gray-800"
+          >
             <h2 className="text-xl font-bold ">DJ or Artist</h2>
 
             {djList.map((dj, index) => (
@@ -449,9 +475,14 @@ const EventBookingForm = () => {
 
                     <div className="flex items-center gap-4">
                       {/* Upload */}
-                      <label htmlFor={`dj-upload-${index}`} className="cursor-pointer">
+                      <label
+                        htmlFor={`dj-upload-${index}`}
+                        className="cursor-pointer"
+                      >
                         <div className="flex items-center gap-2 text-primary">
-                          <span className="text-sm font-semibold">Upload Image</span>
+                          <span className="text-sm font-semibold">
+                            Upload Image
+                          </span>
                           <Upload className="w-4 h-4" />
                         </div>
                         <input
@@ -474,10 +505,12 @@ const EventBookingForm = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 bg-gray-950 border-1 rounded-lg p-3  h-10  shadow-md
+                  <div
+                    className="flex items-center gap-3 bg-gray-950 border-1 rounded-lg p-3  h-10  shadow-md
              hover:!ring-0 hover:!outline-none hover:!border-primary
              hover:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-             transition-all duration-300">
+             transition-all duration-300"
+                  >
                     {dj.image && (
                       <>
                         <img
@@ -510,84 +543,20 @@ const EventBookingForm = () => {
               </div>
             ))}
 
-            <Button type="button" onClick={handleAddField} className="mt-2 bg-primary hover:cursor-pointer">
+            <Button
+              type="button"
+              onClick={handleAddField}
+              className="mt-2 bg-primary hover:cursor-pointer"
+            >
               Add More
             </Button>
-
           </div>
-
 
           {/* Host Information Section */}
-          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border-1 border-gray-800">
-            <h2 className="text-xl font-bold">Host</h2>
-
-            <div className="grid grid-cols-2 gap-6 mb-4">
-              <div className="col-span-2">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Music className="w-4 h-4 text-theme text-sm" />
-                    Main DJ or Artist
-                  </Label>
-
-                  <div className="flex items-center gap-4">
-                    {/* Upload */}
-                    <label htmlFor="dj-upload" className="cursor-pointer">
-                      <div className="flex items-center gap-2 text-primary">
-                        <span className="text-sm font-semibold">Upload Image</span>
-                        <Upload className="w-4 h-4" />
-                      </div>
-                      <input
-                        id="dj-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUploadHost}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 bg-gray-950 border-1 rounded-lg p-3 h-10 shadow-md
-        hover:!ring-0 hover:!outline-none hover:!border-primary
-        hover:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-        transition-all duration-300">
-
-                  {hostImage && (
-                    <>
-                      <img
-                        src={hostImage}
-                        alt="DJ"
-                        className="w-8 h-8 rounded-full object-fill border-2 border-primary"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setDjImage(null)}
-                        className="text-primary text-xs hover:underline"
-                      >
-                        Remove Image
-                      </button>
-                    </>
-                  )}
-
-                  <Input
-                    value={djName}
-                    onChange={(e) => setDjName(e.target.value)}
-                    placeholder="Enter DJ name..."
-                    className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                  />
-
-                  <span className="text-gray-500 text-sm whitespace-nowrap">
-                    {hostImage ? "Image uploaded" : "No file chosen"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <HostSection />
 
           {/* sponser Section */}
           <SponsorsBlock />
-
 
           {/* Extras Section */}
           <ExtrasBlock />
@@ -612,8 +581,10 @@ const EventBookingForm = () => {
           </div>
 
           {/* Submit Section */}
-          <div className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 
-          flex items-center justify-between">
+          <div
+            className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 
+          flex items-center justify-between"
+          >
             {/* Left: Submit Button */}
             <Button
               type="submit"
@@ -636,11 +607,14 @@ const EventBookingForm = () => {
 
             {/* Right: Total Amount */}
             <div className="text-right">
-              <span className="block text-sm text-gray-300 font-semibold">Total</span>
-              <span className="text-primary font-bold text-lg">${calculateTotal()}</span>
+              <span className="block text-sm text-gray-300 font-semibold">
+                Total
+              </span>
+              <span className="text-primary font-bold text-lg">
+                ${calculateTotal()}
+              </span>
             </div>
           </div>
-
         </form>
       </div>
       {/* Similar Flyers */}
@@ -652,9 +626,7 @@ const EventBookingForm = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-
-
-export default observer(EventBookingForm)
+export default observer(EventBookingForm);
