@@ -11,11 +11,11 @@ import { toJS } from "mobx"
 
 const FlyerPage = ()=> {
 
-  const { authStore, filterBarStore, FlyerStore } = useStore()
+  const { authStore, filterBarStore, FlyerFormStore } = useStore()
   const {FlyerId} = useParams()
 
   useEffect(() => {
-    FlyerStore.fetchFlyer(FlyerId as string)
+    FlyerFormStore.fetchFlyer(FlyerId as string)
   }, [FlyerId])
   
 

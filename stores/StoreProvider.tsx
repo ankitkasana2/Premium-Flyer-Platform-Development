@@ -5,21 +5,21 @@ import { FavoritesStore } from "./FavoritesStore"
 import { AuthStore } from "./AuthStore"
 import { FilterBarStore } from "./FilterBarStore"
 import { CategoryStore } from "./CategoryStore"
-import { FlyerStore } from "./FlyerStore"
+import { FlyerFormStore } from "./FlyerFormStore"
 
 export class RootStore {
   favoritesStore: FavoritesStore
   authStore: AuthStore
   filterBarStore: FilterBarStore
   categoryStore : CategoryStore
-  FlyerStore: FlyerStore
+  FlyerFormStore: FlyerFormStore
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
     this.authStore = new AuthStore()
     this.filterBarStore = new FilterBarStore()
     this.categoryStore = new CategoryStore()
-    this.FlyerStore = new FlyerStore()
+    this.FlyerFormStore = new FlyerFormStore()
   }
 }
 
