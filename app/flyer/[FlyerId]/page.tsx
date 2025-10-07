@@ -1,6 +1,6 @@
 'use client'
 
-import EventBookingForm from "@/components/flyer/flyer-form"
+import EventBookingForm from "@/components/orer-form/flyer-form"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { observer } from "mobx-react-lite"
@@ -11,11 +11,11 @@ import { toJS } from "mobx"
 
 const FlyerPage = ()=> {
 
-  const { authStore, filterBarStore, FlyerFormStore } = useStore()
+  const { authStore, filterBarStore, flyerFormStore } = useStore()
   const {FlyerId} = useParams()
 
   useEffect(() => {
-    FlyerFormStore.fetchFlyer(FlyerId as string)
+    flyerFormStore.fetchFlyer(FlyerId as string)
   }, [FlyerId])
   
 

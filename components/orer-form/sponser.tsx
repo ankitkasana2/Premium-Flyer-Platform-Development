@@ -1,16 +1,48 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { observer } from "mobx-react-lite";
+import { useStore } from "@/stores/StoreProvider";
 
-export default function SponsorsBlock() {
-  const sponsorRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+const SponsorsBlock = observer(() => {
+  const { flyerFormStore } = useStore();
+
+  const sponsorRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  // Local state for previews and filenames
   const [sponsorImages, setSponsorImages] = useState<(string | null)[]>([null, null, null]);
   const [fileNames, setFileNames] = useState<(string | null)[]>([null, null, null]);
 
+  // -----------------------------
+  // ✅ Load initial images from store
+  // -----------------------------
+  useEffect(() => {
+    const sponsors = flyerFormStore.flyerFormDetail.sponsors;
+    setSponsorImages([
+      sponsors.sponsor1 ? URL.createObjectURL(sponsors.sponsor1) : null,
+      sponsors.sponsor2 ? URL.createObjectURL(sponsors.sponsor2) : null,
+      sponsors.sponsor3 ? URL.createObjectURL(sponsors.sponsor3) : null,
+    ]);
+    setFileNames([sponsors.sponsor1?.name || null, sponsors.sponsor2?.name || null, sponsors.sponsor3?.name || null]);
+  }, [flyerFormStore.flyerFormDetail.sponsors]);
+
+  // -----------------------------
+  // ✅ Handle file upload
+  // -----------------------------
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0] || null;
     if (!file) return;
 
+    // Update MobX store
+    if (index === 0) flyerFormStore.updateSponsor("sponsor1", file);
+    if (index === 1) flyerFormStore.updateSponsor("sponsor2", file);
+    if (index === 2) flyerFormStore.updateSponsor("sponsor3", file);
+
+    // Local preview
     const reader = new FileReader();
     reader.onload = () => {
       const newImages = [...sponsorImages];
@@ -24,7 +56,14 @@ export default function SponsorsBlock() {
     reader.readAsDataURL(file);
   };
 
+  // -----------------------------
+  // ✅ Remove image
+  // -----------------------------
   const removeImage = (index: number) => {
+    if (index === 0) flyerFormStore.updateSponsor("sponsor1", null);
+    if (index === 1) flyerFormStore.updateSponsor("sponsor2", null);
+    if (index === 2) flyerFormStore.updateSponsor("sponsor3", null);
+
     const newImages = [...sponsorImages];
     newImages[index] = null;
     setSponsorImages(newImages);
@@ -85,4 +124,6 @@ export default function SponsorsBlock() {
       </div>
     </div>
   );
-}
+});
+
+export default SponsorsBlock;

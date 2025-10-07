@@ -12,14 +12,14 @@ export class RootStore {
   authStore: AuthStore
   filterBarStore: FilterBarStore
   categoryStore : CategoryStore
-  FlyerFormStore: FlyerFormStore
+  flyerFormStore: FlyerFormStore
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
     this.authStore = new AuthStore()
     this.filterBarStore = new FilterBarStore()
     this.categoryStore = new CategoryStore()
-    this.FlyerFormStore = new FlyerFormStore()
+    this.flyerFormStore = new FlyerFormStore()
   }
 }
 
