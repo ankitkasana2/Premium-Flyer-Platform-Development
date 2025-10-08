@@ -23,6 +23,7 @@ export type FlyerFormDetails = {
     flyerInfo?: string
     addressAndPhone?: string
     venueLogo?: File | null
+    venueText: string
   }
 
   djsOrArtists: {
@@ -66,6 +67,7 @@ export class FlyerFormStore {
       flyerInfo: "",
       addressAndPhone: "",
       venueLogo: null,
+      venueText: '',
     },
     djsOrArtists: [
       { name: "", image: null },

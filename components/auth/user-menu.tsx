@@ -63,39 +63,39 @@ const UserMenu = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="p-0">
-          <Link href="/profile" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+          <Link href="/profile" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <User className="h-4 w-4 text-white" />
-            <span>Profile ankit</span>
+            <span>Profile</span>
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="p-0">
-          <Link href="/orders" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+          <Link href="/orders" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <ShoppingBag className=" h-4 w-4" />
             <span>My Orders</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="p-0">
-          <Link href="/favorites" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+          <Link href="/favorites" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <Heart className=" h-4 w-4" />
             <span>Favorites</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="p-0">
-          <Link href="/billing" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+          <Link href="/billing" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <CreditCard className=" h-4 w-4" />
             <span>Billing</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="p-0">
-          <Link href="/settings" className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-2 rounded-sm">
+          <Link href="/settings" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <Settings className=" h-4 w-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer p-0">
-          <div className="w-full flex items-center gap-3 text-white hover:bg-red-600 p-1 rounded-sm">
+          <div className="w-full flex items-center gap-3 text-white hover:bg-primary p-1 rounded-sm">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign out</span>
           </div>

@@ -1,3 +1,5 @@
+import { SAMPLE_FLYERS } from "@/lib/types"
+
 export interface OrderItem {
   id: string
   flyerId: string
@@ -69,9 +71,9 @@ export const SAMPLE_ORDERS: Order[] = [
     items: [
       {
         id: "1",
-        flyerId: "1",
+        flyerId: "f1",
         flyerName: "Neon Nights Party",
-        flyerImage: "/neon-party-flyer-dark-background.jpg",
+        flyerImage: "/pic10.jpg",
         price: 15,
         priceType: "regular",
         hasPhotos: true,
@@ -120,4 +122,127 @@ export const SAMPLE_ORDERS: Order[] = [
       },
     ],
   },
+  
 ]
+
+export function getSampleOrdersForUser(userId: string): Order[] {
+  const now = new Date()
+  const minutesFromNow = (m: number) => new Date(now.getTime() + m * 60 * 1000).toISOString()
+  const minutesAgo = (m: number) => new Date(now.getTime() - m * 60 * 1000).toISOString()
+
+  // Clone existing sample orders but bind them to the current user
+  const base = SAMPLE_ORDERS.map((o) => ({
+    ...o,
+    userId,
+  }))
+
+  // Additional sample orders to show different statuses and urgency
+  const ord2: Order = {
+    id: "ORD-002",
+    userId,
+    items: [
+      {
+        id: "2",
+        flyerId: SAMPLE_FLYERS[1]?.id || "2",
+        flyerName: SAMPLE_FLYERS[1]?.name || "Halloween Horror Night",
+        flyerImage: SAMPLE_FLYERS[1]?.imageUrl || "/halloween-horror-party-flyer-spooky.jpg",
+        price: SAMPLE_FLYERS[1]?.price || 40,
+        priceType: SAMPLE_FLYERS[1]?.priceType || "premium",
+        hasPhotos: SAMPLE_FLYERS[1]?.hasPhotos ?? false,
+        extras: {
+          storySize: false,
+          makeDifferent: true,
+          animated: false,
+          instagramPost: true,
+        },
+      },
+      {
+        id: "3",
+        flyerId: SAMPLE_FLYERS[2]?.id || "3",
+        flyerName: SAMPLE_FLYERS[2]?.name || "Ladies Night Elegance",
+        flyerImage: SAMPLE_FLYERS[2]?.imageUrl || "/ladies-night-elegant-party-flyer.jpg",
+        price: SAMPLE_FLYERS[2]?.price || 10,
+        priceType: SAMPLE_FLYERS[2]?.priceType || "basic",
+        hasPhotos: SAMPLE_FLYERS[2]?.hasPhotos ?? true,
+        extras: {
+          storySize: true,
+          makeDifferent: false,
+          animated: false,
+          instagramPost: true,
+        },
+      },
+    ],
+    orderDetails: {
+      presenting: "Grodify Events",
+      mainTitle: "Spooky Double Feature",
+      date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString(),
+      eventInformation: "Two themed flyers for back-to-back events.",
+      mainDJ: "DJ Phantom",
+      additionalDJs: ["DJ Night", "DJ Velvet"],
+      hostedBy: "Grodify Team",
+      address: "456 Night Ave, NYC, NY",
+      phoneNumber: "+1 (555) 987-6543",
+      customNotes: "Keep it premium and moody. Add subtle smoke effect.",
+      uploadedImages: [],
+    },
+    deliveryOption: "1hour",
+    status: "in-progress",
+    totalAmount: (SAMPLE_FLYERS[1]?.price || 40) + (SAMPLE_FLYERS[2]?.price || 10) + 20 /* 1hr */,
+    createdAt: minutesAgo(180), // 3 hours ago
+    updatedAt: minutesAgo(30), // 30 min ago
+    deliveryDeadline: minutesFromNow(45), // urgent (red) in 45 minutes
+    trackingUpdates: [
+      { status: "pending", message: "Order received and payment confirmed", timestamp: minutesAgo(180) },
+      { status: "in-progress", message: "Preparing design assets", timestamp: minutesAgo(60) },
+    ],
+  }
+
+  const ord3: Order = {
+    id: "ORD-003",
+    userId,
+    items: [
+      {
+        id: "4",
+        flyerId: SAMPLE_FLYERS[3]?.id || "4",
+        flyerName: SAMPLE_FLYERS[3]?.name || "EDM Festival Vibes",
+        flyerImage: SAMPLE_FLYERS[3]?.imageUrl || "/edm-festival-electronic-music-flyer.jpg",
+        price: SAMPLE_FLYERS[3]?.price || 15,
+        priceType: SAMPLE_FLYERS[3]?.priceType || "regular",
+        hasPhotos: SAMPLE_FLYERS[3]?.hasPhotos ?? true,
+        extras: {
+          storySize: false,
+          makeDifferent: false,
+          animated: true,
+          instagramPost: true,
+        },
+      },
+    ],
+    orderDetails: {
+      presenting: "Bass Arena",
+      mainTitle: "EDM Festival Vibes",
+      date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString(),
+      eventInformation: "High-energy EDM flyer with neon accents and motion.",
+      mainDJ: "DJ Voltage",
+      additionalDJs: ["DJ Surge"],
+      hostedBy: "Bass Arena",
+      address: "789 Sound Blvd, LA, CA",
+      phoneNumber: "+1 (555) 246-8100",
+      customNotes: "Add waveform motif and bold title lockup.",
+      uploadedImages: [],
+    },
+    deliveryOption: "24hours",
+    status: "ready",
+    totalAmount: (SAMPLE_FLYERS[3]?.price || 15) + 25 /* animated */,
+    createdAt: minutesAgo(1440), // 24h ago
+    updatedAt: minutesAgo(10), // 10 min ago
+    deliveryDeadline: minutesFromNow(600), // far out, not urgent
+    trackingUpdates: [
+      { status: "pending", message: "Order received and payment confirmed", timestamp: minutesAgo(1440) },
+      { status: "in-progress", message: "Design brief prepared", timestamp: minutesAgo(1260) },
+      { status: "designing", message: "Design in progress with animation", timestamp: minutesAgo(720) },
+      { status: "ready", message: "Your flyer is ready for download!", timestamp: minutesAgo(10) },
+    ],
+  }
+
+  return [...base, ord2, ord3]
+}

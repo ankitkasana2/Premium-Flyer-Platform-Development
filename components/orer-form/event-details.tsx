@@ -45,6 +45,12 @@ const EventDetails = observer(() => {
     }
 
 
+    useEffect(() => {
+      console.log(toJS(flyerFormStore.flyerFormDetail))
+    }, [toJS(flyerFormStore.flyerFormDetail)])
+    
+
+
     return (
         <div
             className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl 
@@ -201,9 +207,9 @@ const EventDetails = observer(() => {
                 {/* Venue Logo Upload */}
                 <div className="col-span-1">
                     <Label htmlFor="logo" className="text-sm mb-2 block font-semibold">
-                        Venue Logo
+                        {flyerFormStore.flyer?.hasPhotos ? 'Venue Logo' : 'Venue Text'}
                     </Label>
-                    <div className="flex flex-col gap-2">
+                    {flyerFormStore.flyer?.hasPhotos ? <div className="flex flex-col gap-2">
                         <input
                             id="logo"
                             ref={inputRef}
@@ -228,6 +234,24 @@ const EventDetails = observer(() => {
                             </p>
                         )}
                     </div>
+                        :
+                        <div className="flex flex-col gap-2">
+                            <Input
+                                id="venue"
+                                value={eventDetails.venueText}
+                                onChange={(e) =>
+                                    flyerFormStore.updateEventDetails("venueText", e.target.value)
+                                }
+                                required
+                                placeholder="Enter address & phone number..."
+                                className="bg-gray-950 border border-gray-800 text-white
+              placeholder:text-gray-600 rounded-lg h-10 shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
+                            />
+                        </div>
+                    }
                 </div>
             </div>
         </div>

@@ -136,11 +136,14 @@ const EventBookingForm = () => {
   // ✅ Add new DJ field
   const handleAddField = () => {
     flyerFormStore.addDJ()
+    setDjList(prev => [...prev, { name: "", image: null }])
+
   }
 
   // ✅ Remove DJ field
   const handleRemoveField = (index: number) => {
     flyerFormStore.removeDJ(index)
+    setDjList(prev => prev.filter((_, i) => i !== index))
   }
 
 
@@ -165,7 +168,7 @@ const EventBookingForm = () => {
 
 
 
-    
+
 
     const handleCheckout = async () => {
       const res = await fetch("/api/checkout/session", {

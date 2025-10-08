@@ -13,6 +13,60 @@ import { useAuth } from "@/lib/auth"
 import { SAMPLE_ORDERS, ORDER_STATUSES, type Order } from "@/lib/orders"
 import { Search, Eye, Download, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
+import OrderHistoryList from "@/components/order/order-history-list"
+
+
+const orders = [
+  {
+    id: "ord_9f2c8a",
+    title: "DJ Spin Night",
+    flyerId: 'f1',
+    variant: "Glossy, Full Color",
+    size: '8.5" × 11"',
+    quantity: 500,
+    priceCents: 1500,
+    currency: "USD",
+    orderedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    status: "delivered" as const,
+    imageUrl: "/pic10.jpg",
+    orderNumber: "100245",
+  },
+  {
+    id: "ord_b71d32",
+    title: "DJ Groove Party",
+    flyerId: 'f2',
+    variant: "Matte, Double-sided",
+    size: '5" × 7"',
+    quantity: 1000,
+    priceCents: 2500,
+    currency: "USD",
+    orderedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
+    status: "shipped" as const,
+    imageUrl: "/pic25.jpg",
+    orderNumber: "100141",
+  },
+  {
+    id: "ord_5a03fe",
+    title: "Ladies Night Out",
+    flyerId: 'f4',
+    variant: "Recycled Stock",
+    size: '4" × 6"',
+    quantity: 250,
+    priceCents: 4000,
+    currency: "USD",
+    orderedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 62).toISOString(),
+    status: "canceled" as const,
+    imageUrl: "/pic21.jpg",
+    orderNumber: "100079",
+  },
+]
+
+async function handleReorder(orderId: string) {
+  // In a real app, call a server action or API route here to create a new order.
+  // This demo only logs to the console.
+  console.log("[v0] Reorder requested for:", orderId)
+}
 
 export default function OrdersPage() {
   const { user } = useAuth()
@@ -21,7 +75,8 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
   // Mock orders for the current user
-  const userOrders = SAMPLE_ORDERS.filter((order) => order.userId === user?.id)
+  const userOrders = SAMPLE_ORDERS
+  const router = useRouter()
 
   const filteredOrders = userOrders.filter((order) => {
     const matchesSearch =
@@ -62,13 +117,12 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
 
       <main className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">My Orders</h1>
-          <p className="text-muted-foreground">Track and manage your flyer orders</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground mb-2">My Orders</h1>
+          <p className="text-muted-foreground text-sm">Track and manage your flyer orders</p>
         </div>
 
         {/* Filters */}
@@ -79,11 +133,11 @@ export default function OrdersPage() {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-input border-border"
+              className="pl-10 bg-field-background border-border"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-48 bg-input border-border">
+            <SelectTrigger className="w-full sm:w-48 bg-field-background border-border">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -99,80 +153,68 @@ export default function OrdersPage() {
 
         {/* Orders List */}
         {filteredOrders.length > 0 ? (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => (
-              <Card key={order.id} className="bg-card border-border">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold text-card-foreground mb-1">Order #{order.id}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} item(s)
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={ORDER_STATUSES[order.status].color}>{ORDER_STATUSES[order.status].label}</Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border-border">
-                          <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          {order.status === "ready" && (
-                            <DropdownMenuItem>
-                              <Download className="w-4 h-4 mr-2" />
-                              Download
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+          // <div className="space-y-4">
+          //   {filteredOrders.map((order) => (
+          //     <Card
+          //       key={order.id}
+          //       className="bg-field-background border-border p-0 hover:shadow-md transition-all duration-200"
+          //     >
+          //       <CardContent className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-4">
+          //         {/* Left: Flyer Image */}
+          //         <div className="flex-shrink-0">
+          //           <img
+          //             src={order.items[0]?.flyerImage || "/placeholder.svg"}
+          //             alt={order.items[0]?.flyerName || "Flyer"}
+          //             className="w-28 h-36 object-cover rounded-md border border-border"
+          //           />
+          //         </div>
 
-                  <div className="flex items-center space-x-4 mb-4">
-                    {order.items.slice(0, 3).map((item, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <img
-                          src={item.flyerImage || "/placeholder.svg"}
-                          alt={item.flyerName}
-                          className="w-10 h-14 object-cover rounded"
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-card-foreground">{item.flyerName}</p>
-                          <p className="text-xs text-muted-foreground">${item.price}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {order.items.length > 3 && (
-                      <span className="text-sm text-muted-foreground">+{order.items.length - 3} more</span>
-                    )}
-                  </div>
+          //         {/* Right: Order Details */}
+          //         <div className="flex-1 w-full">
+          //           {/* Flyer Info */}
+          //           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+          //             <h3 className="text-base font-semibold text-card-foreground">
+          //               {order.items[0]?.flyerName}
+          //               {order.items.length > 1 && (
+          //                 <span className="ml-2 text-xs text-muted-foreground">
+          //                   +{order.items.length - 1} more
+          //                 </span>
+          //               )}
+          //             </h3>
+          //             <Badge className={`${ORDER_STATUSES[order.status].color}`}>
+          //               {ORDER_STATUSES[order.status].label}
+          //             </Badge>
+          //           </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      Expected: {new Date(order.deliveryDeadline).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-semibold text-primary">${order.totalAmount}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedOrder(order)}
-                        className="bg-transparent"
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          //           {/* Order Meta Info */}
+          //           <div className="text-sm text-muted-foreground space-y-1 mb-3">
+          //             <p>Order ID: <span className="text-foreground font-medium">#{order.id}</span></p>
+          //             <p>Placed on: {new Date(order.createdAt).toLocaleDateString()}</p>
+          //             <p>Expected delivery: {new Date(order.deliveryDeadline).toLocaleDateString()}</p>
+          //           </div>
+
+          //           {/* Total + Actions */}
+          //           <div className="flex items-center justify-between">
+          //             <span className="font-semibold text-primary">${order.totalAmount}</span>
+
+          //             <div className="flex items-center gap-2">
+          //               <Button
+          //                 size="sm"
+          //                 variant="outline"
+          //                 onClick={() => setSelectedOrder(order)}
+          //               >
+          //                 View Details
+          //               </Button>
+          //             </div>
+          //           </div>
+          //         </div>
+          //       </CardContent>
+          //     </Card>
+          //   ))}
+
+          // </div>
+
+          <OrderHistoryList orders={orders} onReorder={handleReorder} />
         ) : (
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
@@ -182,13 +224,12 @@ export default function OrdersPage() {
                   ? "Try adjusting your search or filter criteria"
                   : "You haven't placed any orders yet"}
               </p>
-              {!searchTerm && statusFilter === "all" && <Button>Browse Flyers</Button>}
+              {!searchTerm && statusFilter === "all" && <Button className="hover:cursor-pointer" onClick={() => { router.push('/categories') }}>Browse Flyers</Button>}
             </CardContent>
           </Card>
         )}
       </main>
 
-      <Footer />
     </div>
   )
 }
