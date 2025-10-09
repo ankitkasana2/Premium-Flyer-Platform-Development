@@ -4,9 +4,12 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Info, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 
 export type OrderHistoryItemProps = {
   order: {
@@ -17,11 +20,21 @@ export type OrderHistoryItemProps = {
     size?: string
     quantity: number
     priceCents: number
+    basePriceCents?: number
+    deliveryPriceCents?: number
     currency?: string
     orderedAt: string // ISO string
+    orderTime: string
     status: "processing" | "shipped" | "delivered" | "canceled"
     imageUrl?: string
     orderNumber?: string
+    deliveryDeadline?: string // ISO string for countdown
+    deliverySpeed?: string
+    extras?: {
+      story?: number
+      different?: number
+      animated?: number
+    }
   }
   className?: string
   onReorder?: (orderId: string) => Promise<void> | void
@@ -43,42 +56,75 @@ function formatMoney(cents: number, currency = "USD") {
 function statusBadgeVariant(status: OrderHistoryItemProps["order"]["status"]) {
   switch (status) {
     case "processing":
-      return "secondary" as const
+      return "secondary"
     case "shipped":
-      return "secondary" as const
+      return "secondary"
     case "delivered":
-      return "outline" as const
+      return "outline"
     case "canceled":
-      return "destructive" as const
+      return "destructive"
     default:
-      return "secondary" as const
+      return "secondary"
   }
 }
 
 export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryItemProps) {
   const { toast } = useToast()
-  const [isReordering, setIsReordering] = React.useState(false)
+  const [isReordering, setIsReordering] = useState(false)
   const router = useRouter()
+  const [copied, setCopied] = useState(false)
+  const [timeLeft, setTimeLeft] = useState("")
 
+  // ⏳ Countdown timer logic
+  useEffect(() => {
+    if (!order.deliveryDeadline) return
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime()
+      const end = new Date(order.deliveryDeadline!).getTime()
+      const diff = end - now
+
+      if (diff <= 0) {
+        setTimeLeft("Delivered")
+        clearInterval(interval)
+        return
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+      setTimeLeft(`${'00'}h ${'00'}m ${'00'}s`)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [order.deliveryDeadline])
+
+  // 📋 Copy order ID
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(order.orderNumber || order.id)
+    setCopied(true)
+    toast({ title: "Copied!", description: "Order ID copied to clipboard." })
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <Card
       className={cn(
-        "p-4 md:p-5 bg-field-background text-card-foreground",
+        "relative p-4 md:p-5 bg-field-background text-card-foreground",
         "flex flex-col gap-4 md:flex-row md:items-start",
         className,
-      )} 
+      )}
       role="article"
       aria-label={`Order ${order.orderNumber || order.id}`}
     >
       {/* Image */}
-      <figure className={cn("w-full md:w-40 lg:w-48", "rounded-lg overflow-hidden bg-secondary")}>
+      <figure className="w-full md:w-40 lg:w-48 rounded-lg overflow-hidden bg-secondary">
         <img
-          src={order.imageUrl || "/placeholder.svg?height=192&width=192&query=flyer%20preview" || "/placeholder.svg"}
+          src={order.imageUrl || "/placeholder.svg"}
           alt={`Flyer preview: ${order.title}`}
-          className="h-40 w-full object-cover md:h-48"
+          className="h-40 w-full object-fill md:h-48"
         />
-        <figcaption className="sr-only">{"Flyer image"}</figcaption>
+        <figcaption className="sr-only">Flyer image</figcaption>
       </figure>
 
       {/* Details + Actions */}
@@ -88,7 +134,23 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
           <div className="grid gap-1">
             <h3 className="text-base md:text-lg font-semibold text-pretty">{order.title}</h3>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              {order.orderNumber ? <span>Order #{order.orderNumber}</span> : null}
+              {order.orderNumber && (
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Order #{order.orderNumber}</span>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Copy
+                        className="h-3.5 w-3.5 cursor-pointer hover:text-foreground"
+                        onClick={handleCopy}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{copied ? "Copied!" : "Copy Order ID"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
+
               <span className="hidden md:inline" aria-hidden>
                 ·
               </span>
@@ -96,52 +158,86 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
               <span className="hidden md:inline" aria-hidden>
                 ·
               </span>
+              <span>{order.orderTime}</span>
+              <span className="hidden md:inline" aria-hidden>
+                ·
+              </span>
               <Badge variant={statusBadgeVariant(order.status)}>
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
+              <span className="hidden md:inline" aria-hidden>
+                ·
+              </span>
+              <span>{order.deliverySpeed}</span>
             </div>
           </div>
 
+          {/* Price + Reorder */}
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <span className="sr-only">Order total</span>
-              <div className="text-sm text-muted-foreground">Total</div>
-              <div className="font-medium">{formatMoney(order.priceCents, order.currency)}</div>
+              <div className="flex items-center justify-end gap-1">
+                <div>
+                  <div className="text-sm text-muted-foreground">Total</div>
+                  <div className="font-medium">{formatMoney(order.priceCents, order.currency)}</div>
+                </div>
+
+                {/* Tooltip for Price Breakdown */}
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground hover:cursor-pointer" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-sm">
+                    <p className="font-semibold mb-1">Price Breakdown</p>
+                    <div className="flex justify-between"><span>Base Price</span><span>{formatMoney(order.basePriceCents || 0, order.currency)}</span></div>
+                    {order.extras?.story && <div className="flex justify-between"><span>Story</span><span>+{formatMoney(order.extras.story * 100, order.currency)}</span></div>}
+                    {order.extras?.different && <div className="flex justify-between"><span>Different Design</span><span>+{formatMoney(order.extras.different * 100, order.currency)}</span></div>}
+                    {order.extras?.animated && <div className="flex justify-between"><span>Animated Flyer</span><span>+{formatMoney(order.extras.animated * 100, order.currency)}</span></div>}
+                    {order.deliverySpeed && (
+                      <div className="flex justify-between">
+                        <span>Delivery ({order.deliverySpeed})</span>
+                        <span>+{formatMoney(order.deliveryPriceCents || 0, order.currency)}</span>
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
-            <Button
-              onClick={()=>{router.push(`/flyer/${order.flyerId}`)}}
-            >
+
+            <Button onClick={() => router.push(`/flyer/${order.flyerId}`)}>
               {isReordering ? "Reordering…" : "Reorder"}
             </Button>
           </div>
         </div>
 
-        {/* Key specs */}
-        <div
-          className={cn("grid gap-2 rounded-md border border-border", "bg-card/50 p-3 md:p-4")}
-          role="list"
-          aria-label="Order details"
-        >
+        {/* Order details */}
+        <div className="grid gap-2 rounded-md border border-border bg-card/50 p-3 md:p-4">
           <div className="grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
-            <div className="grid gap-1" role="listitem">
+            <div className="grid gap-1">
               <span className="text-muted-foreground">Variant</span>
               <span className="font-medium">{order.variant || "Standard Flyers"}</span>
             </div>
-            <div className="grid gap-1" role="listitem">
+            <div className="grid gap-1">
               <span className="text-muted-foreground">Size</span>
               <span className="font-medium">{order.size || '8.5" × 11"'}</span>
             </div>
-            <div className="grid gap-1" role="listitem">
+            <div className="grid gap-1">
               <span className="text-muted-foreground">Quantity</span>
               <span className="font-medium">{order.quantity}</span>
             </div>
-            <div className="grid gap-1" role="listitem">
+            <div className="grid gap-1">
               <span className="text-muted-foreground">ID</span>
               <span className="font-mono text-sm">{order.id}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Countdown Timer (bottom center) */}
+      { (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs ">
+         {'00h 00m 00s'}
+        </div>
+      )}
     </Card>
   )
 }

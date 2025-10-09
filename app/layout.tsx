@@ -29,9 +29,9 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <StoreProvider>
-              <Header/>
+              <Header />
               {children}
-              <Footer/>
+              <Footer />
             </StoreProvider>
             <Toaster />
             <Analytics />

@@ -8,15 +8,20 @@ import { FlyerCard } from "@/components/flyer/flyer-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/lib/auth"
 import { SAMPLE_FLYERS, type Flyer } from "@/lib/types"
 import { HeartOff } from "lucide-react"
+import { observer } from "mobx-react-lite";
+import { useStore } from "@/stores/StoreProvider";
+import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
+import { toJS } from "mobx"
 
-export default function FavoritesPage() {
+const FavoritesPage = () => {
   const { user, loading, updateProfile } = useAuth()
+  const { authStore, favoritesStore } = useStore()
 
   const favoriteFlyers: Flyer[] = useMemo(() => {
-   return SAMPLE_FLYERS.filter(f=>f.hasPhotos==true)
+   return SAMPLE_FLYERS.filter(f=>favoritesStore.favorites.includes(f.id))
   }, [user])
 
   const handleRemoveFavorite = (flyerId: string) => {
@@ -118,3 +123,6 @@ export default function FavoritesPage() {
     </div>
   )
 }
+
+
+export default observer(FavoritesPage)

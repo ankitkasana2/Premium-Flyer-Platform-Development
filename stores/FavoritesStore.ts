@@ -7,15 +7,14 @@ export class FavoritesStore {
     makeAutoObservable(this)
   }
 
-  add(id: string) {
+  handleFavorites(id: string) {
     if (!this.favorites.includes(id)) {
       this.favorites.push(id)
+    } else {
+      this.favorites = this.favorites.filter(favId => favId !== id)
     }
   }
 
-  remove(id: string) {
-    this.favorites = this.favorites.filter(fav => fav !== id)
-  }
 
   get count() {
     return this.favorites.length

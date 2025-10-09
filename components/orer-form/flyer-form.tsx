@@ -64,15 +64,9 @@ type Flyer = {
 
 
 const EventBookingForm = () => {
-  const { authStore, filterBarStore, flyerFormStore } = useStore();
+  const { flyerFormStore } = useStore();
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
   const [note, setNote] = useState("");
-  const [extras, setExtras] = useState({
-    bottle: false,
-    food: false,
-    animation: false,
-  });
-  const [deliveryTime, setDeliveryTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [djList, setDjList] = useState<
     { name: string; image: string | null }[]
@@ -80,10 +74,13 @@ const EventBookingForm = () => {
     { name: "", image: null },
     { name: "", image: null },
   ]);
-  const [host, setHost] = useState<{ name: string; image: string | null }[]>([
-    { name: "", image: null },
-  ]);
 
+  const [djListText, setDjListText] = useState<
+    { name: string }[]
+  >([
+    { name: "" },
+    { name: "" },
+  ]);
 
 
 
@@ -91,14 +88,21 @@ const EventBookingForm = () => {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     flyerFormStore.updateDJ(index, "name", e.target.value)
 
-    // 2️⃣ Create a preview using FileReader
 
     // 3️⃣ Update local UI preview (if you’re using local state for preview)
-    setDjList((prev) => {
-      const newList = [...prev];
-      newList[index].name = e.target.value; // base64 preview
-      return newList;
-    })
+    if (flyer?.hasPhotos == true) {
+      setDjList((prev) => {
+        const newList = [...prev];
+        newList[index].name = e.target.value; // base64 preview
+        return newList;
+      })
+    } else {
+      setDjListText((prev) => {
+        const newList2 = [...prev];
+        newList2[index].name = e.target.value
+        return newList2;
+      })
+    }
   }
 
   // ✅ Handle image upload
@@ -136,15 +140,24 @@ const EventBookingForm = () => {
   // ✅ Add new DJ field
   const handleAddField = () => {
     flyerFormStore.addDJ()
-    setDjList(prev => [...prev, { name: "", image: null }])
+    if (flyer?.hasPhotos == true) {
+      setDjList(prev => [...prev, { name: "", image: null }])
+    } else {
+      setDjListText(prev => [...prev, { name: '' }])
+    }
+
 
   }
 
-  // ✅ Remove DJ field
   const handleRemoveField = (index: number) => {
-    flyerFormStore.removeDJ(index)
-    setDjList(prev => prev.filter((_, i) => i !== index))
-  }
+    flyerFormStore.removeDJ(index);
+
+    if (flyer?.hasPhotos === true) {
+      setDjList(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setDjListText(prev => prev.filter((_, i) => i !== index));
+    }
+  };
 
 
   useEffect(() => {
@@ -243,7 +256,7 @@ const EventBookingForm = () => {
           >
             <h2 className="text-xl font-bold">DJ or Artist</h2>
 
-            {djList.map((dj, index) => (
+            {flyer?.hasPhotos == true ? djList.map((dj, index) => (
               <div key={index} className="grid grid-cols-2 gap-6 mb-4">
                 <div className="col-span-2">
                   <div className="flex items-center justify-between mb-2">
@@ -280,7 +293,7 @@ const EventBookingForm = () => {
                   </div>
 
                   <div
-                    className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3  h-10  shadow-md
+                    className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
                 hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
                 transition-all duration-300"
                   >
@@ -315,7 +328,44 @@ const EventBookingForm = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+              :
+              djListText.map((dj, index) => (
+                <div key={index} className="grid grid-cols-2 gap-6 mb-4">
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <Music className="w-4 h-4 text-theme text-sm" />
+                        Main DJ or Artist {index + 1}
+                      </Label>
+
+                      {/* Remove Field Button (same as photo version) */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveField(index)}
+                        className="text-primary cursor-pointer text-xs hover:underline"
+                      >
+                        Remove Field
+                      </button>
+                    </div>
+
+                    <div
+                      className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
+        hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
+        transition-all duration-300"
+                    >
+                      <Input
+                        value={dj.name}
+                        onChange={(e) => handleNameChange(e, index)}
+                        placeholder="Enter DJ name..."
+                        className="bg-transparent border-none text-white placeholder:text-gray-600 
+          focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
 
             <Button
               type="button"
@@ -342,7 +392,7 @@ const EventBookingForm = () => {
           <div className="space-y-2">
             <Textarea
               value={note}
-              rows={5}
+              rows={3}
               onChange={(e) => (setNote(e.target.value), flyerFormStore.updateCustomNote(e.target.value))}
               placeholder="Custom note..."
               className="bg-gray-950 border border-gray-800 text-white

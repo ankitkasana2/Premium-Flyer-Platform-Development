@@ -53,7 +53,7 @@ const HostSection = observer(() => {
       <h2 className="text-xl font-bold">Host</h2>
 
       <div className="grid grid-cols-2 gap-6 mb-4">
-        <div className="col-span-2">
+        {flyerFormStore.flyer?.hasPhotos ? <div className="col-span-2">
           <div className="flex items-center justify-between mb-2">
             <Label className="text-sm font-semibold flex items-center gap-2">
               <Music className="w-4 h-4 text-theme text-sm" />
@@ -116,6 +116,20 @@ const HostSection = observer(() => {
             </span>
           </div>
         </div>
+          :
+          <div className="col-span-2">
+            <Input
+              value={host?.name || ""}
+              onChange={handleHostNameChange}
+              placeholder="Enter host name..."
+              className="bg-gray-950 border border-gray-800 text-white
+              placeholder:text-gray-600 rounded-lg h-10 shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
+            />
+          </div>
+        }
       </div>
     </div>
   );

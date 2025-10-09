@@ -13,10 +13,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth"
 import { AuthModal } from "./auth-modal"
-import { User, Settings, Heart, ShoppingBag, LogOut, CreditCard } from "lucide-react"
+import { User, Settings, Heart, ShoppingBag, LogOut, CreditCard, Download, Bell, ImageDown } from "lucide-react"
 import Link from "next/link"
 import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
+import { toast } from "sonner"
 
 const UserMenu = () => {
   const { authStore } = useStore()
@@ -65,7 +66,7 @@ const UserMenu = () => {
         <DropdownMenuItem className="p-0">
           <Link href="/profile" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <User className="h-4 w-4 text-white" />
-            <span>Profile</span>
+            <span>Overview</span>
           </Link>
         </DropdownMenuItem>
 
@@ -83,14 +84,26 @@ const UserMenu = () => {
         </DropdownMenuItem>
         <DropdownMenuItem className="p-0">
           <Link href="/billing" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
-            <CreditCard className=" h-4 w-4" />
-            <span>Billing</span>
+            <Download className=" h-4 w-4" />
+            <span>Downloads</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="p-0">
+          <Link href="/notifications" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
+            <Bell className=" h-4 w-4" />
+            <span>Notifications</span>
+          </Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem className="p-0">
           <Link href="/settings" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
             <Settings className=" h-4 w-4" />
-            <span>Settings</span>
+            <span>Account Settings</span>
+          </Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem className="p-0">
+          <Link href="/settings" className="w-full flex items-center gap-3 text-white hover:bg-primary p-2 rounded-sm">
+            <ImageDown className=" h-4 w-4" />
+            <span>Media Library</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
