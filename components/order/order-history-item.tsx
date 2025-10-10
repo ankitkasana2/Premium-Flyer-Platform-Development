@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { SAMPLE_FLYERS } from "@/lib/types"
 
 export type OrderHistoryItemProps = {
   order: {
@@ -30,10 +31,11 @@ export type OrderHistoryItemProps = {
     orderNumber?: string
     deliveryDeadline?: string // ISO string for countdown
     deliverySpeed?: string
-    extras?: {
-      story?: number
-      different?: number
-      animated?: number
+    priceDesc: {
+      story: string,
+      differentDesign: string,
+      animatedFlyer: string,
+      deliverySpeed: string,
     }
   }
   className?: string
@@ -74,6 +76,7 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
   const router = useRouter()
   const [copied, setCopied] = useState(false)
   const [timeLeft, setTimeLeft] = useState("")
+  const [flyer, setFlyer] = useState(SAMPLE_FLYERS.find(f => f.id == order.flyerId))
 
   // ⏳ Countdown timer logic
   useEffect(() => {
@@ -178,28 +181,37 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
               <div className="flex items-center justify-end gap-1">
                 <div>
                   <div className="text-sm text-muted-foreground">Total</div>
-                  <div className="font-medium">{formatMoney(order.priceCents, order.currency)}</div>
+                  <div className="flex gap-1">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-2 w-2 text-muted-foreground hover:cursor-pointer " />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-sm border border-border bg-card w-72">
+                        <p className="font-semibold mb-1">Price Breakdown</p>
+                        <div className="flex justify-between">
+                          <span>Base Price</span><span className="text-xs text-gray-300">${flyer?.price}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Story</span><span className="text-xs text-gray-300">+{order.priceDesc.story}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Different Design</span><span className="text-xs text-gray-300">+{order.priceDesc.differentDesign}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Animated Flyer</span><span className="text-xs text-gray-300">+{order.priceDesc.animatedFlyer}</span>
+                        </div>
+                          <div className="flex justify-between">
+                            <span>Delivery ({order.deliverySpeed})</span>
+                            <span className="text-xs text-gray-300">+{order.priceDesc.deliverySpeed}</span>
+                          </div>
+                      </TooltipContent>
+                    </Tooltip>
+                    <div className="font-medium text-sm">{formatMoney(order.priceCents, order.currency)}</div>
+                  </div>
                 </div>
 
                 {/* Tooltip for Price Breakdown */}
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-muted-foreground hover:cursor-pointer" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-sm">
-                    <p className="font-semibold mb-1">Price Breakdown</p>
-                    <div className="flex justify-between"><span>Base Price</span><span>{formatMoney(order.basePriceCents || 0, order.currency)}</span></div>
-                    {order.extras?.story && <div className="flex justify-between"><span>Story</span><span>+{formatMoney(order.extras.story * 100, order.currency)}</span></div>}
-                    {order.extras?.different && <div className="flex justify-between"><span>Different Design</span><span>+{formatMoney(order.extras.different * 100, order.currency)}</span></div>}
-                    {order.extras?.animated && <div className="flex justify-between"><span>Animated Flyer</span><span>+{formatMoney(order.extras.animated * 100, order.currency)}</span></div>}
-                    {order.deliverySpeed && (
-                      <div className="flex justify-between">
-                        <span>Delivery ({order.deliverySpeed})</span>
-                        <span>+{formatMoney(order.deliveryPriceCents || 0, order.currency)}</span>
-                      </div>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
+
               </div>
             </div>
 
@@ -213,8 +225,8 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
         <div className="grid gap-2 rounded-md border border-border bg-card/50 p-3 md:p-4">
           <div className="grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
             <div className="grid gap-1">
-              <span className="text-muted-foreground">Variant</span>
-              <span className="font-medium">{order.variant || "Standard Flyers"}</span>
+              <span className="text-muted-foreground">Categor</span>
+              <span className="font-medium">{flyer?.category}</span>
             </div>
             <div className="grid gap-1">
               <span className="text-muted-foreground">Size</span>
@@ -233,9 +245,9 @@ export function OrderHistoryItem({ order, className, onReorder }: OrderHistoryIt
       </div>
 
       {/* Countdown Timer (bottom center) */}
-      { (
+      {(
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs ">
-         {'00h 00m 00s'}
+          {'00h 00m 00s'}
         </div>
       )}
     </Card>

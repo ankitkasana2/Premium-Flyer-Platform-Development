@@ -23,7 +23,7 @@ interface FlyerCardProps {
 }
 
 const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }: FlyerCardProps) => {
-  
+
   const [isHovered, setIsHovered] = useState(false)
   const { authStore, favoritesStore } = useStore()
   const { user, signOut } = useAuth()
@@ -33,7 +33,17 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
     e.preventDefault() // ⛔ prevent Link navigation
     e.stopPropagation() // ⛔ stop event bubbling
     if (!user) {
-      toast("Please sign in.")
+      toast.custom((t) => (
+        <div
+          className="flex items-center gap-3 bg-card text-white border border-border p-2 rounded-lg shadow-lg"
+        >
+
+          <div className="flex flex-col">
+            <span className="font-semibold">Please sign in</span>
+            <span className="text-sm text-input-text">Sign in to access this feature.</span>
+          </div>
+        </div>
+      ))
       return
     }
 

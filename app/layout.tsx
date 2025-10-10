@@ -5,7 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { AuthProvider } from "@/lib/auth"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 import "react-multi-carousel/lib/styles.css"
 import { StoreProvider } from "@/stores/StoreProvider"
@@ -33,7 +33,7 @@ export default function RootLayout({
               {children}
               <Footer />
             </StoreProvider>
-            <Toaster />
+            <Toaster position="top-left"/>
             <Analytics />
           </Suspense>
         </AuthProvider>

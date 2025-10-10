@@ -72,3 +72,30 @@ export function removeFromLibrary(userId: string, id: string) {
   const next = current.filter((i) => i.id !== id)
   localStorage.setItem(key, JSON.stringify(next))
 }
+
+export function renameLibraryItem(userId: string, id: string, newName: string) {
+  const key = LIBRARY_KEY(userId)
+  const current = listLibrary(userId)
+  const next = current.map((i) => (i.id === id ? { ...i, name: sanitizeFileName(newName) } : i))
+  localStorage.setItem(key, JSON.stringify(next))
+}
+
+export async function replaceLibraryItem(userId: string, id: string, file: File) {
+  const key = LIBRARY_KEY(userId)
+  const current = listLibrary(userId)
+  const isImage = file.type.startsWith("image/")
+  const dataUrl = isImage ? await imageFileToWebPDataUrl(file, 0.8) : await fileToDataUrl(file)
+  const next = current.map((i) => (i.id === id ? { ...i, dataUrl, size: file.size } : i))
+  localStorage.setItem(key, JSON.stringify(next))
+}
+
+export function setLibraryItemType(userId: string, id: string, type: LibraryItem["type"]) {
+  const key = LIBRARY_KEY(userId)
+  const current = listLibrary(userId)
+  const next = current.map((i) => (i.id === id ? { ...i, type } : i))
+  localStorage.setItem(key, JSON.stringify(next))
+}
+
+export function clearLibrary(userId: string) {
+  localStorage.removeItem(LIBRARY_KEY(userId))
+}
