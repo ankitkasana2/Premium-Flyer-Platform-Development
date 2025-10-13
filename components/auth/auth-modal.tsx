@@ -219,7 +219,7 @@ export function AuthModal({
               <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full bg-transparent"
+                  className="w-full bg-transparent hover:!bg-primary hover:!text-white"
                   onClick={() => handleSocialSignIn("google")}
                   disabled={isLoading}
                 >
@@ -228,7 +228,7 @@ export function AuthModal({
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full bg-transparent"
+                  className="w-full bg-transparent hover:!bg-primary hover:!text-white"
                   onClick={() => handleSocialSignIn("apple")}
                   disabled={isLoading}
                 >
@@ -263,7 +263,11 @@ export function AuthModal({
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        className="pl-10 bg-input border-border"
+                        className="pl-10  border-border bg-input text-white
+              placeholder:text-gray-600 rounded-lg shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
                         required
                       />
                     </div>
@@ -282,7 +286,11 @@ export function AuthModal({
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="pl-10 bg-input border-border"
+                      className="pl-10  border-border bg-input text-white
+              placeholder:text-gray-600 rounded-lg  shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
                       required
                     />
                   </div>
@@ -304,7 +312,11 @@ export function AuthModal({
                             password: e.target.value,
                           })
                         }
-                        className="pl-10 pr-10 bg-input border-border"
+                        className="pl-10 pr-10 border-border bg-input text-white
+              placeholder:text-gray-600 rounded-lg shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
                         required
                       />
                       <Button

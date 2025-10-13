@@ -28,7 +28,7 @@ const UserMenu = () => {
   if (!user) {
     return (
       <>
-        <Button className='h-7 w-14 sm:h-full sm:w-18' onClick={() => authStore.handleAuthModal()}>Sign In</Button>
+        <Button className='h-7 w-14 sm:h-8 sm:w-18 hover:cursor-pointer' onClick={() => authStore.handleAuthModal()}>Sign In</Button>
         <AuthModal isOpen={authStore.authModal} onClose={() => authStore.handleAuthModal()} />
       </>
     )
@@ -48,9 +48,9 @@ const UserMenu = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger >
-        <Button variant="ghost" className="relative h-4 w-4 sm:h-10 sm:w-10 rounded-full p-0 hover:!bg-transparent hover:cursor-pointer">
-          <Avatar className="h-4 w-4 sm:h-10 sm:w-10">
+      <DropdownMenuTrigger className="flex items-center">
+        <Button variant="ghost" className="relative h-5 w-5 sm:h-8 sm:w-8 rounded-full p-0 hover:!bg-transparent hover:cursor-pointer">
+          <Avatar className="h-5 w-5 sm:h-8 sm:w-8">
             <AvatarImage src={user.avatar || "/placeholder.svg"} alt={'user'} />
             <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(user.name)}</AvatarFallback>
           </Avatar>

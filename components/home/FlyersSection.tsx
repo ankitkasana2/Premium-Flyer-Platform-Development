@@ -95,7 +95,7 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
 
 
     return (<>
-        {type.name == 'Premium Flyers' ? <section className="my-2 py-4 px-5  bg-primary/90 shadow-2xl shadow-gray-900 " >
+        {type.name == 'Premium Flyers' ? <section className="my-2 py-2 sm:py-4 px-5 bg-primary/90 shadow-2xl shadow-gray-900 " >
             <div className='flex flex-col gap-1'>
                 {/* title  */}
                 <div className='text-sm md:text-xl  font-bold '>

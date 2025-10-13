@@ -13,9 +13,9 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-[500] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-[50] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full px-2 sm:px-4">
-        <div className="flex items-center w-full justify-between h-16">
+        <div className="flex items-center w-full justify-between h-14 md:h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Image src="/logo.png" height={10} alt="Logo" width={10} className="w-24 sm:w-32 md:w-36" />
@@ -46,7 +46,7 @@ export function Header() {
           </nav>
 
           {/* User Actions */}
-          <div className="flex items-center md:space-x-5 gap-3 mr-1">
+          <div className="flex items-center md:space-x-5 gap-4 mr-1">
             {/* Mobile Search Icon */}
             <div
               className="sm:hidden cursor-pointer"
@@ -61,7 +61,7 @@ export function Header() {
             </div>
 
             <div className="flex hover:bg-none cursor-pointer">
-              <ShoppingCart className="w-4 h-4 sm:h-6 sm:w-6" />
+              <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
             </div>
             <div className="flex items-center">
               <UserMenu />
@@ -73,8 +73,8 @@ export function Header() {
       {/* Mobile Search Bar (Dropdown style) */}
       <div
         className={cn(
-          "sm:hidden px-3 pb-3 bg-background/95 backdrop-blur-md border-b border-border transition-all duration-300 overflow-hidden",
-          isSearchOpen ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+          "sm:hidden sm:bg-background/95 backdrop-blur-md border-b border-border transition-all duration-300 overflow-hidden",
+          isSearchOpen ? "max-h-20 opacity-100 px-3 pb-3 " : "max-h-0 opacity-0"
         )}
       >
         <div className="relative">

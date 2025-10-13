@@ -20,7 +20,7 @@ import {
     type OrderDelivery,
 } from "@/lib/downloads"
 
-type FilterKey = "all" | "image" | "video" | "document" | "psd"
+type FilterKey = "all" | "image" | "video" | "document" 
 
 const fetcher = (userId: string) => () => getDownloads(userId)
 
@@ -107,7 +107,6 @@ export default function DownloadsPage() {
                         <TabsTrigger value="image">Images</TabsTrigger>
                         <TabsTrigger value="video">Videos</TabsTrigger>
                         <TabsTrigger value="document">Documents</TabsTrigger>
-                        <TabsTrigger value="psd">PSD</TabsTrigger>
                     </TabsList>
                     <TabsContent value={filter} className="mt-4">
                         <div className="space-y-6">
