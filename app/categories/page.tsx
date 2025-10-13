@@ -39,9 +39,9 @@ const CategoriesPage = () => {
 
 
   return (
-    <section className="min-h-[150vh] bg-background grid grid-cols-11">
+    <section className="min-h-[150vh] bg-background sm:grid sm:grid-cols-11">
       {/* filter bar  */}
-      <div className="col-span-2 sticky top-16 h-screen bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-50 shadow-lg">
+      <div className="hidden sm:flex col-span-2 sticky top-16 h-screen bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-50 shadow-lg">
         <FilterBar />
       </div>
 

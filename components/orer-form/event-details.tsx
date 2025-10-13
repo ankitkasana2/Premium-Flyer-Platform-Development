@@ -75,8 +75,8 @@ const EventDetails = observer(() => {
                         }
                         required
                         placeholder="Presenting..."
-                        className="bg-gray-950 border border-gray-800 text-white
-              placeholder:text-gray-600 rounded-lg h-10 shadow-md
+                        className="bg-card border border-border text-white
+              placeholder:text-gray-600 rounded-lg  shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300"

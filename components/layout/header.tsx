@@ -61,7 +61,7 @@ export function Header() {
             </div>
 
             <div className="flex hover:bg-none cursor-pointer">
-              <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
+              <Link href={'/cart'}><ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" /></Link>
             </div>
             <div className="flex items-center">
               <UserMenu />

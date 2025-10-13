@@ -161,12 +161,12 @@ export default function MediaPage() {
         <main className="container mx-auto px-4 py-8">
             <div className="mb-6 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-foreground text-balance">Media Library</h1>
-                    <p className="text-muted-foreground text-sm">Upload, organize, and reuse assets for faster orders.</p>
+                    <h1 className="text-lg sm:text-2xl font-semibold text-foreground text-balance">Media Library</h1>
+                    <p className="text-muted-foreground text-xs sm:text-sm">Upload, organize, and reuse assets for faster orders.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="bg-transparent hover:!bg-primary hover:!text-white hover:cursor-pointer" onClick={onBrowseClick}>
-                        <Upload className="mr-2 h-4 w-4" />
+                    <Button variant="outline" className=" bg-transparent hover:!bg-primary hover:!text-white hover:cursor-pointer text-xs sm:text-sm" onClick={onBrowseClick}>
+                        <Upload className="mr-1 sm:mr-2 h-2 w-2 sm:h-4 sm:w-4" />
                         Upload
                     </Button>
                     <input type="file" accept="image/*" multiple ref={fileInputRef} onChange={onFileChange} className="hidden" />
@@ -179,17 +179,19 @@ export default function MediaPage() {
                     <div className="flex flex-wrap items-center gap-3">
                         <div className="flex items-center gap-2">
                             <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute left-2 top-2.5 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                 <Input
                                     value={q}
                                     onChange={(e) => setQ(e.target.value)}
                                     placeholder="Search media..."
-                                    className="pl-8 bg-card text-input-text border-border w-56"
+                                    className="pl-8 text-white h-8 sm:h-10 border-border w-full sm:w-56 bg-card  placeholder:text-gray-600 rounded-lg shadow-md
+                                    focus-visible:!ring-0 focus-visible:!outline-none
+                                    focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300"
                                 />
                             </div>
                         </div>
 
-                        <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)} className="ml-auto">
+                        <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)} className="sm:ml-auto">
                             <TabsList>
                                 <TabsTrigger value="all">All</TabsTrigger>
                                 <TabsTrigger value="image">Images</TabsTrigger>
@@ -199,17 +201,17 @@ export default function MediaPage() {
 
                         <Button
                             variant="outline"
-                            className=" hover:!bg-primary text-foreground hover:cursor-pointer hover:!text-white"
+                            className=" hover:!bg-primary text-foreground hover:cursor-pointer hover:!text-white text-xs sm:text-sm"
                             onClick={() => setSortBy((s) => (s === "recent" ? "name" : "recent"))}
                             title="Toggle sort"
                         >
                             {sortBy === "recent" ? (
                                 <>
-                                    <SortDesc className="mr-2 h-4 w-4" /> Recent
+                                    <SortDesc className="mr-1 h-2 w-2 sm:mr-2 sm:h-4 sm:w-4" /> Recent
                                 </>
                             ) : (
                                 <>
-                                    <SortAsc className="mr-2 h-4 w-4" /> Name
+                                    <SortAsc className="mr-1 h-2 w-2 sm:mr-2 sm:h-4 sm:w-4" /> Name
                                 </>
                             )}
                         </Button>
@@ -219,7 +221,7 @@ export default function MediaPage() {
 
                 <CardContent>
                     {/* Drag-and-drop zone */}
-                    <div ref={dropRef} className="mb-6 rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+                    {filter != 'logo' && <div ref={dropRef} className="mb-6 rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
                         <p className="text-sm text-muted-foreground">
                             Drag and drop files here, or{" "}
                             <button className="underline text-primary" onClick={onBrowseClick}>
@@ -227,7 +229,7 @@ export default function MediaPage() {
                             </button>
                             .
                         </p>
-                    </div>
+                    </div>}
 
                     {filtered.length === 0 ? (
                         <p className="text-muted-foreground text-sm">No media yet. Upload to get started.</p>
@@ -244,52 +246,58 @@ export default function MediaPage() {
                                             className="w-full aspect-square object-cover"
                                         />
                                         <div className="p-3 flex flex-col gap-2">
-                                            <div className="flex items-center justify-between gap-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 {isRenaming ? (
                                                     <div className="flex items-center gap-2 w-full">
                                                         <Input
                                                             value={renameValue}
                                                             onChange={(e) => setRenameValue(e.target.value)}
-                                                            className="bg-input border-border h-8"
+                                                            className="bg-input border-border h-6 sm:h-8 text-xs sm:text-sm"
                                                         />
-                                                        <Button size="sm" onClick={onRenameCommit}>
+                                                        <Button size="sm" className="text-xs sm:text-sm h-6 sm:h-8 hover:cursor-pointer" onClick={onRenameCommit}>
                                                             <Check className="h-2 w-2" />
                                                         </Button>
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm font-medium truncate max-w-[200px]" title={item.name}>
+                                                    <p className="text-xs sm:text-sm font-medium truncate max-w-[200px]" title={item.name}>
                                                         {item.name}
                                                     </p>
                                                 )}
-                                                <Badge variant="outline" className="uppercase text-[10px]">
-                                                    {item.type}
-                                                </Badge>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <Badge variant="outline" className="uppercase text-[10px]">
+                                                        {item.type}
+                                                    </Badge>
+
+                                                    <Badge className="sm:hidden">
+                                                        <Trash2 className="h-2 w-2 mr-1" />
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer"
+                                                    className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer h-7 sm:h-8"
                                                     onClick={() => onRename(item.id)}
                                                 >
-                                                    <Edit2 className="h-2 w-2 mr-1" />
+                                                    <Edit2 className=" h-2 w-2 mr-1" />
                                                     Rename
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                   className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer"
+                                                    className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer h-7 sm:h-8"
                                                     onClick={() => onReplace(item.id)}
                                                 >
                                                     <Replace className="h-2 w-2 mr-1" />
                                                     Replace
                                                 </Button>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer"
+                                                    className="bg-transparent text-xs hover:!bg-card hover:!text-white hover:cursor-pointer h-7 sm:h-8"
                                                     onClick={() => onRetag(item.id, item.type === "logo" ? "image" : "logo")}
                                                     title="Toggle tag"
                                                 >
@@ -300,7 +308,7 @@ export default function MediaPage() {
                                                     size="sm"
                                                     variant="default"
                                                     onClick={() => onDelete(item.id)}
-                                                    className="ml-auto hover:cursor-pointer"
+                                                    className="ml-auto hover:cursor-pointer hidden sm:flex"
                                                     title="Delete"
                                                 >
                                                     <Trash2 className="h-2 w-2 mr-1" />
