@@ -8,6 +8,7 @@ export interface User {
   id: string
   email: string
   name: string
+  phone: string
   avatar?: string
   provider: "email" | "google" | "apple"
   createdAt: string
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: "1",
         email,
         name: email.split("@")[0],
+        phone: "",
         provider: "email",
         createdAt: new Date().toISOString(),
         favorites: [],
@@ -86,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: Date.now().toString(),
         email,
         name,
+        phone: "",
         provider: "email",
         createdAt: new Date().toISOString(),
         favorites: [],
@@ -111,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: "google_" + Date.now(),
         email: "user@gmail.com",
         name: "Google User",
+        phone: '',
         provider: "google",
         createdAt: new Date().toISOString(),
         favorites: [],
@@ -136,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: "apple_" + Date.now(),
         email: "user@icloud.com",
         name: "Apple User",
+        phone: '',
         provider: "apple",
         createdAt: new Date().toISOString(),
         favorites: [],

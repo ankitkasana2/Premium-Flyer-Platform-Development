@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth"
-import { Camera, Save, User, Mail, Calendar, Shield } from "lucide-react"
+import { Camera, Save, User, Mail, Calendar, Shield, Phone } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
+    phone: user?.phone || "",
   })
 
   if (!user) {
@@ -105,68 +106,94 @@ export default function ProfilePage() {
               </div>
 
               {/* Form Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      disabled={!isEditing}
-                      className="pl-10  border-border bg-gray-950 border text-white
+              <div className="flex flex-col space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* name  */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        disabled={!isEditing}
+                        className="pl-10  border-border bg-gray-950 border text-white
               placeholder:text-gray-600 rounded-lg h-10 shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300"
-                    />
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      id="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      disabled={!isEditing}
-                      className="pl-10  border-border bg-gray-950 border text-white
+                  {/* email  */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        id="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        disabled={!isEditing}
+                        className="pl-10  border-border bg-gray-950 border text-white
               placeholder:text-gray-600 rounded-lg h-10 shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300"
-                    />
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Account Created</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      value={new Date(user.createdAt).toLocaleDateString()}
-                      disabled
-                      className="pl-10 border-border bg-gray-950 border text-white
+                  {/* phone number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Mobile Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        max={10}
+                        disabled={!isEditing}
+                        className="pl-10  border-border bg-gray-950 border text-white
               placeholder:text-gray-600 rounded-lg h-10 shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300"
-                    />
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Account Type</Label>
-                  <div className="relative">
-                    <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input value="Standard Customer" disabled className="pl-10 border-border bg-gray-950 border text-white
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Account Created</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        value={new Date(user.createdAt).toLocaleDateString()}
+                        disabled
+                        className="pl-10 border-border bg-gray-950 border text-white
+              placeholder:text-gray-600 rounded-lg h-10 shadow-md
+              focus-visible:!ring-0 focus-visible:!outline-none
+              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+              transition-all duration-300"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Account Type</Label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input value="Standard Customer" disabled className="pl-10 border-border bg-gray-950 border text-white
               placeholder:text-gray-600 rounded-lg h-10 shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300" />
+                    </div>
                   </div>
                 </div>
               </div>

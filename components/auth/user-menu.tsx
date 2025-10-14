@@ -66,7 +66,7 @@ const UserMenu = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild >
-          <Link href="/profile" >
+          <Link href="/overview" >
             <User className="h-4 w-4 " />
             <span>Overview</span>
           </Link>
@@ -97,7 +97,7 @@ const UserMenu = () => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/settings" >
+          <Link href="/profile" >
             <Settings className=" h-4 w-4" />
             <span>Account Settings</span>
           </Link>
