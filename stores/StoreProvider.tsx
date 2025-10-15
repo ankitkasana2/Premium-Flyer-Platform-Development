@@ -6,13 +6,15 @@ import { AuthStore } from "./AuthStore"
 import { FilterBarStore } from "./FilterBarStore"
 import { CategoryStore } from "./CategoryStore"
 import { FlyerFormStore } from "./FlyerFormStore"
+import { CartStore } from "./CartStore"
 
 export class RootStore {
   favoritesStore: FavoritesStore
   authStore: AuthStore
   filterBarStore: FilterBarStore
-  categoryStore : CategoryStore
+  categoryStore: CategoryStore
   flyerFormStore: FlyerFormStore
+  cartStore: CartStore
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
@@ -20,6 +22,7 @@ export class RootStore {
     this.filterBarStore = new FilterBarStore()
     this.categoryStore = new CategoryStore()
     this.flyerFormStore = new FlyerFormStore()
+    this.cartStore = new CartStore()
   }
 }
 

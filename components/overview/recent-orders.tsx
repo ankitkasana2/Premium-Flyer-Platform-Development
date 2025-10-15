@@ -35,7 +35,7 @@ export function RecentOrders({
                 alt={`${order.title} preview`}
                 fill
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-fill"
+                className="object-fill"   
                 priority
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />

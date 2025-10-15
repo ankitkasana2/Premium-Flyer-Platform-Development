@@ -64,7 +64,9 @@ type Flyer = {
 
 
 const EventBookingForm = () => {
-  const { flyerFormStore } = useStore();
+
+  const { flyerFormStore, cartStore } = useStore();
+
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -224,10 +226,12 @@ const EventBookingForm = () => {
                 </h1>
 
                 {/* Price Section */}
-                <div className="flex ">
+                <div className="flex gap-4 justify-center items-center">
+                  
                   <span className="text-sm font-semibold text-white border-1 border-primary px-4 py-1 rounded-md shadow-md">
                     ${flyer?.price}
                   </span>
+                  <Button variant={'outline'} size={'sm'} className="hover:cursor-pointer text-xs w-20" onClick={()=> cartStore.addToCart(flyer?.id ?? '')}>Add To Cart</Button>
                 </div>
               </div>
 
