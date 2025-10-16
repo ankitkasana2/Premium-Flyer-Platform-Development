@@ -8,14 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Plus,
   Upload,
-  CalendarIcon,
-  Clock,
-  MapPin,
   Music,
-  User,
-  Sparkles,
   Check,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
@@ -34,6 +28,7 @@ import { FlyersCarousel } from "../home/FlyersCarousel";
 import HostSection from "./host-block";
 import EventDetails from "./event-details";
 import { loadStripe } from "@stripe/stripe-js";
+import { toast } from "sonner"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -168,6 +163,7 @@ const EventBookingForm = () => {
   }, [flyerFormStore.flyer]);
 
 
+  // submit function 
   const handleSubmit = async (e: React.FormEvent) => {
 
 
@@ -208,6 +204,18 @@ const EventBookingForm = () => {
     setIsSubmitting(false);
   };
 
+  // add to cart function 
+  const addtoCart = (id: string) => {
+
+    if (flyerFormStore.flyerFormDetail.eventDetails.date == null || flyerFormStore.flyerFormDetail.deliveryTime == '') {
+      toast("Please fill date field and choose delivery time.")
+      return
+    }
+
+    cartStore.addToCart(id)
+    toast.success('Added to cart. You can keep shopping.')
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="grid lg:grid-cols-2 gap-8 p-3 md:p-5 max-w-[1600px] mx-auto">
@@ -226,12 +234,12 @@ const EventBookingForm = () => {
                 </h1>
 
                 {/* Price Section */}
-                <div className="flex gap-4 justify-center items-center">
-                  
+                <div className="flex">
+
                   <span className="text-sm font-semibold text-white border-1 border-primary px-4 py-1 rounded-md shadow-md">
                     ${flyer?.price}
                   </span>
-                  <Button variant={'outline'} size={'sm'} className="hover:cursor-pointer text-xs w-20" onClick={()=> cartStore.addToCart(flyer?.id ?? '')}>Add To Cart</Button>
+
                 </div>
               </div>
 
@@ -247,6 +255,7 @@ const EventBookingForm = () => {
             </div>
           </div>
         </div>
+
 
         {/* Right Side - Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -413,26 +422,31 @@ const EventBookingForm = () => {
             className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 
           flex items-center justify-between"
           >
-            {/* Left: Submit Button */}
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary hover:bg-red-550 text-white font-bold h-9 px-3 
-              text-base rounded-lg hover:cursor-pointer transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-900/50"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Check className="w-5 h-5" />
-                  Submit Order
-                </span>
-              )}
-            </Button>
+            <div className="flex gap-4 justify-center items-center">
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-red-550 text-white px-3 
+               rounded-lg hover:cursor-pointer transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-900/50"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Check className="w-5 h-5" />
+                    Checkout Now
+                  </span>
+                )}
+              </Button>
 
+              {/* Add to Cart Button */}
+              <Button type="button" variant={'outline'} className="hover:cursor-pointer" onClick={() => addtoCart(flyer?.id ?? '')}>Add To Cart</Button>
+
+            </div>
             {/* Right: Total Amount */}
             <div className="text-right">
               <span className="block text-sm text-gray-300 font-semibold">

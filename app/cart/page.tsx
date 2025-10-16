@@ -115,9 +115,9 @@ const CartPage = () => {
                                                     <Trash2 className="h-4 w-4" />
                                                     Remove
                                                 </Button>
-                                                <Link href={`/cart`}>
+                                                <Link href={`flyer/${fly.id}`}>
                                                     <Button variant="ghost" size="sm">
-                                                        Customize
+                                                        Edit
                                                     </Button>
                                                 </Link>
                                             </div>

@@ -81,7 +81,7 @@ export class FlyerFormStore {
       animatedFlyer: false,
       instagramPostSize: true,
     },
-    deliveryTime: "24h",
+    deliveryTime: "",
     customNote: "",
     subtotal: 0,
   }
