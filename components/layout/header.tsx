@@ -17,9 +17,14 @@ export function Header() {
       <div className="w-full px-2 sm:px-4">
         <div className="flex items-center w-full justify-between h-14 md:h-16">
           {/* Logo */}
+
+          {/* <Image src="/logo.png" height={10} alt="Logo" width={10} className="w-24 sm:w-32 md:w-36" /> */}
           <Link href="/" className="flex items-center space-x-2">
-            <Image src="/logo.png" height={10} alt="Logo" width={10} className="w-24 sm:w-32 md:w-36" />
+            <Image src='/logo.png' alt="logo" width={10} height={1} className="w-32 h-20 object-contain block" />
           </Link>
+
+
+
 
           {/* Desktop Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">

@@ -7,14 +7,14 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const HeroSection = () => {
-   const router = useRouter();
+  const router = useRouter();
 
   // Each image now has a link (you can replace the URLs with your category paths)
   const heroImages = [
     { src: "/Banner/hero-section-img.jpg", link: "/category/halloween" },
     { src: "/Banner/plane.webp", link: "/category/travel" },
-    { src: "/Banner/hero-section-img.jpg", link: "/category/events" },
-    { src: "/Banner/plane.webp", link: "/category/adventure" },
+    { src: "/Banner/jpegImage.jpg", link: "/category/events" },
+
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -28,7 +28,7 @@ const HeroSection = () => {
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
- // Manual navigation
+  // Manual navigation
   const nextSlide = () =>
     setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
   const prevSlide = () =>
@@ -36,38 +36,38 @@ const HeroSection = () => {
       (prev) => (prev - 1 + heroImages.length) % heroImages.length
     );
 
-      const handleImageClick = (link: string) => {
+  const handleImageClick = (link: string) => {
     router.push(link);
   };
 
-    // Navigate to current category
+  // Navigate to current category
   // const handleNavigate = () => {
   //   router.push(heroImages[currentImageIndex].link);
   // };
 
-   // Navigate to /categories
+  // Navigate to /categories
   const handleNavigate = () => {
     router.push("/categories");
   };
 
   return (
-    <section className="relative px-4 min-h-[50vh] sm:min-h-[60vh] flex items-center">
+    <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center">
       <div className="container h-full mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-        
-          <div
+
+        <div
           className="absolute inset-0 transition-all duration-700 ease-in-out cursor-pointer"
           onClick={() => handleImageClick(heroImages[currentImageIndex].link)}
         >
-        <Image
-        key={heroImages[currentImageIndex].src}
+          <Image
+            key={heroImages[currentImageIndex].src}
             src={heroImages[currentImageIndex].src}
-          alt="Halloween Flyer"
-          fill
-          className="absolute inset-0 object-fill"
-        />
+            alt="Halloween Flyer"
+            fill
+            className="absolute inset-0 object-fill"
+          />
 
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/50"></div>
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
         {/* Text + Button */}
@@ -83,7 +83,7 @@ const HeroSection = () => {
             GET IT
           </Button>
         </div>
-      {/* Left/Right Arrows */}
+        {/* Left/Right Arrows */}
         <button
           onClick={prevSlide}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 p-2 rounded-full"
