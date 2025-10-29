@@ -12,8 +12,8 @@ const HeroSection = () => {
   // Each image now has a link (you can replace the URLs with your category paths)
   const heroImages = [
     { src: "/Banner/hero-section-img.jpg", link: "/category/halloween" },
-    { src: "/Banner/plane.webp", link: "/category/travel" },
-    { src: "/Banner/jpegImage.jpg", link: "/category/events" },
+    { src: "/Banner/Banner1.jpg", link: "/category/travel" },
+
 
   ];
 
