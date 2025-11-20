@@ -1,5 +1,6 @@
 import { makeAutoObservable, toJS } from "mobx"
 import { SAMPLE_FLYERS } from "@/lib/types"
+import { getApiUrl } from "@/config/api"
 
 type Flyer = {
   id: string
@@ -16,6 +17,9 @@ type Flyer = {
 
 // flyer form detail
 export type FlyerFormDetails = {
+  flyerId?: string
+  categoryId?: string
+  userId?: string
   eventDetails: {
     presenting: string
     mainTitle: string
@@ -59,7 +63,11 @@ export type FlyerFormDetails = {
 export class FlyerFormStore {
   flyer: Flyer | null = null
   similarFlyers: Flyer[] = []
+  basePrice = 0
   flyerFormDetail: FlyerFormDetails = {
+    flyerId: "",
+    categoryId: "",
+    userId: "",
     eventDetails: {
       presenting: "",
       mainTitle: "",
@@ -100,13 +108,25 @@ export class FlyerFormStore {
 
   async fetchFlyer(id: string) {
   try {
-    const res = await fetch(`http://193.203.161.174:3007/api/flyers/flyers/${id}`, {
+    const res = await fetch(getApiUrl(`/api/flyers/flyers/${id}`), {
       cache: "no-store",
     });
     const data = await res.json();
 
     runInAction(() => {
       this.flyer = data;
+      const fetchedPrice =
+        data?.price ??
+        data?.base_price ??
+        data?.price_value ??
+        data?.amount ??
+        null
+      if (typeof fetchedPrice === "number" && !Number.isNaN(fetchedPrice)) {
+        this.basePrice = fetchedPrice
+      }
+      this.flyerFormDetail.flyerId = data?.id ?? data?.flyer_id ?? data?.flyerId ?? this.flyerFormDetail.flyerId
+      this.flyerFormDetail.categoryId =
+        data?.category_id ?? data?.categoryId ?? data?.category ?? this.flyerFormDetail.categoryId
     });
 
     this.fetchSimilarFlyers();
@@ -194,10 +214,33 @@ export class FlyerFormStore {
     this.flyerFormDetail.customNote = value
   }
 
+  setUserId(userId: string | null) {
+    this.flyerFormDetail.userId = userId ?? ""
+  }
+
+  setFlyerId(flyerId: string | null | undefined) {
+    if (flyerId) {
+      this.flyerFormDetail.flyerId = flyerId
+    }
+  }
+
+  setCategoryId(categoryId: string | null | undefined) {
+    if (categoryId) {
+      this.flyerFormDetail.categoryId = categoryId
+    }
+  }
+
+  setBasePrice(price: number | null | undefined) {
+    if (typeof price === "number" && !Number.isNaN(price)) {
+      this.basePrice = price
+    }
+  }
+
 
   // subtotal 
   get subtotal() {
-    let total = this.flyer?.price ?? 0;
+    const flyerPrice = this.flyer?.price ?? this.basePrice ?? 0
+    let total = flyerPrice;
 
     // Extras pricing
     const extrasPricing: Record<keyof FlyerFormDetails["extras"], number> = {

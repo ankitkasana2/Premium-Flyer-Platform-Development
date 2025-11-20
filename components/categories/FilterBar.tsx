@@ -1,11 +1,10 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { FLYER_CATEGORIES } from "@/lib/types"
+import { SAMPLE_FLYERS, getCategoriesWithFlyers, getCategoryCounts } from "@/lib/types"
 import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
-import { toJS } from 'mobx'
 
 const pricing = [
     { id: 'basic', label: '10' },
@@ -15,7 +14,7 @@ const pricing = [
 
 const FilterBar = () => {
 
-    const { authStore, filterBarStore } = useStore()
+    const { filterBarStore, flyersStore } = useStore()
 
     const [selected, setSelected] = useState<string[]>([])
 
@@ -32,8 +31,21 @@ const FilterBar = () => {
 
         filterBarStore.priceFilter(id)
     }
-    
-    
+    useEffect(() => {
+        if (!flyersStore.flyers.length) {
+            flyersStore.fetchFlyers()
+        }
+    }, [flyersStore])
+
+    const flyerSource = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
+    const availableCategories = useMemo(
+        () => getCategoriesWithFlyers(flyerSource),
+        [flyerSource]
+    )
+    const categoryCounts = useMemo(
+        () => getCategoryCounts(flyerSource),
+        [flyerSource]
+    )
 
 
     return (
@@ -43,14 +55,17 @@ const FilterBar = () => {
                 <h2>Category</h2>
                 <div className='p-2  rounded-md bg-gray-800/15 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)] max-h-40 overflow-y-auto hide-scrollbar'>
                     <ul className="space-y-3">
-                        {FLYER_CATEGORIES.map((cat) => (
+                        {availableCategories.map((cat) => (
                             <li key={cat.name} className="flex items-center gap-3">
                                 <Checkbox
                                     id={cat.name}
                                     checked={selected.includes(cat.name)}
                                     onCheckedChange={() => toggleCategory(cat.name)}
                                 />
-                                <Label className='font-light' htmlFor={cat.name}>{cat.name}</Label>
+                                <Label className='font-light' htmlFor={cat.name}>
+                                    {cat.name}
+                                    {categoryCounts[cat.name] ? ` (${categoryCounts[cat.name]})` : ""}
+                                </Label>
                             </li>
                         ))}
                     </ul>

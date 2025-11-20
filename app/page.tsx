@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FlyerCard } from "@/components/flyer/flyer-card"
 import { Star, Zap, Clock, Shield } from "lucide-react"
-import { SAMPLE_FLYERS, FLYER_CATEGORIES } from "@/lib/types"
+import { getCategoriesWithFlyers } from "@/lib/types"
 import Link from "next/link"
 import FlyersSection from "@/components/home/FlyersSection"
 import HeroSection from "@/components/home/HeroSection"
@@ -29,7 +29,7 @@ type HomeSectionProps = {
 
 const HomePage: React.FC<HomeSectionProps> = () => {
 
-  const categories = FLYER_CATEGORIES.filter(cat => cat.homePage == true)
+  const categories = getCategoriesWithFlyers().filter((cat) => cat.homePage)
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,4 +1,5 @@
 import { makeAutoObservable, runInAction } from "mobx";
+import { getApiUrl } from "@/config/api";
 
 export class FlyersStore {
   flyers = [];
@@ -15,7 +16,7 @@ export class FlyersStore {
     this.error = null;
 
     try {
-      const response = await fetch("http://193.203.161.174:3007/api/flyers", {
+      const response = await fetch(getApiUrl("/api/flyers"), {
         cache: "no-store",
       });
 

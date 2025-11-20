@@ -27,7 +27,7 @@
 
 
 import { makeAutoObservable } from "mobx"
-import { API_BASE_URL } from "../config/api"
+import { getApiUrl } from "@/config/api"
 
 
 export class CartStore {
@@ -41,7 +41,11 @@ export class CartStore {
         makeAutoObservable(this)
     }
 
-    async addToCart(id: string) {
+    async addToCart(id: string, userId: string, formData?: any) {
+        if (!userId) {
+            throw new Error("User ID is required to add items to the cart.")
+        }
+
         console.log("🛒 addToCart called")
 
         // 1) Add to local cart
@@ -51,15 +55,16 @@ export class CartStore {
 
         // 2) Prepare API values here
         const payload = {
-            user_id: "2",          // you will replace with real user later
-            flyer_id: id           // id IS flyer_id
+            user_id: userId,
+            flyer_id: id,          // id IS flyer_id
+            form_data: formData ?? null
         }
 
         console.log("📦 Saving to server:", payload)
 
         try {
             // const res = await fetch(`http://193.203.161.174:3007/api/cart/add`, {
-            const res = await fetch(`${API_BASE_URL}/api/cart/add`, {
+            const res = await fetch(getApiUrl("/api/cart/add"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -78,11 +83,11 @@ export class CartStore {
 
 
     // Load cart for user
-    async load() {
-        const user_id = "2"
+    async load(userId: string) {
+        if (!userId) return
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/cart/user/${user_id}`)
+            const res = await fetch(getApiUrl(`/api/cart/user/${userId}`))
             const data = await res.json()
 
             if (data.success) {
