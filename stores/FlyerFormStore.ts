@@ -100,7 +100,7 @@ export class FlyerFormStore {
 
   async fetchFlyer(id: string) {
   try {
-    const res = await fetch(`http://193.203.161.174:3007/api/flyers/${id}`, {
+    const res = await fetch(`http://193.203.161.174:3007/api/flyers/flyers/${id}`, {
       cache: "no-store",
     });
     const data = await res.json();

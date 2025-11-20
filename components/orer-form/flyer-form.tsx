@@ -68,7 +68,7 @@ const EventBookingForm = () => {
   const name = searchParams.get("name");
   const price = searchParams.get("price");
 
-console.log("Price from URL:", price);
+console.log("Price from URL:", image);
   const { flyerFormStore, cartStore } = useStore();
 
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
@@ -367,7 +367,8 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
                 <div className="flex">
 
                   <span className="text-sm font-semibold text-white border-1 border-primary px-4 py-1 rounded-md shadow-md">
-                    ${flyer?.price}
+                    {/* ${flyer?.price} */}
+                    ${price}
                   </span>
 
                 </div>
@@ -375,7 +376,8 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
 
               <div className="aspect-[4/5]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
-                  src={flyer?.imageUrl}
+                  // src={flyer?.imageUrl}
+                  src={image || flyer?.imageUrl}
                   alt="Event promotional image"
                   className="w-full h-full object-cover"
                 />
