@@ -30,6 +30,7 @@ import EventDetails from "./event-details";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation";
+import { getApiUrl } from "@/config/api";
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -290,7 +291,7 @@ const mapToApiRequest = (data: any) => {
 
 const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
     const handleCreate= async () => {
-      const res = await fetch("http://193.203.161.174:3007/api/orders", {
+      const res = await fetch(getApiUrl("/api/orders"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apiBody)

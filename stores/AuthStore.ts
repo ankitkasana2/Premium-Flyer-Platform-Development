@@ -1,6 +1,6 @@
 // stores/AuthStore.ts
 import { makeAutoObservable, runInAction } from "mobx"
-import { API_BASE_URL } from "@/config/api"
+import { getApiUrl } from "@/config/api"
 
 export interface AuthUser {
   id: string
@@ -99,7 +99,7 @@ export class AuthStore {
     this.loading = true
     this.error = null
     try {
-      const response = await fetch(`${API_BASE_URL}/api/web/auth/login`, {
+      const response = await fetch(getApiUrl("/api/web/auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +138,7 @@ export class AuthStore {
     this.loading = true
     this.error = null
     try {
-      const response = await fetch(`${API_BASE_URL}/api/web/auth/register`, {
+      const response = await fetch(getApiUrl("/api/web/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

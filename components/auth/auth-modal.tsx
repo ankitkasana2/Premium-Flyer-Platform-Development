@@ -404,6 +404,7 @@ import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/lib/auth"
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Apple } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { getApiUrl } from "@/config/api"
 
 // ❌ OTP Components commented out
 // import {
@@ -567,7 +568,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // ✅ SIGN-IN (LOGIN)
     // ============================
     if (mode === "signin") {
-      const res = await fetch("http://193.203.161.174:3007/api/web/auth/login", {
+      const res = await fetch(getApiUrl("/api/web/auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -603,7 +604,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // ✅ SIGN-UP (REGISTRATION)
     // ============================
     if (mode === "signup") {
-      const res = await fetch("http://193.203.161.174:3007/api/web/auth/register", {
+      const res = await fetch(getApiUrl("/api/web/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

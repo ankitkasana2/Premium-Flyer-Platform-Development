@@ -27,7 +27,7 @@
 
 
 import { makeAutoObservable } from "mobx"
-import { API_BASE_URL } from "../config/api"
+import { getApiUrl } from "@/config/api"
 
 
 export class CartStore {
@@ -59,7 +59,7 @@ export class CartStore {
 
         try {
             // const res = await fetch(`http://193.203.161.174:3007/api/cart/add`, {
-            const res = await fetch(`${API_BASE_URL}/api/cart/add`, {
+            const res = await fetch(getApiUrl("/api/cart/add"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -82,7 +82,7 @@ export class CartStore {
         const user_id = "2"
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/cart/user/${user_id}`)
+            const res = await fetch(getApiUrl(`/api/cart/user/${user_id}`))
             const data = await res.json()
 
             if (data.success) {

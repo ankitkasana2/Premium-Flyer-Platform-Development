@@ -1,5 +1,6 @@
 import { makeAutoObservable, toJS } from "mobx"
 import { SAMPLE_FLYERS } from "@/lib/types"
+import { getApiUrl } from "@/config/api"
 
 type Flyer = {
   id: string
@@ -100,7 +101,7 @@ export class FlyerFormStore {
 
   async fetchFlyer(id: string) {
   try {
-    const res = await fetch(`http://193.203.161.174:3007/api/flyers/flyers/${id}`, {
+    const res = await fetch(getApiUrl(`/api/flyers/flyers/${id}`), {
       cache: "no-store",
     });
     const data = await res.json();
