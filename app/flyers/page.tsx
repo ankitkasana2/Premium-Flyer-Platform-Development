@@ -7,7 +7,7 @@ import { FlyerCard } from "@/components/flyer/flyer-card"
 import { FlyerFilters } from "@/components/flyer/flyer-filters"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { SAMPLE_FLYERS, FLYER_CATEGORIES, type Flyer } from "@/lib/types"
+import { SAMPLE_FLYERS, getCategoriesWithFlyers, type Flyer } from "@/lib/types"
 import { Grid, List } from "lucide-react"
 
 interface FilterState {
@@ -20,6 +20,7 @@ interface FilterState {
 
 export default function FlyersPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const availableCategories = getCategoriesWithFlyers()
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     categories: [],
@@ -44,7 +45,7 @@ export default function FlyersPage() {
     // Category filter
     if (filters.categories.length > 0) {
       result = result.filter((flyer) => {
-        const categorySlug = FLYER_CATEGORIES.find((c) => c.name === flyer.category)?.slug
+        const categorySlug = availableCategories.find((c) => c.name === flyer.category)?.slug
         return categorySlug && filters.categories.includes(categorySlug)
       })
     }
@@ -136,7 +137,7 @@ export default function FlyersPage() {
 
           {/* Category Pills */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {FLYER_CATEGORIES.slice(0, 8).map((category) => (
+            {availableCategories.slice(0, 8).map((category) => (
               <Badge
                 key={category.id}
                 variant={filters.categories.includes(category.slug) ? "default" : "outline"}

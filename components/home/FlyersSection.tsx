@@ -171,8 +171,10 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
 
     // Fetch flyers from backend once
     useEffect(() => {
-        flyersStore.fetchFlyers();
-    }, []);
+        if (!flyersStore.flyers.length && !flyersStore.loading) {
+            flyersStore.fetchFlyers();
+        }
+    }, [flyersStore]);
 
     // Watch MobX store flyers and update UI
     useEffect(() => {
@@ -202,6 +204,20 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
             price: toJS(filterBarStore.price)
         }));
     }, [filterBarStore.price]);
+
+    if (!Flyers.length) {
+        if (flyersStore.loading) {
+            return (
+                <section className="py-4 px-5">
+                    <div className="flex flex-col gap-3">
+                        <div className="h-6 w-40 rounded bg-gray-800/30 animate-pulse" />
+                        <div className="h-48 w-full rounded-xl bg-gray-900/40 animate-pulse" />
+                    </div>
+                </section>
+            )
+        }
+        return null
+    }
 
     return (
         <>

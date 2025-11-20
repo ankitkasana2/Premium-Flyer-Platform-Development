@@ -29,8 +29,9 @@ import HostSection from "./host-block";
 import EventDetails from "./event-details";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner"
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
 import { getApiUrl } from "@/config/api";
+import type { FlyerFormDetails } from "@/stores/FlyerFormStore";
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -53,24 +54,115 @@ type Flyer = {
   priceType: "basic" | "regular" | "premium";
   hasPhotos: boolean;
   imageUrl: string;
+  image_url?: string;
+  category_id?: string;
   tags: string[];
   isRecentlyAdded?: boolean;
   isFeatured?: boolean;
 };
 
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 2
+});
 
+const formatCurrency = (value: number | string | null | undefined) => {
+  const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+  if (Number.isNaN(numericValue)) {
+    return currencyFormatter.format(0);
+  }
+  return currencyFormatter.format(numericValue);
+};
+
+type CheckoutPayloadOptions = {
+  userId?: string;
+  flyerId?: string;
+  categoryId?: string;
+  subtotal?: number;
+};
+
+const mapToApiRequest = (
+  data: FlyerFormDetails,
+  options: CheckoutPayloadOptions = {}
+) => {
+  const extras = data?.extras ?? {
+    storySizeVersion: false,
+    customFlyer: false,
+    animatedFlyer: false,
+    instagramPostSize: true
+  };
+
+  const sponsors = data?.sponsors ?? {};
+  const normalizeSponsor = (file?: File | null) => ({
+    name: file?.name ?? ""
+  });
+
+  return {
+    presenting: data?.eventDetails?.presenting || "",
+    event_title: data?.eventDetails?.mainTitle || "",
+
+    event_date: data?.eventDetails?.date
+      ? new Date(data.eventDetails.date).toISOString().split("T")[0]
+      : "",
+
+    flyer_info: data?.eventDetails?.flyerInfo || "",
+    address_phone: data?.eventDetails?.addressAndPhone || "",
+
+    djs: Array.isArray(data?.djsOrArtists)
+      ? data.djsOrArtists.map((dj: any) => ({
+          name: dj?.name || ""
+        }))
+      : [],
+
+    host: {
+      name: data?.host?.name || ""
+    },
+
+    sponsors: [
+      normalizeSponsor(sponsors.sponsor1),
+      normalizeSponsor(sponsors.sponsor2),
+      normalizeSponsor(sponsors.sponsor3)
+    ],
+
+    story_size_version: extras.storySizeVersion ?? false,
+    custom_flyer: extras.customFlyer ?? false,
+    animated_flyer: extras.animatedFlyer ?? false,
+    instagram_post_size: extras.instagramPostSize ?? false,
+
+    custom_notes: data?.customNote || "",
+    flyer_id: options.flyerId ?? data?.flyerId ?? "",
+    category_id: options.categoryId ?? data?.categoryId ?? "",
+    user_id: options.userId ?? data?.userId ?? "",
+    delivery_time: data?.deliveryTime ?? "",
+    total_price: options.subtotal ?? data?.subtotal ?? 0,
+
+    venue_logo: "",
+    host_file: "",
+    dj_0: "",
+    dj_1: "",
+    sponsor_0: "",
+    sponsor_1: "",
+    sponsor_2: ""
+  };
+};
 
 const EventBookingForm = () => {
-
-  
-     const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
+  const params = useParams();
 
   const image = searchParams.get("image");
   const name = searchParams.get("name");
-  const price = searchParams.get("price");
+  const priceFromQuery = Number(searchParams.get("price") ?? "0");
+  const categoryFromQuery = searchParams.get("category") ?? undefined;
+  const routeFlyerId =
+    typeof params?.FlyerId === "string"
+      ? params.FlyerId
+      : Array.isArray(params?.FlyerId)
+        ? params?.FlyerId[0]
+        : undefined;
 
-console.log("Price from URL:", image);
-  const { flyerFormStore, cartStore } = useStore();
+  const { flyerFormStore, cartStore, authStore } = useStore();
 
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
   const [note, setNote] = useState("");
@@ -88,6 +180,36 @@ console.log("Price from URL:", image);
     { name: "" },
     { name: "" },
   ]);
+
+  const flyerImage = flyer?.image_url || flyer?.imageUrl || image || "/placeholder.svg";
+  const flyerName = flyer?.name || name || "";
+  const basePrice = flyer?.price ?? priceFromQuery;
+  const computedSubtotal = flyerFormStore.subtotal;
+  const totalDisplay = computedSubtotal > 0 ? computedSubtotal : basePrice;
+
+  useEffect(() => {
+    if (routeFlyerId) {
+      flyerFormStore.setFlyerId(routeFlyerId);
+    }
+  }, [routeFlyerId, flyerFormStore]);
+
+  useEffect(() => {
+    const categoryId =
+      (flyer as any)?.category_id ??
+      flyer?.category ??
+      categoryFromQuery;
+
+    if (categoryId) {
+      flyerFormStore.setCategoryId(String(categoryId));
+    }
+  }, [flyer, categoryFromQuery, flyerFormStore]);
+
+  useEffect(() => {
+    const priceCandidate = flyer?.price ?? priceFromQuery;
+    if (priceCandidate && !Number.isNaN(priceCandidate)) {
+      flyerFormStore.setBasePrice(priceCandidate);
+    }
+  }, [flyer?.price, priceFromQuery, flyerFormStore]);
 
 
 
@@ -175,134 +297,45 @@ console.log("Price from URL:", image);
 
   // submit function 
   const handleSubmit = async (e: React.FormEvent) => {
-
-
     e.preventDefault();
-    // setIsSubmitting(true);
 
-    // valiadte 
-    const { valid, errors } = flyerFormStore.validateForm()
-    if (!valid) {
-      alert(errors.join("\n"))
-      return
+    if (!authStore.user?.id) {
+      toast.error("Please sign in to continue with checkout.");
+      authStore.handleAuthModal();
+      return;
     }
 
+    const { valid, errors } = flyerFormStore.validateForm();
+    if (!valid) {
+      toast.error(errors.join("\n"));
+      return;
+    }
 
-//     const mapToApiRequest = (data: any) => {
-//   return {
-//     presenting: data.eventDetails.presenting || "",
-//     event_title: data.eventDetails.mainTitle || "",
-//     // event_date: data.eventDetails.date || "",
-//     event_date: data.eventDetails.date
-//   ? new Date(data.eventDetails.date).toISOString().split("T")[0]
-//   : "",
-//     flyer_info: data.eventDetails.flyerInfo || "",
-//     address_phone: data.eventDetails.addressAndPhone || "",
+    setIsSubmitting(true);
+    flyerFormStore.setUserId(authStore.user.id);
 
-//     // DJs
-//     djs: data.djsOrArtists.map((dj: any) => ({
-//       name: dj.name || ""
-//     })),
+    const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+      userId: authStore.user.id,
+      flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+      categoryId:
+        (flyer as any)?.category_id ??
+        flyer?.category ??
+        flyerFormStore.flyerFormDetail.categoryId,
+      subtotal: totalDisplay
+    });
 
-//     // Host
-//     host: {
-//       name: data.host?.name || ""
-//     },
-
-//     // Sponsors
-//     sponsors: [
-//       {},
-//       {},
-//       {}
-//     ],
-
-//     story_size_version: data.storySizeVersion ?? false,
-//     custom_flyer: data.customFlyer ?? false,
-//     animated_flyer: data.animatedFlyer ?? false,
-//     instagram_post_size: data.instagramPostSize ?? false,
-
-    
-//     custom_notes: data.customNote || "",
-//     flyer_is: data.flyerId || 1,
-
-//     // FILES MUST NOT BE IN CHECKOUT REQUEST — only send file placeholders
-//     venue_logo: "",
-//     host_file: "",
-//     dj_0: "",
-//     dj_1: "",
-//     sponsor_0: "",
-//     sponsor_1: "",
-//     sponsor_2: ""
-//   };
-// };
-const mapToApiRequest = (data: any) => {
-  return {
-    presenting: data?.eventDetails?.presenting || "",
-    event_title: data?.eventDetails?.mainTitle || "",
-
-    // ✅ Safe formatted date
-    event_date: data?.eventDetails?.date
-      ? new Date(data.eventDetails.date).toISOString().split("T")[0]
-      : "",
-
-    flyer_info: data?.eventDetails?.flyerInfo || "",
-    address_phone: data?.eventDetails?.addressAndPhone || "",
-
-    // ✅ DJs safe mapping
-    djs: Array.isArray(data?.djsOrArtists)
-      ? data.djsOrArtists.map((dj: any) => ({
-          name: dj?.name || ""
-        }))
-      : [],
-
-    // ✅ Host
-    host: {
-      name: data?.host?.name || ""
-    },
-
-    // ✅ Sponsors (always 3 slots, API expects structure)
-    sponsors: [
-      { name: data?.sponsors?.[0]?.name || "" },
-      { name: data?.sponsors?.[1]?.name || "" },
-      { name: data?.sponsors?.[2]?.name || "" }
-    ],
-
-    // Options
-    story_size_version: data?.storySizeVersion ?? false,
-    custom_flyer: data?.customFlyer ?? false,
-    animated_flyer: data?.animatedFlyer ?? false,
-    instagram_post_size: data?.instagramPostSize ?? false,
-
-    custom_notes: data?.customNote || "",
-    flyer_is: data?.flyerId || 1,
-
-    // File placeholders for checkout (API rule)
-    venue_logo: data.eventDetails.venueLogo,
-    host_file: "",
-    dj_0: "",
-    dj_1: "",
-    sponsor_0: "",
-    sponsor_1: "",
-    sponsor_2: ""
-  };
-};
-
-
-
-const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
-    const handleCreate= async () => {
+    const handleCreate = async () => {
       const res = await fetch(getApiUrl("/api/orders"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apiBody)
-
       });
 
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
-        alert("Checkout URL not generated. Please try again.");
+        toast.error("Checkout URL not generated. Please try again.");
         console.error("Stripe session response:", data);
       }
     };
@@ -311,41 +344,75 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
       const res = await fetch("/api/checkout/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ item: flyerFormStore.flyerFormDetail }), // key must match backend
+        body: JSON.stringify({
+          item: {
+            ...flyerFormStore.flyerFormDetail,
+            subtotal: totalDisplay
+          }
+        })
       });
 
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
-        alert("Checkout URL not generated. Please try again.");
+        toast.error("Checkout URL not generated. Please try again.");
         console.error("Stripe session response:", data);
       }
     };
 
-
-
-    await handleCreate();
-    await handleCheckout();
-
-
-    setIsSubmitting(false);
+    try {
+      await handleCreate();
+      await handleCheckout();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // add to cart function 
-  const addtoCart = (id: string) => {
+  const addtoCart = async (id?: string) => {
+    const resolvedFlyerId =
+      id ??
+      flyer?.id ??
+      flyerFormStore.flyerFormDetail.flyerId;
 
-    if (flyerFormStore.flyerFormDetail.eventDetails.date == null ) {
-      toast("Please fill date field and choose delivery time.")
-      return
+    if (!resolvedFlyerId) {
+      toast.error("Please select a flyer first.");
+      return;
     }
 
-    const cartres=cartStore.addToCart(id)
+    if (!authStore.user?.id) {
+      toast.error("Please sign in to add items to your cart.");
+      authStore.handleAuthModal();
+      return;
+    }
 
-    console.log(cartres);
-    toast.success('Added to cart. You can keep shopping.')
-    // toast.success(cartres)
-  }
+    const { valid, errors } = flyerFormStore.validateForm();
+    if (!valid) {
+      toast.error(errors.join("\n"));
+      return;
+    }
+
+    flyerFormStore.setUserId(authStore.user.id);
+
+    const cartPayload = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+      userId: authStore.user.id,
+      flyerId: resolvedFlyerId,
+      categoryId:
+        (flyer as any)?.category_id ??
+        flyer?.category ??
+        flyerFormStore.flyerFormDetail.categoryId,
+      subtotal: totalDisplay
+    });
+
+    try {
+      await cartStore.addToCart(resolvedFlyerId, authStore.user.id, cartPayload);
+      toast.success("Added to cart. You can keep shopping.");
+    } catch (error) {
+      console.error("Cart save error", error);
+      toast.error("Unable to add to cart. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -361,15 +428,14 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
                   className="text-xl md:text-2xl font-bold text-white "
 
                 >
-                  {flyer?.name}
+                  {flyerName}
                 </h1>
 
                 {/* Price Section */}
                 <div className="flex">
 
                   <span className="text-sm font-semibold text-white border-1 border-primary px-4 py-1 rounded-md shadow-md">
-                    {/* ${flyer?.price} */}
-                    ${price}
+                    {formatCurrency(basePrice)}
                   </span>
 
                 </div>
@@ -377,9 +443,8 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
 
               <div className="aspect-[4/5]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
-                  // src={flyer?.imageUrl}
-                  src={image || flyer?.imageUrl}
-                  alt="Event promotional image"
+                  src={flyerImage}
+                  alt={flyerName || "Event promotional image"}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -577,7 +642,14 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
               </Button>
 
               {/* Add to Cart Button */}
-              <Button type="button" variant={'outline'} className="hover:cursor-pointer" onClick={() => addtoCart(flyer?.id ?? '')}>Add To Cart</Button>
+              <Button
+                type="button"
+                variant={'outline'}
+                className="hover:cursor-pointer"
+                onClick={() => addtoCart(flyer?.id)}
+              >
+                Add To Cart
+              </Button>
 
             </div>
             {/* Right: Total Amount */}
@@ -586,8 +658,7 @@ const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail);
                 Total
               </span>
               <span className="text-primary font-bold text-lg">
-                ${price}
-                {/* ${flyerFormStore.subtotal} */}
+                {formatCurrency(totalDisplay)}
               </span>
             </div>
           </div>

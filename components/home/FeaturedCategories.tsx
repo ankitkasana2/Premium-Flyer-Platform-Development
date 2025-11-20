@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FlyerCard } from "@/components/flyer/flyer-card"
 import { Star, Zap, Clock, Shield } from "lucide-react"
-import { SAMPLE_FLYERS, FLYER_CATEGORIES } from "@/lib/types"
+import { getCategoriesWithFlyers } from "@/lib/types"
 import Link from "next/link"
 import Image from 'next/image'
 
@@ -20,11 +20,13 @@ const FeaturedCategories = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 cursor-pointer gap-4">
-                    {FLYER_CATEGORIES.map((category) => (
+                    {getCategoriesWithFlyers()
+                        .filter((category) => category.homePage)
+                        .map((category) => (
                         <Link className='flex flex-col gap-2 items-center' key={category.id} href={`/catalog?category=${encodeURIComponent(category.name)}`}>
                             <div className='relative w-full h-[40vh] border rounded-md overflow-hidden group cursor-pointer'>
                                 <Image
-                                    src={category.imageUrl || "/placeholder.svg"}
+                                    src={"/placeholder.svg"}
                                     alt={category.name}
                                     fill
                                     className="absolute object-cover  transition-transform duration-400 group-hover:scale-110"

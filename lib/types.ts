@@ -124,3 +124,48 @@ export const SAMPLE_FLYERS: Flyer[] = [
   { "id": "f50", "name": "Haunted Night Bash", "category": "Halloween", "price": 10, "priceType": "basic", "hasPhotos": false, "imageUrl": "/pic32.jpg", "tags": ["haunted", "party", "fun"] }
 ]
 
+const ALWAYS_VISIBLE_CATEGORIES = new Set(["Recently Added", "Premium Flyers", "Basic Flyers"])
+
+const normalizeCategoryName = (value: any): string | null => {
+  if (!value) return null
+  if (typeof value === "string") return value
+  if (typeof value === "object") {
+    return value?.name ?? value?.title ?? null
+  }
+  return null
+}
+
+export const extractFlyerCategories = (flyer: any): string[] => {
+  if (!flyer) return []
+
+  const names = new Set<string>()
+
+  if (Array.isArray(flyer.categories)) {
+    flyer.categories.forEach((category) => {
+      const name = normalizeCategoryName(category)
+      if (name) names.add(name)
+    })
+  }
+
+  const singleCategory =
+    flyer.category ?? flyer.category_name ?? flyer.categoryName ?? normalizeCategoryName(flyer?.category_id)
+  if (singleCategory) names.add(singleCategory)
+
+  return Array.from(names)
+}
+
+export const getCategoryCounts = (flyers: any[] = SAMPLE_FLYERS): Record<string, number> => {
+  const counts: Record<string, number> = {}
+  flyers.forEach((flyer) => {
+    extractFlyerCategories(flyer).forEach((name) => {
+      counts[name] = (counts[name] ?? 0) + 1
+    })
+  })
+  return counts
+}
+
+export const getCategoriesWithFlyers = (flyers: any[] = SAMPLE_FLYERS): Category[] => {
+  const counts = getCategoryCounts(flyers)
+  return FLYER_CATEGORIES.filter((category) => ALWAYS_VISIBLE_CATEGORIES.has(category.name) || counts[category.name])
+}
+
