@@ -33,9 +33,12 @@ const CartPage = () => {
 
      const { authStore, cartStore } = useStore()
 
-    const cartFlyers: Flyer[] = useMemo(() => {
-        return SAMPLE_FLYERS.filter(f => cartStore.cart.includes(f.id))
-    }, [cartStore.cart])
+    // const cartFlyers: Flyer[] = useMemo(() => {
+    //     return SAMPLE_FLYERS.filter(f => cartStore.cart.includes(f.id))
+    // }, [cartStore.cart])
+    const cartFlyers = cartStore.cart
+
+
 
     const subtotal = useMemo(() => cartFlyers.reduce((sum, it) => sum + (it.price || 0), 0), [cartFlyers])
     const fees = useMemo(() => Math.round(subtotal * 0.05 * 100) / 100, [subtotal]) // 5% estimate

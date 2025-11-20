@@ -13,6 +13,7 @@ import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
 
+
 // Format date display
 function formatDate(date: Date | undefined) {
     if (!date) return ""
@@ -28,6 +29,11 @@ function isValidDate(date: Date | undefined) {
 }
 
 const EventDetails = observer(() => {
+
+
+
+
+
     const { flyerFormStore } = useStore()
     const inputRef = useRef<HTMLInputElement>(null)
     const [open, setOpen] = useState(false)

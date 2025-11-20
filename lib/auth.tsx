@@ -16,10 +16,25 @@ export interface User {
   orders: string[]
 }
 
+// interface AuthContextType {
+//   user: User | null
+//   loading: boolean
+//   // signIn: (email: string, password: string) => Promise<void>
+//   signIn: (userData: any) => Promise<void>
+
+//   signUp: (email: string, password: string, name: string) => Promise<void>
+//   signInWithGoogle: () => Promise<void>
+//   signInWithApple: () => Promise<void>
+//   signOut: () => Promise<void>
+//   sendOTP: (email: string) => Promise<void>
+//   verifyOTP: (email: string, otp: string) => Promise<void>
+//   updateProfile: (data: Partial<User>) => Promise<void>
+// }
+
 interface AuthContextType {
   user: User | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (userData: any) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithApple: () => Promise<void>
@@ -28,6 +43,7 @@ interface AuthContextType {
   verifyOTP: (email: string, otp: string) => Promise<void>
   updateProfile: (data: Partial<User>) => Promise<void>
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -52,31 +68,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false)
   }, [])
 
-  const signIn = async (email: string, password: string) => {
-    setLoading(true)
-    try {
-      // Mock authentication - replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+  // const signIn = async (email: string, password: string) => {
+  //   setLoading(true)
+  //   try {
+  //     // Mock authentication - replace with real API call
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const mockUser: User = {
-        id: "1",
-        email,
-        name: email.split("@")[0],
-        phone: "",
-        provider: "email",
-        createdAt: new Date().toISOString(),
-        favorites: [],
-        orders: [],
-      }
+  //     const mockUser: User = {
+  //       id: "1",
+  //       email,
+  //       name: email.split("@")[0],
+  //       phone: "",
+  //       provider: "email",
+  //       createdAt: new Date().toISOString(),
+  //       favorites: [],
+  //       orders: [],
+  //     }
 
-      setUser(mockUser)
-      localStorage.setItem("grodify_user", JSON.stringify(mockUser))
-    } catch (error) {
-      throw new Error("Invalid credentials")
-    } finally {
-      setLoading(false)
+  //     setUser(mockUser)
+  //     localStorage.setItem("grodify_user", JSON.stringify(mockUser))
+  //   } catch (error) {
+  //     throw new Error("Invalid credentials")
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+  const signIn = async (backendUser: any) => {
+  setLoading(true)
+  try {
+    const userData: User = {
+      id: backendUser.id?.toString() || "",
+      email: backendUser.email || "",
+      name: backendUser.fullname || backendUser.email?.split("@")[0] || "User",
+      phone: "",                     // backend does not provide phone
+      avatar: "",                    // backend does not provide avatar
+      provider: "email",
+      createdAt: new Date().toISOString(),
+      favorites: [],
+      orders: [],
     }
+
+    setUser(userData)
+    localStorage.setItem("grodify_user", JSON.stringify(userData))
+  } catch (error) {
+    throw new Error("Login failed")
+  } finally {
+    setLoading(false)
   }
+}
+
+
+
 
   const signUp = async (email: string, password: string, name: string) => {
     setLoading(true)

@@ -93,10 +93,28 @@ export class FlyerFormStore {
   // -----------------------------
   // 1️⃣ Fetch flyer and similar flyers
   // -----------------------------
-  fetchFlyer(id: string) {
-    this.flyer = SAMPLE_FLYERS.find((f) => f.id === id) ?? null
-    this.fetchSimilarFlyers()
+  // fetchFlyer(id: string) {
+  //   this.flyer = SAMPLE_FLYERS.find((f) => f.id === id) ?? null
+  //   this.fetchSimilarFlyers()
+  // }
+
+  async fetchFlyer(id: string) {
+  try {
+    const res = await fetch(`http://193.203.161.174:3007/api/flyers/${id}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+
+    runInAction(() => {
+      this.flyer = data;
+    });
+
+    this.fetchSimilarFlyers();
+  } catch (err) {
+    console.error("Failed to load flyer:", err);
   }
+}
+
 
   fetchSimilarFlyers() {
     const flyer = this.flyer

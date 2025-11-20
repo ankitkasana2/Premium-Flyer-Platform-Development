@@ -7,8 +7,10 @@ import { FilterBarStore } from "./FilterBarStore"
 import { CategoryStore } from "./CategoryStore"
 import { FlyerFormStore } from "./FlyerFormStore"
 import { CartStore } from "./CartStore"
+import { FlyersStore } from "./flyersStore";
 
 export class RootStore {
+  flyersStore: FlyersStore = new FlyersStore()
   favoritesStore: FavoritesStore
   authStore: AuthStore
   filterBarStore: FilterBarStore

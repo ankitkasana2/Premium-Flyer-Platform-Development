@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart } from "lucide-react"
-import type { Flyer } from "@/lib/types"
+// import type { Flyer } from "@/lib/types"
 import Link from "next/link"
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
@@ -53,7 +53,20 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
 
 
   return (
-    <Link href={`/flyer/${flyer.id}`}>
+    
+    
+    // <Link href={`/flyer/${flyer.id}`}>
+    <Link
+  href={{
+    pathname: `/flyer/${flyer.id}`,
+    query: {
+      image: flyer.image_url,
+      name: flyer.name,
+      price: flyer.price,
+    },
+  }}
+>
+
       <div
         className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 
              hover:scale-105 hover:shadow-xl hover:shadow-primary/20 cursor-pointer 
@@ -61,7 +74,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
       >
         <div className="relative aspect-[3/4] overflow-hidden">
           <Image
-            src={flyer.imageUrl || "/placeholder.svg"}
+            src={flyer.image_url || "/placeholder.svg"}
             alt={flyer.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-102"
@@ -105,6 +118,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
         </div>
       </div>
     </Link>
+    
   )
 }
 
