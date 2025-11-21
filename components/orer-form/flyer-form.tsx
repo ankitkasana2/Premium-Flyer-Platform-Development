@@ -80,6 +80,7 @@ type CheckoutPayloadOptions = {
   flyerId?: string;
   categoryId?: string;
   subtotal?: number;
+  image_url?: string;
 };
 
 const mapToApiRequest = (
@@ -143,7 +144,9 @@ const mapToApiRequest = (
     dj_1: "",
     sponsor_0: "",
     sponsor_1: "",
-    sponsor_2: ""
+    sponsor_2: "",
+    // ✅ ADD THIS FIELD
+  image_url: options.image_url ?? "",
   };
 };
 
@@ -321,7 +324,8 @@ const EventBookingForm = () => {
         (flyer as any)?.category_id ??
         flyer?.category ??
         flyerFormStore.flyerFormDetail.categoryId,
-      subtotal: totalDisplay
+      subtotal: totalDisplay,
+      image_url: image || ""
     });
 
     const handleCreate = async () => {
@@ -381,6 +385,7 @@ const EventBookingForm = () => {
       return;
     }
 
+    // alert("User ID: " + authStore.user?.id);
     if (!authStore.user?.id) {
       toast.error("Please sign in to add items to your cart.");
       authStore.handleAuthModal();
@@ -396,14 +401,17 @@ const EventBookingForm = () => {
     flyerFormStore.setUserId(authStore.user.id);
 
     const cartPayload = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-      userId: authStore.user.id,
+      // userId: authStore.user.id,
+      userId: "10",  // temporary user id for testing
       flyerId: resolvedFlyerId,
       categoryId:
         (flyer as any)?.category_id ??
         flyer?.category ??
         flyerFormStore.flyerFormDetail.categoryId,
-      subtotal: totalDisplay
+      subtotal: totalDisplay,
+      image_url: image || ""// temporary image url for testing
     });
+    // alert("Cart Payload: " + JSON.stringify(cartPayload));
 
     try {
       await cartStore.addToCart(resolvedFlyerId, authStore.user.id, cartPayload);

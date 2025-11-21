@@ -106,34 +106,72 @@ export class FlyerFormStore {
   //   this.fetchSimilarFlyers()
   // }
 
-  async fetchFlyer(id: string) {
+//   async fetchFlyer(id: string) {
+//   try {
+//     const res = await fetch(getApiUrl(`/api/flyers/flyers/${id}`), {
+//       cache: "no-store",
+//     });
+//     const data = await res.json();
+
+//     runInAction(() => {
+//       this.flyer = data;
+//       const fetchedPrice =
+//         data?.price ??
+//         data?.base_price ??
+//         data?.price_value ??
+//         data?.amount ??
+//         null
+//       if (typeof fetchedPrice === "number" && !Number.isNaN(fetchedPrice)) {
+//         this.basePrice = fetchedPrice
+//       }
+//       this.flyerFormDetail.flyerId = data?.id ?? data?.flyer_id ?? data?.flyerId ?? this.flyerFormDetail.flyerId
+//       this.flyerFormDetail.categoryId =
+//         data?.category_id ?? data?.categoryId ?? data?.category ?? this.flyerFormDetail.categoryId
+//     });
+
+//     this.fetchSimilarFlyers();
+//   } catch (err) {
+//     console.error("Failed to load flyer:", err);
+//   }
+// }
+async fetchFlyer(id: string) {
   try {
-    const res = await fetch(getApiUrl(`/api/flyers/flyers/${id}`), {
+    const res = await fetch(`http://193.203.161.174:3007/api/flyers/flyers/${id}`, {
       cache: "no-store",
     });
+
     const data = await res.json();
 
     runInAction(() => {
-      this.flyer = data;
-      const fetchedPrice =
-        data?.price ??
-        data?.base_price ??
-        data?.price_value ??
-        data?.amount ??
-        null
-      if (typeof fetchedPrice === "number" && !Number.isNaN(fetchedPrice)) {
-        this.basePrice = fetchedPrice
-      }
-      this.flyerFormDetail.flyerId = data?.id ?? data?.flyer_id ?? data?.flyerId ?? this.flyerFormDetail.flyerId
-      this.flyerFormDetail.categoryId =
-        data?.category_id ?? data?.categoryId ?? data?.category ?? this.flyerFormDetail.categoryId
-    });
+      this.flyer = {
+        ...data,
+        name: data.title,               // FIX NAME
+        image_url: data.image_url,      // FIX IMAGE
+      };
 
-    this.fetchSimilarFlyers();
+      // FIX PRICE
+      const rawPrice = data.price;
+      const numericPrice = rawPrice
+        ? Number(String(rawPrice).replace(/[^0-9.]/g, ""))
+        : null;
+
+      if (!Number.isNaN(numericPrice)) {
+        this.basePrice = numericPrice;
+      }
+
+      // FIX FLYER ID
+      this.flyerFormDetail.flyerId = data.id;
+
+      // FIX CATEGORY
+      this.flyerFormDetail.categoryId =
+        data.categories?.[0] ?? this.flyerFormDetail.categoryId;
+    });
   } catch (err) {
     console.error("Failed to load flyer:", err);
   }
 }
+
+
 
 
   fetchSimilarFlyers() {

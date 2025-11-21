@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,10 +8,26 @@ import UserMenu from "@/components/auth/user-menu"
 import { Search, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useStore } from "@/stores/StoreProvider";
+import { CartStore } from "@/stores/CartStore"
+// const cartCount = useCartStore((state) => state.items.length)
+// assume your store exposes something like: cartStore.items
+
+// const cartCount =7;
 
 export function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const { authStore, cartStore } = useStore()
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // const cart = CartStore((s) => s.cart);
 
+useEffect(() => {
+      cartStore.load('2')
+
+  }, ['2', cartStore])
+
+// const cartCount = cartStore.count;
+
+// alert("Cart Count: " + JSON.stringify(cartCount));
   return (
     <header className="sticky top-0 z-[50] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full px-2 sm:px-4">
@@ -65,9 +81,25 @@ export function Header() {
               />
             </div>
 
-            <div className="flex hover:bg-none cursor-pointer">
-              <Link href={'/cart'}><ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" /></Link>
-            </div>
+            {/* <div className="flex hover:bg-none cursor-pointer">
+              <Link href={'/cart'}>
+              
+              <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
+                
+    
+              </Link>
+            </div> */}
+            <div className="relative cursor-pointer">
+  <Link href="/cart">
+    <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
+  </Link>
+
+ {cartStore.count > 0 && (
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          {cartStore.count}
+        </span>
+      )}
+</div>
             <div className="flex items-center">
               <UserMenu />
             </div>

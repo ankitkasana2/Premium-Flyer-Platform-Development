@@ -405,6 +405,9 @@ import { useAuth } from "@/lib/auth"
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Apple } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getApiUrl } from "@/config/api"
+import { AuthStore } from "@/stores/AuthStore"
+import { useStore } from "@/stores/StoreProvider"
+
 
 // ❌ OTP Components commented out
 // import {
@@ -445,6 +448,7 @@ export function AuthModal({
   const [isLoading, setIsLoading] = useState(false)
 
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth()
+    const { authStore, filterBarStore, flyerFormStore } = useStore()
   const { toast } = useToast()
 
   // const handleSubmit = async (e: React.FormEvent) => {
@@ -559,87 +563,135 @@ export function AuthModal({
 // };
 
 
+// const handleSubmit = async (e: React.FormEvent) => {
+//   e.preventDefault();
+//   setIsLoading(true);
+
+//   try {
+//     // ============================
+//     // ✅ SIGN-IN (LOGIN)
+//     // ============================
+//     if (mode === "signin") {
+//       const res = await fetch(getApiUrl("/api/web/auth/login"), {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           email: formData.email,
+//           password: formData.password,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (!res.ok) {
+//         throw new Error(data.message || "Login failed");
+//       }
+//       // await signIn(formData.email, formData.password)
+//       await signIn(data)   // pass real user from backend
+
+//       toast({
+//         title: "Welcome back!",
+//         description: "Successfully signed in.",
+//       });
+
+
+//       // OPTIONAL: save token if backend returns it
+//       // localStorage.setItem("token", data.token);
+
+//       onClose();
+//       return;
+//     }
+
+//     // ============================
+//     // ✅ SIGN-UP (REGISTRATION)
+//     // ============================
+//     if (mode === "signup") {
+//       const res = await fetch(getApiUrl("/api/web/auth/register"), {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           fullname: formData.name,
+//           email: formData.email,
+//           password: formData.password,
+//         }),
+//       });
+
+//       const data = await res.json();
+
+//       if (!res.ok) {
+//         throw new Error(data.message || "Registration failed");
+//       }
+
+//       toast({
+//         title: "Account created!",
+//         description: "Your account has been successfully registered.",
+//       });
+
+//       // After signup → go to login mode
+//       setMode("signin");
+//     }
+//   } catch (error) {
+//     toast({
+//       title: "Error",
+//       description: error instanceof Error ? error.message : "Something went wrong",
+//       variant: "destructive",
+//     });
+//   } finally {
+//     setIsLoading(false);
+//   }
+// };
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsLoading(true);
 
   try {
-    // ============================
-    // ✅ SIGN-IN (LOGIN)
-    // ============================
+    // SIGN IN
     if (mode === "signin") {
-      const res = await fetch(getApiUrl("/api/web/auth/login"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+      // alert(mode);
+      await authStore.login({
+        email: formData.email,
+        password: formData.password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-      // await signIn(formData.email, formData.password)
-      await signIn(data)   // pass real user from backend
 
       toast({
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
 
-
-      // OPTIONAL: save token if backend returns it
-      // localStorage.setItem("token", data.token);
-
-      onClose();
+      // onClose();
       return;
     }
 
-    // ============================
-    // ✅ SIGN-UP (REGISTRATION)
-    // ============================
+    // SIGN UP
     if (mode === "signup") {
-      const res = await fetch(getApiUrl("/api/web/auth/register"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullname: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
+      await authStore.register({
+        fullname: formData.name,
+        email: formData.email,
+        password: formData.password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
 
       toast({
         title: "Account created!",
-        description: "Your account has been successfully registered.",
+        description: "You can now sign in.",
       });
 
-      // After signup → go to login mode
       setMode("signin");
     }
-  } catch (error) {
+  } catch (error: any) {
     toast({
       title: "Error",
-      description: error instanceof Error ? error.message : "Something went wrong",
+      description: error?.message ?? "Something went wrong",
       variant: "destructive",
     });
   } finally {
     setIsLoading(false);
   }
 };
+
 
   const handleSocialSignIn = async (provider: "google" | "apple") => {
     setIsLoading(true)
