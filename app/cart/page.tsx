@@ -11,6 +11,7 @@ import { useStore } from "@/stores/StoreProvider";
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth"
 import { toJS } from "mobx"
+// import { useEffect, useState } from "react"
 
 type CartItem = {
     id: string
@@ -30,19 +31,37 @@ function currency(n?: number) {
 }
 
 const CartPage = () => {
+    
 
      const { authStore, cartStore } = useStore()
 
     // const cartFlyers: Flyer[] = useMemo(() => {
     //     return SAMPLE_FLYERS.filter(f => cartStore.cart.includes(f.id))
     // }, [cartStore.cart])
-    const cartFlyers = cartStore.cart
+    
+  // Load cart on mount
+  useEffect(() => {
+    const userId = authStore.user?.id || '2' // fallback for testing
+    if (userId) {
+      cartStore.load(userId)
+    }
+  }, [authStore.user?.id])
 
+const cartFlyers = cartStore.cartItems
+if (cartStore.isLoading) {
+    return (
+      <div className="container mx-auto py-20 text-center">
+        <p>Loading your cart...</p>
+      </div>
+    )
+  }
 
-
-    const subtotal = useMemo(() => cartFlyers.reduce((sum, it) => sum + (it.price || 0), 0), [cartFlyers])
-    const fees = useMemo(() => Math.round(subtotal * 0.05 * 100) / 100, [subtotal]) // 5% estimate
-    const total = useMemo(() => subtotal + fees, [subtotal, fees])
+    // const subtotal = useMemo(() => cartFlyers.reduce((sum, it) => sum + (it.price || 0), 0), [cartFlyers])
+    // const fees = useMemo(() => Math.round(subtotal * 0.05 * 100) / 100, [subtotal]) // 5% estimate
+    // const total = useMemo(() => subtotal + fees, [subtotal, fees])
+    const subtotal = cartFlyers.reduce((sum, f) => sum + (f.price || 0), 0)
+  const fees = Math.round(subtotal * 0.05 * 100) / 100
+  const total = subtotal + fees
 
     const EmptyState = () => (
         <div className="rounded-lg border border-border bg-card p-10 text-center">
@@ -86,6 +105,7 @@ const CartPage = () => {
 
                         <ul className="mt-4 space-y-4">
                             {cartFlyers.map((fly) => (
+                                // alert(JSON.stringify(fly)),
                                 <li key={fly.id} className="rounded-md border border-border p-4 overflow-hidden">
                                     <div className="flex items-start gap-4">
                                         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
@@ -93,7 +113,7 @@ const CartPage = () => {
                                             {/* Use provided image or placeholder */}
                                             <img
                                                 src={
-                                                    fly.imageUrl ||
+                                                    fly.image_url ||
                                                     "/placeholder.svg?height=160&width=160&query=fallback%20flyer%20thumbnail" ||
                                                     "/placeholder.svg"
                                                 }
@@ -104,7 +124,7 @@ const CartPage = () => {
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-start gap-2">
-                                                <h3 className="font-medium truncate">{fly.name || "Untitled Flyer"}</h3>
+                                                <h3 className="font-medium truncate">{fly.event_title || "Untitled Flyer"}</h3>
                                                 {fly.category ? <Badge >{fly.category}</Badge> : null}
                                             </div>
 

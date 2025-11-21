@@ -14,11 +14,12 @@ const FlyerPage = ()=> {
   const { authStore, filterBarStore, flyerFormStore } = useStore()
   const {FlyerId} = useParams()
 
+  // alert(FlyerId);
   useEffect(() => {
     flyerFormStore.fetchFlyer(FlyerId as string)
   }, [FlyerId])
   
-
+// alert(JSON.stringify(flyerFormStore));
   
 
   return (

@@ -62,7 +62,8 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
     query: {
       image: flyer.image_url,
       name: flyer.name,
-      price: flyer.price,
+      // price: flyer.price,
+      price:10,
     },
   }}
 >
