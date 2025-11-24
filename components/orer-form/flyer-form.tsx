@@ -299,79 +299,143 @@ const EventBookingForm = () => {
 
 
   // submit function 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!authStore.user?.id) {
+  //     toast.error("Please sign in to continue with checkout.");
+  //     authStore.handleAuthModal();
+  //     return;
+  //   }
+
+  //   const { valid, errors } = flyerFormStore.validateForm();
+  //   if (!valid) {
+  //     toast.error(errors.join("\n"));
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   flyerFormStore.setUserId(authStore.user.id);
+
+  //   const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+  //     userId: authStore.user.id,
+  //     flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+  //     categoryId:
+  //       (flyer as any)?.category_id ??
+  //       flyer?.category ??
+  //       flyerFormStore.flyerFormDetail.categoryId,
+  //     subtotal: totalDisplay,
+  //     image_url: image || ""
+  //   });
+
+  //   const handleCreate = async () => {
+  //     const res = await fetch(getApiUrl("/api/orders"), {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(apiBody)
+  //     });
+
+  //     const data = await res.json();
+  //     if (data.url) {
+  //       window.location.href = data.url; // Redirect to Stripe Checkout
+  //     } else {
+  //       toast.error("Checkout URL not generated. Please try again.");
+  //       console.error("Stripe session response:", data);
+  //     }
+  //   };
+
+  //   const handleCheckout = async () => {
+  //     const res = await fetch("/api/checkout/session", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         item: {
+  //           ...flyerFormStore.flyerFormDetail,
+  //           subtotal: totalDisplay
+  //         }
+  //       })
+      
+  //     }
+  //   );
+
+  //     const data = await res.json();
+  //     if (data.url) {
+  //       window.location.href = data.url; // Redirect to Stripe Checkout
+  //     } else {
+  //       toast.error("Checkout URL not generated. Please try again.");
+  //       console.error("Stripe session response:", data);
+  //     }
+  //   };
+
+  //   try {
+  //      await handleCheckout();
+  //     await handleCreate();
+     
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!authStore.user?.id) {
+    toast.error("Please sign in to continue with checkout.");
+    authStore.handleAuthModal();
+    return;
+  }
 
-    if (!authStore.user?.id) {
-      toast.error("Please sign in to continue with checkout.");
-      authStore.handleAuthModal();
-      return;
-    }
+  const { valid, errors } = flyerFormStore.validateForm();
+  if (!valid) {
+    toast.error(errors.join("\n"));
+    return;
+  }
 
-    const { valid, errors } = flyerFormStore.validateForm();
-    if (!valid) {
-      toast.error(errors.join("\n"));
-      return;
-    }
+  setIsSubmitting(true);
+  flyerFormStore.setUserId(authStore.user.id);
 
-    setIsSubmitting(true);
-    flyerFormStore.setUserId(authStore.user.id);
+  const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+    userId: authStore.user.id,
+    flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+    categoryId:
+      (flyer as any)?.category_id ??
+      flyer?.category ??
+      flyerFormStore.flyerFormDetail.categoryId,
+    subtotal: totalDisplay,
+    image_url: image || ""
+  });
 
-    const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-      userId: authStore.user.id,
-      flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
-      categoryId:
-        (flyer as any)?.category_id ??
-        flyer?.category ??
-        flyerFormStore.flyerFormDetail.categoryId,
-      subtotal: totalDisplay,
-      image_url: image || ""
+  try {
+    // Only call checkout session here
+    const res = await fetch("/api/checkout/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item: { ...apiBody, subtotal: totalDisplay } })
     });
 
-    const handleCreate = async () => {
-      const res = await fetch(getApiUrl("/api/orders"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiBody)
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe Checkout
-      } else {
-        toast.error("Checkout URL not generated. Please try again.");
-        console.error("Stripe session response:", data);
-      }
-    };
-
-    const handleCheckout = async () => {
-      const res = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          item: {
-            ...flyerFormStore.flyerFormDetail,
-            subtotal: totalDisplay
-          }
-        })
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe Checkout
-      } else {
-        toast.error("Checkout URL not generated. Please try again.");
-        console.error("Stripe session response:", data);
-      }
-    };
-
-    try {
-      await handleCreate();
-      await handleCheckout();
-    } finally {
-      setIsSubmitting(false);
+    // don't call res.json() before checking ok
+    if (!res.ok) {
+      const text = await res.text().catch(() => null);
+      console.error("Checkout session error response:", text);
+      toast.error("Unable to create checkout session. Please try again.");
+      return;
     }
-  };
+
+    const data = await res.json();
+    if (data?.url) {
+      // redirect to Stripe (this will navigate away)
+      window.location.href = data.url;
+      return;
+    } else {
+      console.error("Stripe response missing url", data);
+      toast.error("Checkout URL not generated. Please try again.");
+    }
+  } catch (err) {
+    console.error("Checkout error", err);
+    toast.error("An error occurred during checkout. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   // add to cart function 
   const addtoCart = async (id?: string) => {
