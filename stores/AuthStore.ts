@@ -1,6 +1,44 @@
 // stores/AuthStore.ts
-import { makeAutoObservable, runInAction } from "mobx"
+import { makeAutoObservable, runInAction, autorun } from "mobx"
 import { getApiUrl } from "@/config/api"
+import { Amplify } from 'aws-amplify'
+import { Hub } from '@aws-amplify/core'
+import {
+  signIn as awsSignIn,
+  signUp as awsSignUp,
+  signOut as awsSignOut,
+  getCurrentUser,
+  fetchAuthSession,
+  resetPassword as awsResetPassword,
+  confirmResetPassword as awsConfirmResetPassword,
+  type SignInInput,
+  type SignUpInput,
+  type ResetPasswordInput,
+  type ConfirmResetPasswordInput,
+  type SignInWithRedirectInput,
+  type AuthUser as AWSAuthUser
+} from 'aws-amplify/auth'
+import { awsConfig } from "@/config/aws-config"
+
+// Configure AWS Amplify
+const amplifyConfig = {
+  Auth: {
+    Cognito: {
+      userPoolId: awsConfig.userPoolId,
+      userPoolClientId: awsConfig.userPoolWebClientId,
+      loginWith: {
+        oauth: {
+          ...awsConfig.oauth,
+          redirectSignIn: [awsConfig.oauth.redirectSignIn],
+          redirectSignOut: [awsConfig.oauth.redirectSignOut],
+          scopes: awsConfig.oauth.scopes
+        },
+      },
+    },
+  },
+}
+
+Amplify.configure(amplifyConfig, { ssr: true })
 
 export interface AuthUser {
   id: string
@@ -32,9 +70,53 @@ export class AuthStore {
   loading = false
   error: string | null = null
   authModal = false
+  private authListener: any = null
 
   constructor() {
     makeAutoObservable(this)
+    this.initializeAuthListener()
+  }
+
+  private initializeAuthListener = () => {
+    // Clean up any existing listener
+    if (this.authListener) {
+      this.authListener()
+    }
+
+    // Define the Hub payload type for auth events
+    type AuthHubPayload = {
+      event: 'signedIn' | 'signedOut' | 'signInWithRedirect' | 'signInWithRedirect_failure' | 'tokenRefresh' | 'tokenRefresh_failure' | string;
+      data?: any;
+      message?: string;
+    };
+
+    // Set up new auth state listener with proper typing
+    this.authListener = Hub.listen('auth', async ({ payload }: { payload: AuthHubPayload }) => {
+      if (!payload) return;
+      
+      switch (payload.event) {
+        case 'signedIn':
+          await this.updateUserFromAmplify()
+          break
+        case 'signedOut':
+          this.clearUser()
+          break
+        case 'signInWithRedirect':
+        case 'signInWithRedirect_failure':
+          // Handle redirect sign-in success/failure
+          if (payload.event === 'signInWithRedirect_failure') {
+            console.error('Sign in with redirect failed:', payload.message || 'Unknown error')
+          }
+          break
+        case 'tokenRefresh':
+        case 'tokenRefresh_failure':
+          // Handle token refresh events if needed
+          break
+        default:
+          // Handle any other auth events
+          break
+      }
+    })
   }
 
   hydrate = () => {
@@ -79,12 +161,19 @@ export class AuthStore {
     }
   }
 
-  private setSession = (user: AuthUser, token?: string | null) => {
-    this.user = user
-    if (token !== undefined) {
+  private setSession = (user: AuthUser | null, token: string | null = null) => {
+    runInAction(() => {
+      this.user = user
       this.token = token
-    }
-    this.persistSession()
+      if (user) {
+        this.persistSession()
+      }
+    })
+  }
+
+  private clearUser = () => {
+    this.setSession(null, null)
+    this.clearSessionStorage()
   }
 
   get authHeaders() {
@@ -99,34 +188,24 @@ export class AuthStore {
     this.loading = true
     this.error = null
     try {
-      const response = await fetch(getApiUrl("/api/web/auth/login"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-      if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || "Unable to sign in")
+      const signInInput: SignInInput = {
+        username: email,
+        password,
       }
-
-      const userPayload = data?.user ?? data?.data ?? data
-      const token = data?.token ?? data?.data?.token ?? null
-      const normalized = this.normalizeUser(userPayload)
-
-      runInAction(() => {
-        this.setSession(normalized, token)
-        this.authModal = false
-      })
-
-      return normalized
+      
+      const { isSignedIn } = await awsSignIn(signInInput)
+      
+      if (!isSignedIn) {
+        throw new Error('Additional authentication steps required')
+      }
+      
+      return await this.updateUserFromAmplify()
     } catch (error: any) {
+      const errorMessage = error?.message || "Login failed"
       runInAction(() => {
-        this.error = error?.message || "Login failed"
+        this.error = errorMessage
       })
-      throw error
+      throw new Error(errorMessage)
     } finally {
       runInAction(() => {
         this.loading = false
@@ -134,24 +213,60 @@ export class AuthStore {
     }
   }
 
+  private updateUserFromAmplify = async () => {
+    try {
+      const user = await getCurrentUser()
+      const session = await fetchAuthSession()
+      const token = session.tokens?.idToken?.toString() || ''
+      
+      const normalized = this.normalizeUser({
+        id: user.userId,
+        email: user.signInDetails?.loginId || '',
+        name: user.username || user.userId,
+      })
+
+      runInAction(() => {
+        this.setSession(normalized, token)
+        this.authModal = false
+      })
+
+      return normalized
+    } catch (error) {
+      runInAction(() => {
+        this.clearUser()
+      })
+      return null
+    }
+  }
+
   register = async ({ fullname, email, password }: RegisterPayload) => {
     this.loading = true
     this.error = null
     try {
-      const response = await fetch(getApiUrl("/api/web/auth/register"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const signUpInput: SignUpInput = {
+        username: email,
+        password,
+        options: {
+          userAttributes: {
+            email,
+            name: fullname,
+            // Add any additional attributes as needed
+          },
         },
-        body: JSON.stringify({ fullname, email, password }),
-      })
-
-      const data = await response.json()
-      if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || "Unable to sign up")
       }
-
-      return data
+      
+      const { isSignUpComplete, userId, nextStep } = await awsSignUp(signUpInput)
+      
+      // Return a consistent response format
+      return {
+        success: isSignUpComplete,
+        user: {
+          id: userId,
+          email,
+          name: fullname,
+        },
+        message: 'User registration successful. Please check your email to confirm your account.'
+      }
     } catch (error: any) {
       runInAction(() => {
         this.error = error?.message || "Registration failed"
@@ -164,10 +279,14 @@ export class AuthStore {
     }
   }
 
-  logout = () => {
-    this.user = null
-    this.token = null
-    this.clearSessionStorage()
+  logout = async () => {
+    try {
+      await awsSignOut()
+    } catch (error) {
+      console.error('Error during sign out:', error)
+    } finally {
+      this.clearUser()
+    }
   }
 
   updateProfile = async (payload: Partial<AuthUser>) => {
@@ -176,16 +295,55 @@ export class AuthStore {
     this.setSession(updated, this.token)
   }
 
-  signInWithProvider = async (_provider: "google" | "apple") => {
-    throw new Error("Social sign-in is not available yet.")
+  signInWithProvider = async (provider: "google" | "apple") => {
+    try {
+      // This will redirect to the Cognito Hosted UI
+      const signInInput: SignInWithRedirectInput = {
+        provider: provider.toLowerCase() as 'Google' | 'Apple',
+      }
+      await awsSignIn(signInInput)
+    } catch (error) {
+      console.error('Error signing in with provider:', error)
+      throw new Error(`Failed to sign in with ${provider}`)
+    }
   }
 
-  sendOTP = async (_email: string) => {
-    return Promise.resolve()
+  sendOTP = async (email: string) => {
+    try {
+      const resetPasswordInput: ResetPasswordInput = { username: email }
+      const result = await awsResetPassword(resetPasswordInput)
+      
+      // In v6, resetPassword doesn't return a boolean, so we assume success if no error is thrown
+      return { 
+        success: true, 
+        message: 'Password reset code sent to your email.',
+        nextStep: result.nextStep
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error)
+      throw new Error('Failed to send password reset code. Please try again.')
+    }
   }
 
-  verifyOTP = async (_email: string, _otp: string) => {
-    return Promise.resolve()
+  verifyOTP = async (email: string, code: string, newPassword: string) => {
+    try {
+      const confirmResetPasswordInput: ConfirmResetPasswordInput = {
+        username: email,
+        confirmationCode: code,
+        newPassword,
+      }
+      
+      // In v6, confirmResetPassword doesn't return a boolean
+      await awsConfirmResetPassword(confirmResetPasswordInput)
+      
+      return { 
+        success: true, 
+        message: 'Password reset successful. You can now sign in with your new password.' 
+      }
+    } catch (error) {
+      console.error('Error verifying OTP:', error)
+      throw new Error('Failed to reset password. The code may be invalid or expired.')
+    }
   }
 
   handleAuthModal = () => {
