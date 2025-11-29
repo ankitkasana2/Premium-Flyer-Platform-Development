@@ -12,17 +12,25 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Upload, X, Plus, Calendar, MapPin, Phone, User, Music, Star } from "lucide-react"
+import { Upload, X, Plus, Calendar, MapPin, Phone, User, Music, Star, Loader2 } from "lucide-react"
 import { DELIVERY_OPTIONS, type OrderItem } from "@/lib/orders"
 import type { Flyer } from "@/lib/types"
+import { useOrderSubmission } from "@/hooks/useOrderSubmission"
+import { useCheckout } from "@/hooks/useCheckout"
+import { loadStripe } from "@stripe/stripe-js"
+import type { OrderSubmission } from "@/types/order"
+import { useAuth } from "@/lib/auth"
 
 interface OrderFormProps {
   selectedFlyer: Flyer
-  onSubmit: (orderData: any) => void
   onCancel: () => void
 }
 
-export function OrderForm({ selectedFlyer, onSubmit, onCancel }: OrderFormProps) {
+export function OrderForm({ selectedFlyer, onCancel }: OrderFormProps) {
+  const { handleSubmitOrder, isSubmitting, error: submissionError } = useOrderSubmission()
+  const { processCheckout, isProcessing, error: checkoutError } = useCheckout()
+  const { user } = useAuth()
+  const [orderData, setOrderData] = useState<OrderSubmission | null>(null)
   const [formData, setFormData] = useState({
     presenting: "",
     mainTitle: "",
@@ -98,34 +106,68 @@ export function OrderForm({ selectedFlyer, onSubmit, onCancel }: OrderFormProps)
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const orderItem: OrderItem = {
-      id: Date.now().toString(),
-      flyerId: selectedFlyer.id,
-      flyerName: selectedFlyer.name,
-      flyerImage: selectedFlyer.imageUrl,
-      price: selectedFlyer.price,
-      priceType: selectedFlyer.priceType,
-      hasPhotos: selectedFlyer.hasPhotos,
-      extras,
-    }
-
-    const orderData = {
-      items: [orderItem],
-      orderDetails: {
-        ...formData,
-        uploadedImages,
-        venueLogo: logos.venue,
-        promoterLogo: logos.promoter,
-        sponsorLogo: logos.sponsor,
+    // Prepare order data with real user data
+    const orderSubmission: OrderSubmission = {
+      formData: {
+        presenting: formData.presenting,
+        event_title: formData.mainTitle,
+        event_date: formData.date,
+        address_phone: `${formData.address} | ${formData.phoneNumber}`,
+        flyer_info: formData.eventInformation,
+        custom_notes: formData.customNotes,
+        delivery_time: deliveryOption,
+        email: user?.email || "user@example.com", // Use real user email
+        story_size_version: extras.storySize,
+        custom_flyer: extras.makeDifferent,
+        animated_flyer: extras.animated,
+        instagram_post_size: extras.instagramPost,
+        flyer_is: parseInt(selectedFlyer.id) || 26,
+        category_id: parseInt(selectedFlyer.id) || 9, // Use flyer id as category_id since Flyer has category as string
+        user_id: user?.id || "99ae0488-f0a1-70db-db50-da298fdef51esery", // Use real user ID
+        total_price: calculateTotal(),
+        subtotal: calculateTotal(),
+        image_url: selectedFlyer.imageUrl || "https://images.unsplash.com/photo.jpg",
+        djs: [
+          { name: formData.mainDJ },
+          ...formData.additionalDJs.filter(dj => dj.trim() !== '').map(name => ({ name }))
+        ],
+        host: { name: formData.hostedBy },
+        sponsors: uploadedImages.map((_, index) => ({ name: `Sponsor ${index + 1}` }))
       },
-      deliveryOption,
-      totalAmount: calculateTotal(),
+      files: {
+        venueLogoFile: logos.venue,
+        hostFile: logos.promoter,
+        djFiles: uploadedImages,
+        sponsorFiles: []
+      },
+      userId: user?.id || "99ae0488-f0a1-70db-db50-da298fdef51esery", // Use real user ID
+      userEmail: user?.email || "user@example.com" // Use real user email
     }
 
-    onSubmit(orderData)
+    console.log('Submitting order:', orderSubmission)
+
+    // For testing, submit directly without Stripe
+    try {
+      const result = await handleSubmitOrder(orderSubmission)
+      console.log('Order submission result:', result)
+    } catch (error) {
+      console.error('Order submission error:', error)
+    }
+
+    // TODO: Uncomment this when Stripe is configured
+    // setOrderData(orderSubmission)
+    // 
+    // // Process checkout with Stripe
+    // const result = await processCheckout(orderSubmission)
+    // 
+    // if (!result.success) {
+    //   // If Stripe fails, fall back to direct order submission for testing
+    //   console.error('Stripe checkout failed, submitting order directly')
+    //   await handleSubmitOrder(orderSubmission)
+    // }
   }
 
   return (
@@ -510,13 +552,27 @@ export function OrderForm({ selectedFlyer, onSubmit, onCancel }: OrderFormProps)
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={onCancel} className="flex-1 bg-transparent">
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1 bg-transparent" disabled={isProcessing || isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" className="flex-1">
-            Proceed to Payment
+          <Button type="submit" className="flex-1" disabled={isProcessing || isSubmitting}>
+            {isProcessing || isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Proceed to Payment"
+            )}
           </Button>
         </div>
+        
+        {/* Error Display */}
+        {(checkoutError || submissionError) && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-800 text-sm">{checkoutError || submissionError}</p>
+          </div>
+        )}
       </form>
     </div>
   )

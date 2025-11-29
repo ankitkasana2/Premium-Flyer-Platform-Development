@@ -8,6 +8,7 @@ import { CategoryStore } from "./CategoryStore"
 import { FlyerFormStore } from "./FlyerFormStore"
 import { CartStore } from "./CartStore"
 import { FlyersStore } from "./flyersStore";
+import bannerStore from "./BannerStore" // Import the banner store
 
 export class RootStore {
   flyersStore: FlyersStore = new FlyersStore()
@@ -17,6 +18,7 @@ export class RootStore {
   categoryStore: CategoryStore
   flyerFormStore: FlyerFormStore
   cartStore: CartStore
+  bannerStore = bannerStore // Add banner store
 
   constructor() {
     this.favoritesStore = new FavoritesStore()

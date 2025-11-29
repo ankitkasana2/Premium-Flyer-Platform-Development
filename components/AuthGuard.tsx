@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Amplify } from "aws-amplify";
+import cognitoConfig from "@/lib/aws-config";
 
 const Authenticator = dynamic(
   () => import("@aws-amplify/ui-react").then((m) => m.Authenticator),
@@ -13,15 +14,22 @@ import "@aws-amplify/ui-react/styles.css";
 
 export default function AuthGuard({ children }: any) {
   useEffect(() => {
-    Amplify.configure({
-      Auth: {
-        Cognito: {
-          userPoolId: "ap-southeast-2_1tWWnrkxi",
-          userPoolClientId: "2rrjp79uvfvje1ip5c70c4e1gk",
-          region: "ap-southeast-2",
-        },
-      },
-    });
+    const isHttp = typeof window !== 'undefined' && window.location.protocol === 'http:';
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'server';
+    
+    console.log('=== Amplify Configuration ===');
+    console.log('Protocol:', window.location.protocol);
+    console.log('Hostname:', hostname);
+    console.log('Is HTTP:', isHttp);
+    console.log('Cognito Config:', cognitoConfig);
+    console.log('================================');
+    
+    try {
+      Amplify.configure(cognitoConfig);
+      console.log('✅ Amplify configured successfully');
+    } catch (error) {
+      console.error('❌ Amplify configuration failed:', error);
+    }
   }, []);
 
   return (

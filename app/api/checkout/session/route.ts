@@ -46,6 +46,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(req: NextRequest) {
   try {
     const { item } = await req.json();
+    console.log("Received checkout request:", item);
 
     const origin = req.headers.get("x-forwarded-proto")
       ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("host")}`
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
 
     const itemsArray = Array.isArray(item) ? item : [item];
 
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -70,12 +72,16 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         };
       }),
-      success_url: `${origin}/success`,
+      success_url: `${origin}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
+      metadata: {
+        orderData: JSON.stringify(item) // Store order data for later processing
+      },
     });
 
     if (!session.url) throw new Error("Stripe session URL not created");
 
+    console.log("Stripe session created:", session.id);
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
     console.error("Stripe Error:", err);
