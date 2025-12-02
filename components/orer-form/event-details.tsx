@@ -213,7 +213,7 @@ const EventDetails = observer(() => {
                 {/* Venue Logo Upload */}
                 <div className="col-span-1">
                     <Label htmlFor="logo" className="text-sm mb-2 block font-semibold">
-                        {flyerFormStore.flyer?.hasPhotos ? 'Venue Logo' : 'Venue Text'}
+                        {flyerFormStore.flyer?.hasPhotos ? 'Venue Logo' : 'Venue Text *'}
                     </Label>
                     {flyerFormStore.flyer?.hasPhotos ? <div className="flex flex-col gap-2">
                         <input

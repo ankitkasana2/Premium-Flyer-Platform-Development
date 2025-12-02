@@ -11,6 +11,7 @@ import {
   Upload,
   Music,
   Check,
+  TestTube,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
@@ -100,24 +101,24 @@ const mapToApiRequest = (
   });
 
   return {
-    presenting: data?.eventDetails?.presenting || "",
-    event_title: data?.eventDetails?.mainTitle || "",
+    presenting: data?.eventDetails?.presenting || "Presenting Event", // Ensure non-null default value
+    event_title: data?.eventDetails?.mainTitle || "Event Title", // Ensure non-null default value
 
     event_date: data?.eventDetails?.date
       ? new Date(data.eventDetails.date).toISOString().split("T")[0]
-      : "",
+      : new Date().toISOString().split("T")[0], // Default to today
 
-    flyer_info: data?.eventDetails?.flyerInfo || "",
-    address_phone: data?.eventDetails?.addressAndPhone || "",
+    flyer_info: data?.eventDetails?.flyerInfo || "Event Information", // Ensure non-null default value
+    address_phone: data?.eventDetails?.addressAndPhone || "Address and Phone", // Ensure non-null default value
 
     djs: Array.isArray(data?.djsOrArtists)
       ? data.djsOrArtists.map((dj: any) => ({
-          name: dj?.name || ""
+          name: dj?.name || "DJ Name" // Ensure non-null default value
         }))
-      : [],
+      : [{ name: "DJ Name" }, { name: "DJ Name" }], // Ensure at least 2 DJs
 
     host: {
-      name: data?.host?.name || ""
+      name: data?.host?.name || "Host Name" // Ensure non-null default value
     },
 
     sponsors: [
@@ -131,11 +132,11 @@ const mapToApiRequest = (
     animated_flyer: extras.animatedFlyer ?? false,
     instagram_post_size: extras.instagramPostSize ?? false,
 
-    custom_notes: data?.customNote || "",
-    flyer_id: options.flyerId ?? data?.flyerId ?? "",
-    category_id: options.categoryId ?? data?.categoryId ?? "",
-    user_id: options.userId ?? data?.userId ?? "",
-    delivery_time: data?.deliveryTime ?? "",
+    custom_notes: data?.customNote || "Custom Notes", // Ensure non-null default value
+    flyer_id: options.flyerId ?? data?.flyerId ?? "1", // Default flyer ID
+    category_id: options.categoryId ?? data?.categoryId ?? "1", // Default category ID
+    user_id: options.userId ?? data?.userId ?? "", // User ID should come from auth
+    delivery_time: data?.deliveryTime ?? "24hours", // Default delivery time
     total_price: options.subtotal ?? data?.subtotal ?? 0,
 
     venue_logo: "",
@@ -403,6 +404,24 @@ const EventBookingForm = () => {
     image_url: image || ""
   });
 
+  // Store order data in session storage for post-payment processing
+  const orderData = {
+    ...apiBody,
+    web_user_id: authStore.user.id,
+    email: authStore.user.email || authStore.user.name || 'unknown@example.com',
+    // Store file references
+    hasImage: !!image,
+    hasVenueLogo: !!flyerFormStore.flyerFormDetail.eventDetails.venueLogo,
+    djImages: flyerFormStore.flyerFormDetail.djsOrArtists.map(dj => !!dj.image),
+    hostImage: !!flyerFormStore.flyerFormDetail.host?.image,
+    sponsorImages: Object.values(flyerFormStore.flyerFormDetail.sponsors).map(s => !!s)
+  };
+
+  // Store in session storage
+  console.log('Storing order data in sessionStorage:', orderData);
+  sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+  console.log('SessionStorage after storing:', Object.keys(sessionStorage));
+
   try {
     // Only call checkout session here
     const res = await fetch("/api/checkout/session", {
@@ -436,6 +455,179 @@ const EventBookingForm = () => {
   }
 };
 
+// Test order function
+const handleTestOrder = async () => {
+  console.log('🧪 Test order button clicked!');
+  
+  if (!authStore.user?.id) {
+    console.log('❌ User not logged in');
+    toast.error("Please sign in to create a test order.");
+    authStore.handleAuthModal();
+    return;
+  }
+
+  console.log('✅ User logged in:', authStore.user.id);
+
+  const { valid, errors } = flyerFormStore.validateForm();
+  console.log('📋 Form validation:', { valid, errors });
+  
+  if (!valid) {
+    console.log('❌ Form validation failed:', errors);
+    toast.error(errors.join("\n"));
+    return;
+  }
+
+  console.log('✅ Form validation passed');
+  setIsSubmitting(true);
+  flyerFormStore.setUserId(authStore.user.id);
+
+  try {
+    console.log('🚀 Starting test order creation...');
+    
+    // Create FormData to handle file uploads
+    const formData = new FormData();
+    
+    // Get the form data
+    const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+      userId: authStore.user.id,
+      flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+      categoryId:
+        (flyer as any)?.category_id ??
+        flyer?.category ??
+        flyerFormStore.flyerFormDetail.categoryId,
+      subtotal: totalDisplay,
+      image_url: image || ""
+    });
+
+    console.log('📦 API body prepared:', apiBody);
+
+    // Add individual form fields (matching Postman format)
+    formData.append('presenting', apiBody.presenting);
+    formData.append('event_title', apiBody.event_title);
+    formData.append('event_date', apiBody.event_date);
+    formData.append('flyer_info', apiBody.flyer_info);
+    formData.append('address_phone', apiBody.address_phone);
+    
+    // Add DJs as JSON string
+    formData.append('djs', JSON.stringify(apiBody.djs));
+    
+    // Add host as JSON string
+    formData.append('host', JSON.stringify(apiBody.host));
+    
+    // Add sponsors as JSON string
+    formData.append('sponsors', JSON.stringify(apiBody.sponsors));
+    
+    // Add boolean fields
+    formData.append('story_size_version', apiBody.story_size_version.toString());
+    formData.append('custom_flyer', apiBody.custom_flyer.toString());
+    formData.append('animated_flyer', apiBody.animated_flyer.toString());
+    formData.append('instagram_post_size', apiBody.instagram_post_size.toString());
+    
+    // Add other fields
+    formData.append('delivery_time', apiBody.delivery_time);
+    formData.append('custom_notes', apiBody.custom_notes);
+    formData.append('flyer_is', apiBody.flyer_id);
+    
+    // Add user information
+    console.log('👤 User object:', authStore.user);
+    console.log('📧 User email:', authStore.user.email);
+    console.log('👤 User name:', authStore.user.name);
+    formData.append('web_user_id', authStore.user.id);
+    formData.append('email', authStore.user.email || authStore.user.name || 'unknown@example.com');
+
+    // Add files if they exist
+    if (image && typeof image === 'object' && 'name' in image && 'size' in image) {
+      console.log('🖼️ Adding image file:', image.name);
+      formData.append('image', image as File);
+    }
+
+    // Add venue logo if it exists
+    if (flyerFormStore.flyerFormDetail.eventDetails.venueLogo) {
+      const venueLogo = flyerFormStore.flyerFormDetail.eventDetails.venueLogo;
+      if (typeof venueLogo === 'object' && venueLogo !== null && 'name' in venueLogo && 'size' in venueLogo) {
+        console.log('🏢 Adding venue logo:', venueLogo.name);
+        formData.append('venue_logo', venueLogo as File);
+      }
+    }
+
+    // Add DJ/Artist images
+    flyerFormStore.flyerFormDetail.djsOrArtists.forEach((dj, index) => {
+      if (dj.image && 
+          typeof dj.image === 'object' && 
+          dj.image !== null && 
+          'name' in dj.image && 
+          'size' in dj.image) {
+        console.log(`🎵 Adding DJ ${index} image:`, dj.image.name);
+        formData.append(`dj_${index}`, dj.image as File);
+      }
+    });
+
+    // Add host image
+    if (flyerFormStore.flyerFormDetail.host?.image && 
+        typeof flyerFormStore.flyerFormDetail.host.image === 'object' && 
+        flyerFormStore.flyerFormDetail.host.image !== null && 
+        'name' in flyerFormStore.flyerFormDetail.host.image && 
+        'size' in flyerFormStore.flyerFormDetail.host.image) {
+      console.log('🎤 Adding host image:', flyerFormStore.flyerFormDetail.host.image.name);
+      formData.append('host', flyerFormStore.flyerFormDetail.host.image as File);
+    }
+
+    // Add sponsor images
+    Object.entries(flyerFormStore.flyerFormDetail.sponsors).forEach(([key, sponsor]) => {
+      if (sponsor && 
+          typeof sponsor === 'object' && 
+          sponsor !== null && 
+          'name' in sponsor && 
+          'size' in sponsor) {
+        console.log(`🏷️ Adding sponsor ${key} image:`, sponsor.name);
+        formData.append(`sponsor_${key}`, sponsor as File);
+      }
+    });
+
+    console.log("📤 Submitting test order with FormData:", {
+      dataKeys: Array.from(formData.keys()),
+      hasFiles: formData.has('image') || formData.has('venue_logo'),
+      userId: authStore.user.id
+    });
+
+    console.log('🌐 Calling /api/test-order endpoint...');
+    
+    // Send test order to dedicated test-order API
+    const response = await fetch("/api/test-order", {
+      method: "POST",
+      body: formData,
+    });
+
+    console.log('📬 Response status:', response.status);
+    console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+      console.error("❌ Test order error:", errorData);
+      toast.error(`Test order failed: ${errorData.message || "Please try again."}`);
+      return;
+    }
+
+    const result = await response.json();
+    console.log("✅ Test order success:", result);
+    
+    toast.success("🎉 Test order created successfully!");
+    
+    // Show order details
+    if (result.orderId) {
+      toast.success(`📋 Order ID: ${result.orderId}`);
+    }
+    if (result.data?.id) {
+      toast.success(`📋 Order ID: ${result.data.id}`);
+    }
+
+  } catch (error: any) {
+    console.error("❌ Test order error:", error);
+    toast.error(`Test order failed: ${error.message || "Please try again."}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // add to cart function 
   const addtoCart = async (id?: string) => {
@@ -693,6 +885,27 @@ const EventBookingForm = () => {
           flex items-center justify-between"
           >
             <div className="flex gap-4 justify-center items-center">
+              {/* Test Order Button */}
+              {/* <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-white hover:cursor-pointer transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleTestOrder}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                    Testing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <TestTube className="w-4 h-4" />
+                    Test Order
+                  </span>
+                )}
+              </Button> */}
+
               {/* Submit Button */}
               <Button
                 type="submit"
