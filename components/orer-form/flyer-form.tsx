@@ -33,6 +33,29 @@ import { toast } from "sonner"
 import { useSearchParams, useParams } from "next/navigation";
 import { getApiUrl } from "@/config/api";
 import type { FlyerFormDetails } from "@/stores/FlyerFormStore";
+import { createCartFormData, setUserIdInFormData } from "@/lib/cart";
+
+// Cart fetching function
+const fetchCartByUserId = async (userId: string) => {
+  try {
+    const response = await fetch(`${getApiUrl()}/api/cart/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch cart: ${response.status}`);
+    }
+
+    const cartData = await response.json();
+    return cartData;
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
+};
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -168,9 +191,18 @@ const EventBookingForm = () => {
 
   const { flyerFormStore, cartStore, authStore } = useStore();
 
+  // Auto-load cart data when user is logged in
+  useEffect(() => {
+    if (authStore.user?.id) {
+      console.log('FlyerForm: Auto-loading cart for user:', authStore.user.id)
+      cartStore.load(authStore.user.id)
+    }
+  }, [authStore.user?.id, cartStore])
+
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cartData, setCartData] = useState<any>(null);
   const [djList, setDjList] = useState<
     { name: string; image: string | null }[]
   >([
@@ -214,6 +246,42 @@ const EventBookingForm = () => {
       flyerFormStore.setBasePrice(priceCandidate);
     }
   }, [flyer?.price, priceFromQuery, flyerFormStore]);
+
+  // Fetch cart data when user is logged in
+  useEffect(() => {
+    const loadCartData = async () => {
+      if (authStore.user?.id) {
+        try {
+          const cart = await fetchCartByUserId(authStore.user.id);
+          setCartData(cart);
+          console.log('Cart data loaded:', cart);
+        } catch (error) {
+          console.error('Failed to load cart data:', error);
+          toast.error('Failed to load cart data');
+        }
+      }
+    };
+
+    loadCartData();
+  }, [authStore.user?.id]);
+
+  // Function to manually refresh cart data
+  const refreshCartData = async () => {
+    if (!authStore.user?.id) {
+      toast.error('Please log in to view cart');
+      return;
+    }
+
+    try {
+      const cart = await fetchCartByUserId(authStore.user.id);
+      setCartData(cart);
+      toast.success('Cart data refreshed');
+      console.log('Cart data refreshed:', cart);
+    } catch (error) {
+      console.error('Failed to refresh cart data:', error);
+      toast.error('Failed to refresh cart data');
+    }
+  };
 
 
 
@@ -656,21 +724,32 @@ const handleTestOrder = async () => {
 
     flyerFormStore.setUserId(authStore.user.id);
 
-    const cartPayload = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-      // userId: authStore.user.id,
-      userId: "10",  // temporary user id for testing
+    // Create FormData for cart API - handle venueLogo null case
+    const formDetailForCart = {
+      ...flyerFormStore.flyerFormDetail,
+      eventDetails: {
+        ...flyerFormStore.flyerFormDetail.eventDetails,
+        venueLogo: flyerFormStore.flyerFormDetail.eventDetails.venueLogo || undefined
+      }
+    };
+    
+    const cartFormData = createCartFormData(formDetailForCart, {
       flyerId: resolvedFlyerId,
       categoryId:
         (flyer as any)?.category_id ??
         flyer?.category ??
         flyerFormStore.flyerFormDetail.categoryId,
+      totalPrice: totalDisplay,
       subtotal: totalDisplay,
-      image_url: image || ""// temporary image url for testing
+      deliveryTime: "1 Hour",
+      image_url: image || ""
     });
-    // alert("Cart Payload: " + JSON.stringify(cartPayload));
+
+    // Set the actual user ID
+    const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
 
     try {
-      await cartStore.addToCart(resolvedFlyerId, authStore.user.id, cartPayload);
+      await cartStore.addToCart(finalFormData);
       toast.success("Added to cart. You can keep shopping.");
     } catch (error) {
       console.error("Cart save error", error);
@@ -683,6 +762,62 @@ const handleTestOrder = async () => {
       <div className="grid lg:grid-cols-2 gap-8 p-3 md:p-5 max-w-[1600px] mx-auto">
         {/* Left Side - Event Flyer */}
         <div className="space-y-6">
+          {/* Cart Information Section */}
+          {authStore.user?.id && (
+            <div className="bg-gradient-to-br from-blue-950/20 to-black p-4 rounded-2xl border border-gray-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Your Cart</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cartStore.load(authStore.user!.id)}
+                  className="text-xs"
+                  disabled={cartStore.isLoading}
+                >
+                  {cartStore.isLoading ? 'Loading...' : 'Refresh Cart'}
+                </Button>
+              </div>
+              
+              {!cartStore.isEmpty ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-300">
+                    User ID: {authStore.user.id}
+                  </p>
+                  {cartStore.cartItems && cartStore.cartItems.length > 0 ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-300">
+                        Items ({cartStore.cartItems.length}):
+                      </p>
+                      {cartStore.cartItems.map((item: any, index: number) => (
+                        <div key={item.id || index} className="text-xs text-gray-400 bg-gray-900 p-2 rounded">
+                          <p>{item.event_title || 'Unknown Item'}</p>
+                          <p>Status: {item.status}</p>
+                          <p>Price: {formatCurrency(item.total_price || 0)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">Your cart is empty</p>
+                  )}
+                  
+                  {cartStore.totalPrice > 0 && (
+                    <p className="text-sm font-bold text-primary">
+                      Total: {formatCurrency(cartStore.totalPrice)}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cartStore.isLoading ? (
+                    <p className="text-sm text-gray-400">Loading cart data...</p>
+                  ) : (
+                    <p className="text-sm text-gray-400">Your cart is empty</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden  glow-effect transition-all duration-300 ">
 
 

@@ -37,7 +37,7 @@
 // }
 
 
-
+export const dynamic = "force-dynamic";
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -75,7 +75,10 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
       metadata: {
-        orderData: JSON.stringify(item) // Store order data for later processing
+        userId: item?.user_id || '',
+        flyerId: item?.flyer_id || '',
+        totalPrice: item?.total_price || '0',
+        eventTitle: item?.event_title || 'Event'
       },
     });
 
