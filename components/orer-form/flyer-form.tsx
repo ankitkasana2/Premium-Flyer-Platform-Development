@@ -33,6 +33,29 @@ import { toast } from "sonner"
 import { useSearchParams, useParams } from "next/navigation";
 import { getApiUrl } from "@/config/api";
 import type { FlyerFormDetails } from "@/stores/FlyerFormStore";
+import { createCartFormData, setUserIdInFormData } from "@/lib/cart";
+
+// Cart fetching function
+const fetchCartByUserId = async (userId: string) => {
+  try {
+    const response = await fetch(`${getApiUrl()}/api/cart/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch cart: ${response.status}`);
+    }
+
+    const cartData = await response.json();
+    return cartData;
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
+};
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -100,25 +123,26 @@ const mapToApiRequest = (
     name: file?.name ?? ""
   });
 
+  // Use REAL form data without fallbacks - only use fallbacks if data is truly empty
   return {
-    presenting: data?.eventDetails?.presenting || "Presenting Event", // Ensure non-null default value
-    event_title: data?.eventDetails?.mainTitle || "Event Title", // Ensure non-null default value
+    presenting: data?.eventDetails?.presenting || "",
+    event_title: data?.eventDetails?.mainTitle || "",
 
     event_date: data?.eventDetails?.date
       ? new Date(data.eventDetails.date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0], // Default to today
+      : "",
 
-    flyer_info: data?.eventDetails?.flyerInfo || "Event Information", // Ensure non-null default value
-    address_phone: data?.eventDetails?.addressAndPhone || "Address and Phone", // Ensure non-null default value
+    flyer_info: data?.eventDetails?.flyerInfo || "",
+    address_phone: data?.eventDetails?.addressAndPhone || "",
 
     djs: Array.isArray(data?.djsOrArtists)
       ? data.djsOrArtists.map((dj: any) => ({
-          name: dj?.name || "DJ Name" // Ensure non-null default value
+          name: dj?.name || ""
         }))
-      : [{ name: "DJ Name" }, { name: "DJ Name" }], // Ensure at least 2 DJs
+      : [],
 
     host: {
-      name: data?.host?.name || "Host Name" // Ensure non-null default value
+      name: data?.host?.name || ""
     },
 
     sponsors: [
@@ -132,22 +156,14 @@ const mapToApiRequest = (
     animated_flyer: extras.animatedFlyer ?? false,
     instagram_post_size: extras.instagramPostSize ?? false,
 
-    custom_notes: data?.customNote || "Custom Notes", // Ensure non-null default value
-    flyer_id: options.flyerId ?? data?.flyerId ?? "1", // Default flyer ID
-    category_id: options.categoryId ?? data?.categoryId ?? "1", // Default category ID
-    user_id: options.userId ?? data?.userId ?? "", // User ID should come from auth
-    delivery_time: data?.deliveryTime ?? "24hours", // Default delivery time
-    total_price: options.subtotal ?? data?.subtotal ?? 0,
-
-    venue_logo: "",
-    host_file: "",
-    dj_0: "",
-    dj_1: "",
-    sponsor_0: "",
-    sponsor_1: "",
-    sponsor_2: "",
-    // ✅ ADD THIS FIELD
-  image_url: options.image_url ?? "",
+    custom_notes: data?.customNote || "",
+    flyer_id: options.flyerId ?? data?.flyerId ?? "",
+    category_id: options.categoryId ?? data?.categoryId ?? "",
+    user_id: options.userId ?? data?.userId ?? "",
+    subtotal: options.subtotal ?? 0,
+    image_url: options.image_url || "",
+    delivery_time: data?.deliveryTime || "24 hours",
+    total_price: options.subtotal ?? 0
   };
 };
 
@@ -168,9 +184,18 @@ const EventBookingForm = () => {
 
   const { flyerFormStore, cartStore, authStore } = useStore();
 
+  // Auto-load cart data when user is logged in
+  useEffect(() => {
+    if (authStore.user?.id) {
+      console.log('FlyerForm: Auto-loading cart for user:', authStore.user.id)
+      cartStore.load(authStore.user.id)
+    }
+  }, [authStore.user?.id, cartStore])
+
   const [flyer, setFlyer] = useState<Flyer | undefined>(undefined);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cartData, setCartData] = useState<any>(null);
   const [djList, setDjList] = useState<
     { name: string; image: string | null }[]
   >([
@@ -214,6 +239,42 @@ const EventBookingForm = () => {
       flyerFormStore.setBasePrice(priceCandidate);
     }
   }, [flyer?.price, priceFromQuery, flyerFormStore]);
+
+  // Fetch cart data when user is logged in
+  useEffect(() => {
+    const loadCartData = async () => {
+      if (authStore.user?.id) {
+        try {
+          const cart = await fetchCartByUserId(authStore.user.id);
+          setCartData(cart);
+          console.log('Cart data loaded:', cart);
+        } catch (error) {
+          console.error('Failed to load cart data:', error);
+          toast.error('Failed to load cart data');
+        }
+      }
+    };
+
+    loadCartData();
+  }, [authStore.user?.id]);
+
+  // Function to manually refresh cart data
+  const refreshCartData = async () => {
+    if (!authStore.user?.id) {
+      toast.error('Please log in to view cart');
+      return;
+    }
+
+    try {
+      const cart = await fetchCartByUserId(authStore.user.id);
+      setCartData(cart);
+      toast.success('Cart data refreshed');
+      console.log('Cart data refreshed:', cart);
+    } catch (error) {
+      console.error('Failed to refresh cart data:', error);
+      toast.error('Failed to refresh cart data');
+    }
+  };
 
 
 
@@ -393,6 +454,13 @@ const EventBookingForm = () => {
   setIsSubmitting(true);
   flyerFormStore.setUserId(authStore.user.id);
 
+  // Debug: Log the actual form store data
+  console.log('🔍 DEBUG - Raw form store data:', toJS(flyerFormStore.flyerFormDetail));
+  console.log('🔍 DEBUG - Event details:', toJS(flyerFormStore.flyerFormDetail.eventDetails));
+  console.log('🔍 DEBUG - DJs:', toJS(flyerFormStore.flyerFormDetail.djsOrArtists));
+  console.log('🔍 DEBUG - Host:', toJS(flyerFormStore.flyerFormDetail.host));
+  console.log('🔍 DEBUG - Sponsors:', toJS(flyerFormStore.flyerFormDetail.sponsors));
+
   const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
     userId: authStore.user.id,
     flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
@@ -402,6 +470,17 @@ const EventBookingForm = () => {
       flyerFormStore.flyerFormDetail.categoryId,
     subtotal: totalDisplay,
     image_url: image || ""
+  });
+
+  console.log('🔍 REAL form data being stored:', {
+    event_title: apiBody.event_title,
+    presenting: apiBody.presenting,
+    djs: apiBody.djs,
+    host: apiBody.host,
+    sponsors: apiBody.sponsors,
+    delivery_time: apiBody.delivery_time,
+    custom_notes: apiBody.custom_notes,
+    total_price: apiBody.total_price
   });
 
   // Store order data in session storage for post-payment processing
@@ -423,14 +502,14 @@ const EventBookingForm = () => {
   console.log('SessionStorage after storing:', Object.keys(sessionStorage));
 
   try {
-    // Only call checkout session here
+    // First call checkout session to get the Stripe session ID
+    console.log('Creating Stripe checkout session...');
     const res = await fetch("/api/checkout/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ item: { ...apiBody, subtotal: totalDisplay } })
     });
 
-    // don't call res.json() before checking ok
     if (!res.ok) {
       const text = await res.text().catch(() => null);
       console.error("Checkout session error response:", text);
@@ -439,14 +518,51 @@ const EventBookingForm = () => {
     }
 
     const data = await res.json();
-    if (data?.url) {
-      // redirect to Stripe (this will navigate away)
-      window.location.href = data.url;
-      return;
-    } else {
+    if (!data?.url) {
       console.error("Stripe response missing url", data);
       toast.error("Checkout URL not generated. Please try again.");
+      return;
     }
+
+    // Store order data BEFORE redirecting to Stripe
+    console.log('Storing order data before checkout...');
+    
+    // Generate a temporary session ID for storage
+    const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const storeResponse = await fetch("/api/checkout/store-order-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        sessionId: tempSessionId,
+        orderData: {
+          ...apiBody,
+          web_user_id: authStore.user.id,
+          email: authStore.user.email || authStore.user.name || 'unknown@example.com',
+          djs: flyerFormStore.flyerFormDetail.djsOrArtists,
+          host: flyerFormStore.flyerFormDetail.host,
+          sponsors: flyerFormStore.flyerFormDetail.sponsors,
+          extras: flyerFormStore.flyerFormDetail.extras,
+          deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime,
+          customNote: flyerFormStore.flyerFormDetail.customNote
+        }
+      })
+    });
+
+    if (!storeResponse.ok) {
+      console.error("Failed to store order data");
+      toast.error("Unable to prepare order. Please try again.");
+      return;
+    }
+
+    // Store temp session ID in sessionStorage for retrieval after payment
+    sessionStorage.setItem('tempSessionId', tempSessionId);
+    console.log('Stored temp session ID:', tempSessionId);
+
+    // redirect to Stripe (this will navigate away)
+    window.location.href = data.url;
+    return;
+
   } catch (err) {
     console.error("Checkout error", err);
     toast.error("An error occurred during checkout. Please try again.");
@@ -656,21 +772,32 @@ const handleTestOrder = async () => {
 
     flyerFormStore.setUserId(authStore.user.id);
 
-    const cartPayload = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-      // userId: authStore.user.id,
-      userId: "10",  // temporary user id for testing
+    // Create FormData for cart API - handle venueLogo null case
+    const formDetailForCart = {
+      ...flyerFormStore.flyerFormDetail,
+      eventDetails: {
+        ...flyerFormStore.flyerFormDetail.eventDetails,
+        venueLogo: flyerFormStore.flyerFormDetail.eventDetails.venueLogo || undefined
+      }
+    };
+    
+    const cartFormData = createCartFormData(formDetailForCart, {
       flyerId: resolvedFlyerId,
       categoryId:
         (flyer as any)?.category_id ??
         flyer?.category ??
         flyerFormStore.flyerFormDetail.categoryId,
+      totalPrice: totalDisplay,
       subtotal: totalDisplay,
-      image_url: image || ""// temporary image url for testing
+      deliveryTime: "1 Hour",
+      image_url: image || ""
     });
-    // alert("Cart Payload: " + JSON.stringify(cartPayload));
+
+    // Set the actual user ID
+    const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
 
     try {
-      await cartStore.addToCart(resolvedFlyerId, authStore.user.id, cartPayload);
+      await cartStore.addToCart(finalFormData);
       toast.success("Added to cart. You can keep shopping.");
     } catch (error) {
       console.error("Cart save error", error);
@@ -683,6 +810,62 @@ const handleTestOrder = async () => {
       <div className="grid lg:grid-cols-2 gap-8 p-3 md:p-5 max-w-[1600px] mx-auto">
         {/* Left Side - Event Flyer */}
         <div className="space-y-6">
+          {/* Cart Information Section */}
+          {authStore.user?.id && (
+            <div className="bg-gradient-to-br from-blue-950/20 to-black p-4 rounded-2xl border border-gray-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Your Cart</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cartStore.load(authStore.user!.id)}
+                  className="text-xs"
+                  disabled={cartStore.isLoading}
+                >
+                  {cartStore.isLoading ? 'Loading...' : 'Refresh Cart'}
+                </Button>
+              </div>
+              
+              {!cartStore.isEmpty ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-300">
+                    User ID: {authStore.user.id}
+                  </p>
+                  {cartStore.cartItems && cartStore.cartItems.length > 0 ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-300">
+                        Items ({cartStore.cartItems.length}):
+                      </p>
+                      {cartStore.cartItems.map((item: any, index: number) => (
+                        <div key={item.id || index} className="text-xs text-gray-400 bg-gray-900 p-2 rounded">
+                          <p>{item.event_title || 'Unknown Item'}</p>
+                          <p>Status: {item.status}</p>
+                          <p>Price: {formatCurrency(item.total_price || 0)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">Your cart is empty</p>
+                  )}
+                  
+                  {cartStore.totalPrice > 0 && (
+                    <p className="text-sm font-bold text-primary">
+                      Total: {formatCurrency(cartStore.totalPrice)}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cartStore.isLoading ? (
+                    <p className="text-sm text-gray-400">Loading cart data...</p>
+                  ) : (
+                    <p className="text-sm text-gray-400">Your cart is empty</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden  glow-effect transition-all duration-300 ">
 
 

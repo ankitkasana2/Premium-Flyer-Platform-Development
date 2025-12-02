@@ -9,21 +9,38 @@ import { Search, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useStore } from "@/stores/StoreProvider";
-import { CartStore } from "@/stores/CartStore"
+import { observer } from "mobx-react-lite";
 // const cartCount = useCartStore((state) => state.items.length)
 // assume your store exposes something like: cartStore.items
 
 // const cartCount =7;
 
-export function Header() {
+export const Header = observer(() => {
   const { authStore, cartStore } = useStore()
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // const cart = CartStore((s) => s.cart);
 
 useEffect(() => {
-      cartStore.load('2')
-
-  }, ['2', cartStore])
+    // Load cart for logged-in user only
+    if (authStore.user?.id) {
+      console.log('Header: Loading cart for user:', authStore.user.id)
+      cartStore.load(authStore.user.id)
+    }
+    
+    // Also try to load cart if user data becomes available later
+    const checkUser = setInterval(() => {
+      if (authStore.user?.id) {
+        console.log('Header: Retrying cart load for user:', authStore.user.id)
+        cartStore.load(authStore.user.id)
+        clearInterval(checkUser)
+      }
+    }, 1000)
+    
+    // Cleanup interval after 10 seconds
+    setTimeout(() => clearInterval(checkUser), 10000)
+    
+    return () => clearInterval(checkUser)
+  }, [authStore.user?.id, cartStore])
 
 // const cartCount = cartStore.count;
 
@@ -99,6 +116,13 @@ useEffect(() => {
           {cartStore.count}
         </span>
       )}
+      
+      {/* Show loading indicator when cart is being loaded */}
+      {cartStore.isLoading && (
+        <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+          ...
+        </span>
+      )}
 </div>
             <div className="flex items-center">
               <UserMenu />
@@ -127,4 +151,4 @@ useEffect(() => {
       </div>
     </header>
   )
-}
+})

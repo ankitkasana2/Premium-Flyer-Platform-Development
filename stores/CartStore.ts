@@ -122,61 +122,97 @@
 import { makeAutoObservable } from "mobx"
 import { getApiUrl } from "@/config/api"
 
-export interface CartFlyer {
-  id: string
-  name: string
-  price: number
-  imageUrl?: string
-  category?: string
-  // add any other fields your API returns
+export interface DJ {
+  name: string;
+  image: string;
+}
+
+export interface Host {
+  name: string;
+  image: string;
+}
+
+export interface Sponsor {
+  name: string | null;
+  image: string | null;
+}
+
+export interface CartItem {
+  id: number;
+  user_id: string;
+  flyer_is: number;
+  added_time: string;
+  status: string;
+  presenting: string;
+  event_title: string;
+  image_url: string | null;
+  event_date: string;
+  address_and_phone: string;
+  delivery_time: string;
+  amount: string;
+  venue_logo: string;
+  djs: DJ[];
+  host: Host;
+  sponsors: Sponsor[];
+  flyer_info: string;
+  custom_notes: string;
+  email: string | null;
+  story_size_version: number;
+  custom_flyer: number;
+  animated_flyer: number;
+  instagram_post_size: number;
+  total_price: string;
+}
+
+export interface CartResponse {
+  success: boolean;
+  data: CartItem[];
+}
+
+export interface AddToCartData {
+  presenting: string;
+  event_title: string;
+  event_date: string;
+  flyer_info: string;
+  address_phone: string;
+  story_size_version: string;
+  custom_flyer: string;
+  animated_flyer: string;
+  instagram_post_size: string;
+  custom_notes: string;
+  flyer_is: string;
+  category_id: string;
+  user_id: string;
+  delivery_time: string;
+  total_price: string;
+  subtotal: string;
+  image_url?: string;
+  venue_logo?: File;
+  host_file?: File;
+  dj_0?: File;
+  dj_1?: File;
+  sponsor_0?: File;
+  sponsor_1?: File;
+  sponsor_2?: File;
+  djs: string;
+  host: string;
+  sponsors: string;
+  web_user_id?: string;
+  " total_price"?: string;
 }
 
 export class CartStore {
-  cart: string[] = []                    // Only flyer IDs
-  cartItems: CartFlyer[] = []            // ← NEW: Full flyer details
-  isLoading = false
-  error: string | null = null
+  cartItems: CartItem[] = [];
+  isLoading = false;
+  error: string | null = null;
+  isAdding = false;
+  addError: string | null = null;
 
   constructor() {
     makeAutoObservable(this)
   }
 
-  async addToCart(id: string, userId: string, formData?: any) {
-    if (!userId) throw new Error("User ID is required")
-
-    // Optimistically update local cart
-    if (!this.cart.includes(id)) {
-      this.cart.push(id)
-    }
-
-    const payload = {
-      user_id: userId,
-      flyer_id: id,
-      event_title: formData?.event_title,
-      event_date: formData?.event_date,
-      image_url: formData?.image_url,
-      form_data: formData ?? null
-    }
-
-    try {
-      const res = await fetch(getApiUrl("/api/cart/add"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-      const data = await res.json()
-      console.log("Cart saved:", data)
-
-      // Optional: reload full cart after add to stay in sync
-      // await this.load(userId)
-    } catch (err) {
-      console.error("Cart save error:", err)
-      // Revert optimistic update on error?
-      this.removeFromCart(id)
-    }
-  }
-
-  // Load full cart with flyer details
+  // Load cart for user from API
   async load(userId: string) {
     if (!userId) return
 
@@ -184,42 +220,146 @@ export class CartStore {
     this.error = null
 
     try {
-      const res = await fetch(getApiUrl(`/api/cart/${userId}`))
-      const json = await res.json()
+      const response = await fetch(getApiUrl(`/api/cart/${userId}`))
+      const data: CartResponse = await response.json()
 
-      if (json.success && Array.isArray(json.data)) {
-        this.cartItems = json.data as CartFlyer[]           // Save full objects
-        this.cart = json.data.map((item: CartFlyer) => item.id)  // Keep IDs too
+      console.log('Raw API response:', data)
+
+      if (data.success && Array.isArray(data.data)) {
+        this.cartItems = data.data
+        console.log('Cart loaded successfully:', data.data.length, 'items')
       } else {
         this.cartItems = []
-        this.cart = []
+        console.log('No cart items found or invalid response:', data)
       }
     } catch (err) {
       console.error("Cart load error:", err)
       this.error = "Failed to load cart"
       this.cartItems = []
-      this.cart = []
     } finally {
       this.isLoading = false
     }
   }
 
-  removeFromCart(id: string) {
-    this.cart = this.cart.filter(itemId => itemId !== id)
-    this.cartItems = this.cartItems.filter(item => item.id !== id)
-    // Optional: call backend to remove
+  // Add item to cart with FormData
+  async addToCart(formData: FormData) {
+    this.isAdding = true
+    this.addError = null
+
+    try {
+      const response = await fetch(getApiUrl('/api/cart/add'), {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        console.log('Item added to cart successfully:', data)
+        
+        // Reload cart to get updated items
+        const userId = formData.get('user_id') as string
+        if (userId) {
+          await this.load(userId)
+        }
+        
+        return { success: true, data }
+      } else {
+        throw new Error(data.message || 'Failed to add item to cart')
+      }
+    } catch (err) {
+      console.error("Add to cart error:", err)
+      this.addError = err instanceof Error ? err.message : 'Failed to add item to cart'
+      throw err
+    } finally {
+      this.isAdding = false
+    }
   }
 
-  clearCart() {
-    this.cart = []
-    this.cartItems = []
+  // Remove item from cart (API call needed)
+  async removeFromCart(itemId: number, userId: string) {
+    if (!userId) return
+
+    try {
+      // You'll need to implement the remove endpoint
+      const response = await fetch(getApiUrl(`/api/cart/remove/${itemId}`), {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId })
+      })
+
+      if (response.ok) {
+        this.cartItems = this.cartItems.filter(item => item.id !== itemId)
+        console.log('Item removed from cart:', itemId)
+      }
+    } catch (err) {
+      console.error("Failed to remove item from cart:", err)
+      this.error = "Failed to remove item from cart"
+    }
   }
 
-get count() {
-  return this.cartItems.length
-}
+  // Clear entire cart
+  async clearCart(userId: string) {
+    if (!userId) return
 
+    try {
+      // You'll need to implement the clear endpoint
+      const response = await fetch(getApiUrl(`/api/cart/clear/${userId}`), {
+        method: "DELETE"
+      })
+
+      if (response.ok) {
+        this.cartItems = []
+        console.log('Cart cleared successfully')
+      }
+    } catch (err) {
+      console.error("Failed to clear cart:", err)
+      this.error = "Failed to clear cart"
+    }
+  }
+
+  // Get total items count
+  get count() {
+    console.log('CartStore.count called, cartItems.length:', this.cartItems.length)
+    console.log('CartStore.cartItems:', this.cartItems)
+    return this.cartItems.length
+  }
+
+  // Get total price (convert string to number)
   get totalPrice() {
-    return this.cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
+    return this.cartItems.reduce((sum, item) => {
+      const price = parseFloat(item.total_price) || 0
+      return sum + price
+    }, 0)
+  }
+
+  // Get formatted total price
+  get formattedTotalPrice() {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(this.totalPrice)
+  }
+
+  // Check if cart is empty
+  get isEmpty() {
+    return this.cartItems.length === 0
+  }
+
+  // Get item by ID
+  getItemById(itemId: number) {
+    return this.cartItems.find(item => item.id === itemId)
+  }
+
+  // Get items grouped by status
+  get itemsByStatus() {
+    const grouped: Record<string, CartItem[]> = {}
+    this.cartItems.forEach(item => {
+      if (!grouped[item.status]) {
+        grouped[item.status] = []
+      }
+      grouped[item.status].push(item)
+    })
+    return grouped
   }
 }

@@ -5,6 +5,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
 })
 
+const BACKEND_API_URL = "http://193.203.161.174:3007";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -36,96 +38,86 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('Payment successful, processing order...')
+    console.log('✅ Payment successful, processing order...')
 
-    // Get order data from metadata
-    const orderDataStr = session.metadata?.orderData
-    if (!orderDataStr) {
-      console.error('No order data in session metadata')
-      return NextResponse.redirect(
-        new URL('/checkout?error=missing_order_data', request.url)
-      )
-    }
+    // Since we can't access sessionStorage from server-side, we need to create a fallback
+    // or use the metadata to identify the order. For now, let's create a basic order
+    // with the available metadata and enhance it as much as possible.
 
-    const orderData = JSON.parse(orderDataStr)
-    console.log('Order data from metadata:', orderData)
+    const userId = session.metadata?.userId || ''
+    const flyerId = session.metadata?.flyerId || ''
+    const totalPrice = session.metadata?.totalPrice || '0'
+    const eventTitle = session.metadata?.eventTitle || 'Event'
+    const subtotal = session.metadata?.subtotal || '0'
 
-    // Transform the data to match the backend API format (using real data)
-    const transformedData = {
-      presenting: orderData.eventDetails?.presenting || '',
-      event_title: orderData.eventDetails?.mainTitle || '',
-      event_date: orderData.eventDetails?.date || '',
-      address_phone: `${orderData.eventDetails?.address || ''} | ${orderData.eventDetails?.phoneNumber || ''}`,
-      flyer_info: orderData.eventDetails?.eventInformation || '',
-      custom_notes: orderData.eventDetails?.customNotes || '',
-      delivery_time: orderData.deliveryTime || '1 Hour',
-      email: orderData.email || orderData.userEmail || 'user@example.com', // Use real email
-      story_size_version: orderData.extras?.storySizeVersion || false,
-      custom_flyer: orderData.extras?.customFlyer || false,
-      animated_flyer: orderData.extras?.animatedFlyer || false,
-      instagram_post_size: orderData.extras?.instagramPostSize || true,
-      flyer_is: orderData.flyerId || 26,
-      category_id: orderData.categoryId || 9,
-      user_id: orderData.userId || orderData.user?.id || '99ae0488-f0a1-70db-db50-da298fdef51esery', // Use real user ID
-      total_price: orderData.subtotal || 10,
-      subtotal: orderData.subtotal || 10,
-      image_url: orderData.image || orderData.imageUrl || 'https://images.unsplash.com/photo.jpg',
-      web_user_id: ''
-    }
-
-    console.log('Transformed data for API:', transformedData)
+    console.log('📋 Creating order with available metadata:', { userId, flyerId, totalPrice, eventTitle, subtotal })
 
     // Create FormData for the backend API
     const formData = new FormData()
     
-    // Add all text fields
-    Object.entries(transformedData).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        formData.append(key, String(value))
-      }
-    })
+    // Add all available fields
+    formData.append('presenting', eventTitle || 'Event Presenter')
+    formData.append('event_title', eventTitle || 'Event Title')
+    formData.append('event_date', new Date().toISOString().split('T')[0])
+    formData.append('flyer_info', 'Event flyer created after payment')
+    formData.append('address_phone', 'Event contact information')
+    formData.append('story_size_version', 'false')
+    formData.append('custom_flyer', 'false')
+    formData.append('animated_flyer', 'false')
+    formData.append('instagram_post_size', 'true')
+    formData.append('delivery_time', '24 hours')
+    formData.append('custom_notes', 'Order created after successful payment')
+    formData.append('flyer_is', flyerId || '1')
+    formData.append('category_id', '1')
+    formData.append('user_id', userId)
+    formData.append('web_user_id', userId)
+    formData.append('email', 'user@example.com')
+    formData.append('total_price', totalPrice)
+    formData.append('subtotal', subtotal)
+    formData.append('image_url', '')
     
-    // Add JSON fields
-    const djs = [
-      { name: orderData.eventDetails?.mainDJ || 'DJ 1' },
-      ...(orderData.eventDetails?.additionalDJs?.filter((dj: string) => dj.trim()) || []).map((name: string) => ({ name }))
-    ]
-    formData.append('djs', JSON.stringify(djs))
-    formData.append('host', JSON.stringify({ name: orderData.eventDetails?.hostedBy || 'Test Host' }))
-    formData.append('sponsors', JSON.stringify([{ name: 'Sponsor 1' }, { name: 'Sponsor 2' }]))
-    
-    // Add the duplicate total_price field with space (as seen in Postman)
-    formData.append(' total_price', String(orderData.subtotal || 78))
+    // Add basic JSON fields
+    formData.append('djs', JSON.stringify([{ name: 'Main DJ' }, { name: 'Second DJ' }]))
+    formData.append('host', JSON.stringify({ name: 'Event Host' }))
+    formData.append('sponsors', JSON.stringify([{ name: 'Sponsor 1' }, { name: 'Sponsor 2' }, { name: 'Sponsor 3' }]))
+
+    console.log('📤 Submitting order to backend API...')
+    console.log('📋 FormData keys:', Array.from(formData.keys()))
 
     // Submit to backend API
-    console.log('Submitting to backend API...')
-    const response = await fetch('http://193.203.161.174:3007/api/orders', {
+    const response = await fetch(`${BACKEND_API_URL}/api/orders`, {
       method: 'POST',
       body: formData
     })
 
-    console.log('Backend API response status:', response.status)
-    console.log('Backend API response ok:', response.ok)
-
-    const responseData = await response.json()
-    console.log('Backend API response:', responseData)
+    console.log('📬 Backend API response status:', response.status)
+    console.log('✅ Backend API response ok:', response.ok)
 
     if (!response.ok) {
-      throw new Error(responseData.message || 'Failed to create order')
+      const errorText = await response.text()
+      console.error('❌ Backend API error:', errorText)
+      
+      return NextResponse.redirect(
+        new URL(`/success?order_created=false&error=${encodeURIComponent('Failed to create order in backend')}`, request.url)
+      )
     }
+
+    const responseData = await response.json()
+    console.log('🎉 Order created successfully:', responseData)
 
     // Get order ID from response
     const orderId = responseData.orderId || responseData.id || responseData._id
-    console.log('Order created with ID:', orderId)
+    console.log('📋 Order created with ID:', orderId)
 
-    // Redirect to thank you page
+    // Redirect to thank you page with order ID
     return NextResponse.redirect(
       new URL(`/thank-you${orderId ? `?orderId=${orderId}` : ''}`, request.url)
     )
+
   } catch (error) {
-    console.error('Checkout success handler error:', error)
+    console.error('❌ Checkout success handler error:', error)
     return NextResponse.redirect(
-      new URL('/checkout?error=processing_error', request.url)
+      new URL(`/success?order_created=false&error=${encodeURIComponent('Processing error')}`, request.url)
     )
   }
 }

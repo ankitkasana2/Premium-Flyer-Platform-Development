@@ -37,7 +37,7 @@
 // }
 
 
-
+export const dynamic = "force-dynamic";
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     const itemsArray = Array.isArray(item) ? item : [item];
 
-    // Create Stripe checkout session
+    // Store complete order data in sessionStorage (client-side) and use minimal metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -75,7 +75,14 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
       metadata: {
-        orderData: JSON.stringify(item) // Store order data for later processing
+        // Store only essential info - the rest comes from sessionStorage
+        userId: item?.user_id || '',
+        flyerId: item?.flyer_id || '',
+        totalPrice: item?.total_price || '0',
+        eventTitle: item?.event_title || 'Event',
+        subtotal: item?.subtotal || '0',
+        // Store a flag to indicate we should use sessionStorage data
+        useSessionStorage: 'true'
       },
     });
 

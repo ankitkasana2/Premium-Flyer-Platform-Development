@@ -1,37 +1,48 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export default function SuccessPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isCreatingOrder, setIsCreatingOrder] = useState(false)
   const [orderCreated, setOrderCreated] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('Success page loaded - creating order after payment');
+    console.log('🚀 Success page loaded - creating order after payment');
     
+    // Get session parameters
+    const sessionId = searchParams.get('session_id');
+    console.log('📋 Session ID from URL:', sessionId);
+    
+    if (!sessionId) {
+      console.log('❌ No session_id found in URL');
+      setError('No session ID found. Please contact support.')
+      return
+    }
+
     // Check if order was already processed in this session
     const orderProcessed = sessionStorage.getItem('orderProcessed')
-    console.log('Order processed status:', orderProcessed);
+    console.log('📋 Order processed status:', orderProcessed);
     
     if (orderProcessed === 'true') {
-      console.log('Order already processed, skipping');
+      console.log('✅ Order already processed, skipping');
       setOrderCreated(true)
       return
     }
 
     // Prevent multiple executions
     if (orderCreated || isCreatingOrder) {
-      console.log('Already creating order, skipping');
+      console.log('⏳ Already creating order, skipping');
       return
     }
 
     const createOrderAfterPayment = async () => {
-      console.log('Starting order creation after payment...');
+      console.log('🚀 Starting order creation after payment...');
       
       // Mark as processing immediately
       sessionStorage.setItem('orderProcessed', 'processing')
@@ -39,43 +50,74 @@ export default function SuccessPage() {
       setError(null)
 
       try {
-        // Get pending order data from session storage
-        const pendingOrderData = sessionStorage.getItem('pendingOrder')
-        console.log('Pending order data found:', !!pendingOrderData);
-        console.log('SessionStorage keys:', Object.keys(sessionStorage));
+        // First try to get stored order data using temp session ID
+        const tempSessionId = sessionStorage.getItem('tempSessionId')
+        console.log('🔑 Temp session ID from storage:', tempSessionId);
         
-        if (!pendingOrderData) {
-          console.log('❌ No pending order data found');
-          setError('No order data found. Please contact support.')
+        let orderData = null
+        
+        if (tempSessionId) {
+          try {
+            const storedResponse = await fetch(`/api/checkout/store-order-data?sessionId=${tempSessionId}`)
+            if (storedResponse.ok) {
+              const storedData = await storedResponse.json()
+              orderData = storedData.orderData
+              console.log('✅ Retrieved REAL order data from storage:', orderData)
+            } else {
+              console.log('❌ Failed to retrieve stored order data')
+            }
+          } catch (error) {
+            console.log('❌ Error retrieving stored order data:', error)
+          }
+        }
+
+        // If no stored data, try to get from sessionStorage backup
+        if (!orderData) {
+          const pendingOrderData = sessionStorage.getItem('pendingOrder')
+          if (pendingOrderData) {
+            orderData = JSON.parse(pendingOrderData)
+            console.log('✅ Retrieved order data from sessionStorage backup:', orderData)
+          }
+        }
+
+        // If still no data, show error - we need real data to create order
+        if (!orderData) {
+          console.log('❌ No stored order data found - cannot create order without real form data')
+          setError('Order data not found. Please fill out the form again and try checkout.')
           sessionStorage.removeItem('orderProcessed')
           return
         }
 
-        const orderData = JSON.parse(pendingOrderData)
-        console.log('✅ Order data parsed successfully');
-        console.log('Order data keys:', Object.keys(orderData));
+        console.log('📋 Creating order with data:', orderData);
 
         // Create FormData for the order API
         const formData = new FormData()
 
         // Add all order fields
-        formData.append('presenting', orderData.presenting)
-        formData.append('event_title', orderData.event_title)
-        formData.append('event_date', orderData.event_date)
-        formData.append('flyer_info', orderData.flyer_info)
-        formData.append('address_phone', orderData.address_phone)
-        formData.append('djs', JSON.stringify(orderData.djs))
-        formData.append('host', JSON.stringify(orderData.host))
-        formData.append('sponsors', JSON.stringify(orderData.sponsors))
-        formData.append('story_size_version', orderData.story_size_version.toString())
-        formData.append('custom_flyer', orderData.custom_flyer.toString())
-        formData.append('animated_flyer', orderData.animated_flyer.toString())
-        formData.append('instagram_post_size', orderData.instagram_post_size.toString())
-        formData.append('delivery_time', orderData.delivery_time)
-        formData.append('custom_notes', orderData.custom_notes)
-        formData.append('flyer_is', orderData.flyer_id)
-        formData.append('web_user_id', orderData.web_user_id)
-        formData.append('email', orderData.email)
+        formData.append('presenting', orderData.presenting || '')
+        formData.append('event_title', orderData.event_title || '')
+        formData.append('event_date', orderData.event_date || '')
+        formData.append('flyer_info', orderData.flyer_info || '')
+        formData.append('address_phone', orderData.address_phone || '')
+        formData.append('story_size_version', (orderData.story_size_version || false).toString())
+        formData.append('custom_flyer', (orderData.custom_flyer || false).toString())
+        formData.append('animated_flyer', (orderData.animated_flyer || false).toString())
+        formData.append('instagram_post_size', (orderData.instagram_post_size || true).toString())
+        formData.append('delivery_time', orderData.delivery_time || '24 hours')
+        formData.append('custom_notes', orderData.custom_notes || '')
+        formData.append('flyer_is', orderData.flyer_id || '1')
+        formData.append('category_id', orderData.category_id || '1')
+        formData.append('user_id', orderData.user_id || '')
+        formData.append('web_user_id', orderData.web_user_id || '')
+        formData.append('email', orderData.email || 'user@example.com')
+        formData.append('total_price', (orderData.total_price || 0).toString())
+        formData.append('subtotal', (orderData.subtotal || 0).toString())
+        formData.append('image_url', orderData.image_url || '')
+        
+        // Add JSON fields
+        formData.append('djs', JSON.stringify(orderData.djs || []))
+        formData.append('host', JSON.stringify(orderData.host || {}))
+        formData.append('sponsors', JSON.stringify(orderData.sponsors || []))
 
         console.log('✅ FormData prepared, calling API now...');
         
@@ -101,8 +143,15 @@ export default function SuccessPage() {
         // Mark as completed
         sessionStorage.setItem('orderProcessed', 'true')
         
-        // Clear session storage
+        // Clean up session storage
         sessionStorage.removeItem('pendingOrder')
+        sessionStorage.removeItem('tempSessionId')
+
+        // Redirect to thank you page
+        const orderId = result.orderId || result.id || result._id
+        setTimeout(() => {
+          router.push(`/thank-you${orderId ? `?orderId=${orderId}` : ''}`)
+        }, 2000)
 
       } catch (err: any) {
         console.error('❌ Error creating order:', err);
@@ -122,7 +171,7 @@ export default function SuccessPage() {
         sessionStorage.removeItem('orderProcessed')
       }
     }
-  }, []) // Empty dependency array - run only once on mount
+  }, [searchParams, router, orderCreated, isCreatingOrder])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-950/30 to-black flex items-center justify-center p-4">
