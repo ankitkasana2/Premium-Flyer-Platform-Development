@@ -909,6 +909,7 @@ const AuthModal = observer(({
   const [showPassword, setShowPassword] = useState(false)
   const [showOtp, setShowOtp] = useState(false)
   const [userEmail, setUserEmail] = useState("")
+  const [userPassword, setUserPassword] = useState("") // Store password for auto-login after OTP
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -925,14 +926,30 @@ const AuthModal = observer(({
     if (!isOpen) {
       setFormData({ name: "", email: "", password: "", otp: "" })
       setShowOtp(false)
+      setUserEmail("")
+      setUserPassword("") // Clear stored password
       setMode(defaultMode)
+      // Clear any existing auth errors when modal closes
+      authStore.error = null
     }
   }, [isOpen, defaultMode])
 
+  // Display auth store errors prominently
+  useEffect(() => {
+    if (authStore.error) {
+      toast({
+        title: "Authentication Error",
+        description: authStore.error,
+        variant: "destructive",
+      })
+    }
+  }, [authStore.error, toast])
+
   const getFriendlyErrorMessage = (error: any): string => {
+    // This function is now mainly for fallback, as AuthStore handles most error messages
     const errorMessage = error?.message || 'Something went wrong';
     
-    // Handle common Cognito error messages
+    // Handle any remaining error messages not covered in AuthStore
     if (errorMessage.includes('User already exists')) {
       return 'An account with this email already exists. Please sign in or use a different email.';
     }
@@ -1033,21 +1050,37 @@ const AuthModal = observer(({
           throw new Error('Please enter a valid email address.');
         }
         
-        await authStore.register({
+        const registerResult = await authStore.register({
           fullname: formData.name,
           email: formData.email,
           password: formData.password,
         })
 
-        // Show OTP input and store email
-        setShowOtp(true)
-        setUserEmail(formData.email)
-        setFormData(prev => ({ ...prev, password: "" })) // Clear password field
+        // Handle auto-login success
+        if (registerResult.autoLogin && authStore.user) {
+          toast({
+            title: "🎉 Welcome to Grodify!",
+            description: "Your account has been created and you're now logged in.",
+          })
+          onClose()
+          return
+        }
 
-        toast({
-          title: "Verify Your Email",
-          description: "We've sent a verification code to your email. Please check your inbox.",
-        })
+        // Handle registration requiring email verification
+        if (!registerResult.autoLogin) {
+          // Store email and password for auto-login after OTP verification
+          setUserEmail(formData.email)
+          setUserPassword(formData.password)
+          
+          // Show OTP input and store email
+          setShowOtp(true)
+          setFormData(prev => ({ ...prev, password: "" })) // Clear password field
+
+          toast({
+            title: "✅ Account Created!",
+            description: registerResult.message || "Please check your email for verification code.",
+          })
+        }
       }
     } catch (error: any) {
       const friendlyMessage = getFriendlyErrorMessage(error);
@@ -1079,8 +1112,35 @@ const AuthModal = observer(({
       });
       
       if (isSignUpComplete) {
+        // Auto-login after successful email verification
+        if (userEmail && userPassword) {
+          try {
+            await authStore.login({
+              email: userEmail,
+              password: userPassword,
+            })
+
+            toast({
+              title: "🎉 Welcome to Grodify!",
+              description: "Your email has been verified and you're now logged in.",
+            })
+            onClose()
+            return
+          } catch (loginError: any) {
+            console.error('Auto-login after OTP verification failed:', loginError)
+            toast({
+              title: "✅ Email Verified!",
+              description: "Your email has been verified. Please sign in manually.",
+            })
+            setShowOtp(false)
+            setMode("signin")
+            return
+          }
+        }
+
+        // Fallback if no password stored
         toast({
-          title: "Email Verified!",
+          title: "✅ Email Verified!",
           description: "Your email has been verified. You can now sign in.",
         })
         setShowOtp(false)
@@ -1178,7 +1238,7 @@ const AuthModal = observer(({
                     }
                     className="pl-10"
                   />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  {/* <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" /> */}
                 </div>
               </div>
               
@@ -1254,56 +1314,93 @@ const AuthModal = observer(({
 
               {/* Email / Password form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Inline Error Display */}
+                {authStore.error && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <div className="flex items-start space-x-2">
+                      <div className="text-red-400 text-sm">
+                        {authStore.error}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {mode === "signup" && (
                   <div className="space-y-2">
                     <Label>Full Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      {/* <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" /> */}
                       <Input
                         type="text"
                         placeholder="Enter your full name"
                         value={formData.name}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({ ...formData, name: e.target.value })
-                        }
+                          // Clear error when user starts typing
+                          if (authStore.error) authStore.error = null
+                        }}
                         required
                         disabled={isLoading}
+                        className={formData.name && formData.name.length < 2 ? "border-red-500/50" : ""}
                       />
                     </div>
+                    {formData.name && formData.name.length < 2 && (
+                      <div className="text-xs text-red-400">
+                        Name must be at least 2 characters long
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    {/* <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" /> */}
                     <Input
                       type="email"
                       placeholder="Enter your email"
                       value={formData.email}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({ ...formData, email: e.target.value })
-                      }
+                        // Clear error when user starts typing
+                        if (authStore.error) authStore.error = null
+                      }}
                       required
                       disabled={isLoading}
+                      className={
+                        formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) 
+                          ? "border-red-500/50" 
+                          : ""
+                      }
                     />
                   </div>
+                  {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                    <div className="text-xs text-red-400">
+                      Please enter a valid email address
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label>Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    {/* <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" /> */}
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={formData.password}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({ ...formData, password: e.target.value })
-                      }
+                        // Clear error when user starts typing
+                        if (authStore.error) authStore.error = null
+                      }}
                       required
                       disabled={isLoading}
-                      className="pr-10"
+                      className={`pr-10 ${
+                        formData.password && formData.password.length > 0 && formData.password.length < 8 
+                          ? "border-red-500/50" 
+                          : ""
+                      }`}
                     />
                     <button
                       type="button"
@@ -1318,6 +1415,35 @@ const AuthModal = observer(({
                       )}
                     </button>
                   </div>
+                  {mode === "signup" && formData.password && formData.password.length > 0 && (
+                    <div className="space-y-1">
+                      {formData.password.length < 8 && (
+                        <div className="text-xs text-red-400">
+                          Password must be at least 8 characters long
+                        </div>
+                      )}
+                      {formData.password.length >= 8 && !/[A-Z]/.test(formData.password) && (
+                        <div className="text-xs text-red-400">
+                          Must include at least one uppercase letter
+                        </div>
+                      )}
+                      {formData.password.length >= 8 && /[A-Z]/.test(formData.password) && !/[a-z]/.test(formData.password) && (
+                        <div className="text-xs text-red-400">
+                          Must include at least one lowercase letter
+                        </div>
+                      )}
+                      {formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) && !/[0-9]/.test(formData.password) && (
+                        <div className="text-xs text-red-400">
+                          Must include at least one number
+                        </div>
+                      )}
+                      {formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) && /[0-9]/.test(formData.password) && !/[^A-Za-z0-9]/.test(formData.password) && (
+                        <div className="text-xs text-red-400">
+                          Must include at least one special character
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {mode === "signin" && (

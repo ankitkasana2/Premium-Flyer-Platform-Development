@@ -5,6 +5,7 @@ import { Amplify } from 'aws-amplify'
 import { Hub } from '@aws-amplify/core'
 import {
   signIn as awsSignIn,
+  signInWithRedirect as awsSignInWithRedirect,
   signUp as awsSignUp,
   signOut as awsSignOut,
   getCurrentUser,
@@ -188,20 +189,102 @@ export class AuthStore {
     this.loading = true
     this.error = null
     try {
+      // Basic validation
+      if (!email || !password) {
+        throw new Error('Email and password are required')
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
+      if (password.length < 1) {
+        throw new Error('Password is required')
+      }
+
       const signInInput: SignInInput = {
         username: email,
         password,
       }
       
-      const { isSignedIn } = await awsSignIn(signInInput)
+      const { isSignedIn, nextStep } = await awsSignIn(signInInput)
       
       if (!isSignedIn) {
-        throw new Error('Additional authentication steps required')
+        // Handle additional authentication steps
+        if (nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+          throw new Error('You need to set a new password. Please check your email for instructions.')
+        }
+        if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
+          throw new Error('Please verify your email address before signing in. Check your inbox for the verification code.')
+        }
+        throw new Error('Additional authentication steps required. Please try again.')
       }
       
       return await this.updateUserFromAmplify()
     } catch (error: any) {
-      const errorMessage = error?.message || "Login failed"
+      let errorMessage = "Login failed"
+      
+      // Handle specific AWS Cognito errors
+      const errorString = error?.message || error?.toString() || ''
+      
+      // User not found scenarios - Comprehensive coverage
+      if (errorString.includes('UserNotFoundException') || 
+          errorString.includes('User does not exist') ||
+          errorString.includes('user not found') ||
+          errorString.includes('USER_NOT_FOUND') ||
+          errorString.includes('User not found') ||
+          errorString.includes('Username does not exist') ||
+          errorString.includes('username does not exist') ||
+          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+          errorString.includes('Invalid username') ||
+          errorString.includes('invalid username') ||
+          errorString.includes('INVALID_USERNAME') ||
+          errorString.includes('No such user') ||
+          errorString.includes('no such user') ||
+          errorString.includes('NO_SUCH_USER')) {
+        errorMessage = 'No account found with this email address. Please check your email or create a new account.'
+      } else if (errorString.includes('NotAuthorizedException')) {
+        if (errorString.includes('Incorrect username or password')) {
+          errorMessage = 'Incorrect email or password. Please try again.'
+        } else if (errorString.includes('Password attempts exceeded')) {
+          errorMessage = 'Too many failed login attempts. Please try again later or reset your password.'
+        } else {
+          errorMessage = 'Invalid credentials. Please check your email and password.'
+        }
+      } else if (errorString.includes('UserNotConfirmedException')) {
+        errorMessage = 'Your email address has not been verified. Please check your inbox for the verification code.'
+      } else if (errorString.includes('UserLambdaValidationException')) {
+        errorMessage = 'Unable to sign in. The service is temporarily unavailable. Please try again later.'
+      } else if (errorString.includes('TooManyRequestsException')) {
+        errorMessage = 'Too many login attempts. Please wait a moment and try again.'
+      } else if (errorString.includes('LimitExceededException')) {
+        errorMessage = 'Attempt limit exceeded. Please try again later.'
+      } else if (errorString.includes('InvalidParameterException')) {
+        if (errorString.includes('email')) {
+          errorMessage = 'Invalid email format. Please enter a valid email address.'
+        } else {
+          errorMessage = 'Invalid input. Please check your email and password.'
+        }
+      } else if (errorString.includes('Network error') || errorString.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.'
+      } else if (errorString.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.'
+      } else if (errorString.includes('Email and password are required')) {
+        errorMessage = 'Please enter both email and password.'
+      } else if (errorString.includes('Please enter a valid email address')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (errorString.includes('Password is required')) {
+        errorMessage = 'Please enter your password.'
+      } else if (errorString.includes('set a new password')) {
+        errorMessage = errorString
+      } else if (errorString.includes('verify your email')) {
+        errorMessage = errorString
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       runInAction(() => {
         this.error = errorMessage
       })
@@ -213,17 +296,42 @@ export class AuthStore {
     }
   }
 
+  // Add a public method to manually refresh user data
+  refreshUserData = async () => {
+    return await this.updateUserFromAmplify()
+  }
+
   private updateUserFromAmplify = async () => {
     try {
       const user = await getCurrentUser()
       const session = await fetchAuthSession()
       const token = session.tokens?.idToken?.toString() || ''
       
+      console.log('Raw user from AWS:', user);
+      console.log('Session tokens:', session.tokens);
+      console.log('ID Token exists:', !!token);
+      
+      // Try to extract email from JWT token
+      let emailFromToken = ''
+      if (token) {
+        try {
+          // Simple JWT decode (without verification since it's from AWS)
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          console.log('JWT payload:', payload);
+          emailFromToken = payload.email || ''
+          console.log('Email from token:', emailFromToken);
+        } catch (e) {
+          console.warn('Could not extract email from token:', e)
+        }
+      }
+      
       const normalized = this.normalizeUser({
         id: user.userId,
-        email: user.signInDetails?.loginId || '',
+        email: emailFromToken || user.signInDetails?.loginId || '',
         name: user.username || user.userId,
       })
+
+      console.log('Normalized user:', normalized);
 
       runInAction(() => {
         this.setSession(normalized, token)
@@ -243,6 +351,27 @@ export class AuthStore {
     this.loading = true
     this.error = null
     try {
+      // Basic validation
+      if (!fullname || !email || !password) {
+        throw new Error('All fields are required')
+      }
+
+      // Name validation
+      if (fullname.trim().length < 2) {
+        throw new Error('Name must be at least 2 characters long')
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
+      // Password validation (basic checks, Cognito will enforce policy)
+      if (password.length < 8) {
+        throw new Error('Password must be at least 8 characters long')
+      }
+
       const signUpInput: SignUpInput = {
         username: email,
         password,
@@ -257,9 +386,62 @@ export class AuthStore {
       
       const { isSignUpComplete, userId, nextStep } = await awsSignUp(signUpInput)
       
-      // Return a consistent response format
+      // If sign up is complete, automatically sign in the user
+      if (isSignUpComplete) {
+        try {
+          // Auto-login after successful registration
+          const signInInput: SignInInput = {
+            username: email,
+            password,
+          }
+          
+          const { isSignedIn } = await awsSignIn(signInInput)
+          
+          if (isSignedIn) {
+            await this.updateUserFromAmplify()
+            return {
+              success: true,
+              autoLogin: true,
+              user: {
+                id: userId,
+                email,
+                name: fullname,
+              },
+              message: 'Account created successfully! You are now logged in.'
+            }
+          } else {
+            // Registration successful but auto-login failed
+            return {
+              success: true,
+              autoLogin: false,
+              user: {
+                id: userId,
+                email,
+                name: fullname,
+              },
+              message: 'Account created successfully. Please sign in manually.'
+            }
+          }
+        } catch (loginError: any) {
+          // Registration successful but auto-login failed
+          console.error('Auto-login after registration failed:', loginError)
+          return {
+            success: true,
+            autoLogin: false,
+            user: {
+              id: userId,
+              email,
+              name: fullname,
+            },
+            message: 'Account created successfully. Please sign in manually.'
+          }
+        }
+      }
+      
+      // Return for manual verification (email verification required)
       return {
         success: isSignUpComplete,
+        autoLogin: false,
         user: {
           id: userId,
           email,
@@ -268,10 +450,51 @@ export class AuthStore {
         message: 'User registration successful. Please check your email to confirm your account.'
       }
     } catch (error: any) {
+      let errorMessage = "Registration failed"
+      
+      // Handle specific AWS Cognito errors
+      const errorString = error?.message || error?.toString() || ''
+      
+      if (errorString.includes('UsernameExistsException') || errorString.includes('User already exists')) {
+        errorMessage = 'An account with this email already exists. Please sign in or use a different email.'
+      } else if (errorString.includes('InvalidPasswordException')) {
+        if (errorString.includes('Password did not conform with policy')) {
+          errorMessage = 'Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.'
+        } else {
+          errorMessage = 'Password does not meet security requirements. Please choose a stronger password.'
+        }
+      } else if (errorString.includes('InvalidParameterException')) {
+        if (errorString.includes('email')) {
+          errorMessage = 'Invalid email format. Please enter a valid email address.'
+        } else if (errorString.includes('name')) {
+          errorMessage = 'Invalid name format. Please enter your full name.'
+        } else {
+          errorMessage = 'Invalid input. Please check all fields and try again.'
+        }
+      } else if (errorString.includes('TooManyRequestsException')) {
+        errorMessage = 'Too many registration attempts. Please wait a moment and try again.'
+      } else if (errorString.includes('LimitExceededException')) {
+        errorMessage = 'Attempt limit exceeded. Please try again later.'
+      } else if (errorString.includes('Network error') || errorString.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.'
+      } else if (errorString.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.'
+      } else if (errorString.includes('All fields are required')) {
+        errorMessage = 'Please fill in all required fields.'
+      } else if (errorString.includes('Name must be at least 2 characters long')) {
+        errorMessage = 'Name must be at least 2 characters long.'
+      } else if (errorString.includes('Please enter a valid email address')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (errorString.includes('Password must be at least 8 characters long')) {
+        errorMessage = 'Password must be at least 8 characters long.'
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       runInAction(() => {
-        this.error = error?.message || "Registration failed"
+        this.error = errorMessage
       })
-      throw error
+      throw new Error(errorMessage)
     } finally {
       runInAction(() => {
         this.loading = false
@@ -301,15 +524,48 @@ export class AuthStore {
       const signInInput: SignInWithRedirectInput = {
         provider: provider.toLowerCase() as 'Google' | 'Apple',
       }
-      await awsSignIn(signInInput)
-    } catch (error) {
+      await awsSignInWithRedirect(signInInput)
+    } catch (error: any) {
       console.error('Error signing in with provider:', error)
-      throw new Error(`Failed to sign in with ${provider}`)
+      
+      let errorMessage = `Failed to sign in with ${provider}`
+      const errorString = error?.message || error?.toString() || ''
+      
+      if (errorString.includes('NotAuthorizedException')) {
+        errorMessage = `${provider} sign-in not authorized. Please check your ${provider} account settings.`
+      } else if (errorString.includes('UserNotConfirmedException')) {
+        errorMessage = `Your ${provider} account needs to be verified. Please check your email.`
+      } else if (errorString.includes('Network error') || errorString.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.'
+      } else if (errorString.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.'
+      } else if (errorString.includes('TooManyRequestsException')) {
+        errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.'
+      } else if (errorString.includes('InvalidParameterException')) {
+        errorMessage = 'Invalid sign-in parameters. Please try again.'
+      } else if (errorString.includes('UserLambdaValidationException')) {
+        errorMessage = 'Unable to sign in with social account. The service is temporarily unavailable. Please try again later.'
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      throw new Error(errorMessage)
     }
   }
 
   sendOTP = async (email: string) => {
     try {
+      // Basic validation
+      if (!email) {
+        throw new Error('Email is required')
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
       const resetPasswordInput: ResetPasswordInput = { username: email }
       const result = await awsResetPassword(resetPasswordInput)
       
@@ -319,14 +575,75 @@ export class AuthStore {
         message: 'Password reset code sent to your email.',
         nextStep: result.nextStep
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending OTP:', error)
-      throw new Error('Failed to send password reset code. Please try again.')
+      
+      let errorMessage = 'Failed to send password reset code'
+      const errorString = error?.message || error?.toString() || ''
+      
+      // User not found scenarios - Comprehensive coverage for password reset
+      if (errorString.includes('UserNotFoundException') || 
+          errorString.includes('User does not exist') ||
+          errorString.includes('user not found') ||
+          errorString.includes('USER_NOT_FOUND') ||
+          errorString.includes('User not found') ||
+          errorString.includes('Username does not exist') ||
+          errorString.includes('username does not exist') ||
+          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+          errorString.includes('Invalid username') ||
+          errorString.includes('invalid username') ||
+          errorString.includes('INVALID_USERNAME') ||
+          errorString.includes('No such user') ||
+          errorString.includes('no such user') ||
+          errorString.includes('NO_SUCH_USER')) {
+        errorMessage = 'No account found with this email address. Please check your email or create a new account.'
+      } else if (errorString.includes('InvalidParameterException')) {
+        if (errorString.includes('email')) {
+          errorMessage = 'Invalid email format. Please enter a valid email address.'
+        } else {
+          errorMessage = 'Invalid input. Please check your email address.'
+        }
+      } else if (errorString.includes('LimitExceededException') || errorString.includes('TooManyRequestsException')) {
+        errorMessage = 'Too many password reset attempts. Please wait a moment and try again.'
+      } else if (errorString.includes('Network error') || errorString.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.'
+      } else if (errorString.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.'
+      } else if (errorString.includes('Email is required')) {
+        errorMessage = 'Please enter your email address.'
+      } else if (errorString.includes('Please enter a valid email address')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      throw new Error(errorMessage)
     }
   }
 
   verifyOTP = async (email: string, code: string, newPassword: string) => {
     try {
+      // Basic validation
+      if (!email || !code || !newPassword) {
+        throw new Error('All fields are required')
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
+      // Code validation
+      if (code.trim().length < 1) {
+        throw new Error('Verification code is required')
+      }
+
+      // Password validation (basic checks, Cognito will enforce policy)
+      if (newPassword.length < 8) {
+        throw new Error('New password must be at least 8 characters long')
+      }
+
       const confirmResetPasswordInput: ConfirmResetPasswordInput = {
         username: email,
         confirmationCode: code,
@@ -340,9 +657,65 @@ export class AuthStore {
         success: true, 
         message: 'Password reset successful. You can now sign in with your new password.' 
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying OTP:', error)
-      throw new Error('Failed to reset password. The code may be invalid or expired.')
+      
+      let errorMessage = 'Failed to reset password'
+      const errorString = error?.message || error?.toString() || ''
+      
+      // User not found scenarios - Comprehensive coverage for OTP verification
+      if (errorString.includes('UserNotFoundException') || 
+          errorString.includes('User does not exist') ||
+          errorString.includes('user not found') ||
+          errorString.includes('USER_NOT_FOUND') ||
+          errorString.includes('User not found') ||
+          errorString.includes('Username does not exist') ||
+          errorString.includes('username does not exist') ||
+          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+          errorString.includes('Invalid username') ||
+          errorString.includes('invalid username') ||
+          errorString.includes('INVALID_USERNAME') ||
+          errorString.includes('No such user') ||
+          errorString.includes('no such user') ||
+          errorString.includes('NO_SUCH_USER')) {
+        errorMessage = 'No account found with this email address. Please check your email or create a new account.'
+      } else if (errorString.includes('InvalidParameterException')) {
+        if (errorString.includes('code')) {
+          errorMessage = 'Invalid verification code. Please check the code and try again.'
+        } else if (errorString.includes('password')) {
+          errorMessage = 'New password does not meet security requirements. Please choose a stronger password.'
+        } else {
+          errorMessage = 'Invalid input. Please check all fields and try again.'
+        }
+      } else if (errorString.includes('CodeMismatchException')) {
+        errorMessage = 'Invalid verification code. Please check the code and try again.'
+      } else if (errorString.includes('ExpiredCodeException')) {
+        errorMessage = 'The verification code has expired. Please request a new code.'
+      } else if (errorString.includes('InvalidPasswordException')) {
+        if (errorString.includes('Password did not conform with policy')) {
+          errorMessage = 'Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.'
+        } else {
+          errorMessage = 'New password does not meet security requirements. Please choose a stronger password.'
+        }
+      } else if (errorString.includes('LimitExceededException') || errorString.includes('TooManyRequestsException')) {
+        errorMessage = 'Too many verification attempts. Please wait a moment and try again.'
+      } else if (errorString.includes('Network error') || errorString.includes('fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.'
+      } else if (errorString.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.'
+      } else if (errorString.includes('All fields are required')) {
+        errorMessage = 'Please fill in all required fields.'
+      } else if (errorString.includes('Please enter a valid email address')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (errorString.includes('Verification code is required')) {
+        errorMessage = 'Please enter the verification code.'
+      } else if (errorString.includes('New password must be at least 8 characters long')) {
+        errorMessage = 'New password must be at least 8 characters long.'
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      throw new Error(errorMessage)
     }
   }
 
