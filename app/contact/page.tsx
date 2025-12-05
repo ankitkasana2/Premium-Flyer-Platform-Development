@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLoading } from "@/hooks/useLoading";
 
 export default function ContactPage() {
+    const { withLoading } = useLoading();
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -15,10 +17,15 @@ export default function ContactPage() {
         message: "",
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast.success("Message sent! We'll get back to you soon.");
-        setFormData({ name: "", email: "", subject: "", message: "" });
+
+        await withLoading(async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            toast.success("Message sent! We'll get back to you soon.");
+            setFormData({ name: "", email: "", subject: "", message: "" });
+        }, "Sending message...");
     };
 
     return (
