@@ -14,23 +14,83 @@ const pricing = [
 
 const FilterBar = () => {
 
-    const { filterBarStore, flyersStore } = useStore()
+    const { filterBarStore, flyersStore, categoryStore } = useStore()
 
-    const [selected, setSelected] = useState<string[]>([])
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+    const [selectedPrices, setSelectedPrices] = useState<string[]>([])
+    const [selectedTypes, setSelectedTypes] = useState<string[]>([])
 
-    const toggleCategory = (id: string) => {
-        setSelected((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-        )
+    const toggleCategory = (categoryName: string) => {
+        const newSelected = selectedCategories.includes(categoryName)
+            ? selectedCategories.filter((c) => c !== categoryName)
+            : [...selectedCategories, categoryName]
+
+        setSelectedCategories(newSelected)
+        filterBarStore.categoryFilter(categoryName)
+
+        // Apply category filter
+        if (newSelected.length > 0) {
+            // Filter flyers by selected categories
+            const allFlyers = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
+            const filtered = allFlyers.filter((flyer: any) => {
+                // Check if flyer has categories array (API format)
+                if (Array.isArray(flyer.categories)) {
+                    return newSelected.some(cat => flyer.categories.includes(cat))
+                }
+                // Fallback to old format
+                return newSelected.includes(flyer.category)
+            })
+            categoryStore.flyers = filtered
+            categoryStore.category = newSelected.join(', ')
+        } else {
+            // No category selected, show current category or all
+            if (categoryStore.category) {
+                categoryStore.setFlyer(categoryStore.category)
+            }
+        }
     }
 
-     const togglePrice = (id: string) => {
-        setSelected((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-        )
+    const togglePrice = (id: string) => {
+        const newSelected = selectedPrices.includes(id)
+            ? selectedPrices.filter((c) => c !== id)
+            : [...selectedPrices, id]
 
+        setSelectedPrices(newSelected)
         filterBarStore.priceFilter(id)
+
+        // Apply price filter to current category
+        categoryStore.setFlyerByFilter(filterBarStore.price)
     }
+
+    const toggleType = (type: string) => {
+        const newSelected = selectedTypes.includes(type)
+            ? selectedTypes.filter((t) => t !== type)
+            : [...selectedTypes, type]
+
+        setSelectedTypes(newSelected)
+        filterBarStore.typeFilter(type)
+
+        // Apply type filter
+        if (newSelected.length > 0) {
+            const allFlyers = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
+            const filtered = allFlyers.filter((flyer: any) => {
+                if (newSelected.includes('info')) {
+                    return !flyer.hasPhotos && !flyer.has_photos
+                }
+                if (newSelected.includes('photos')) {
+                    return flyer.hasPhotos || flyer.has_photos
+                }
+                return true
+            })
+            categoryStore.flyers = filtered
+        } else {
+            // Reset to current category
+            if (categoryStore.category) {
+                categoryStore.setFlyer(categoryStore.category)
+            }
+        }
+    }
+
     useEffect(() => {
         if (!flyersStore.flyers.length) {
             flyersStore.fetchFlyers()
@@ -59,10 +119,10 @@ const FilterBar = () => {
                             <li key={cat.name} className="flex items-center gap-3">
                                 <Checkbox
                                     id={cat.name}
-                                    checked={selected.includes(cat.name)}
+                                    checked={selectedCategories.includes(cat.name)}
                                     onCheckedChange={() => toggleCategory(cat.name)}
                                 />
-                                <Label className='font-light' htmlFor={cat.name}>
+                                <Label className='font-light cursor-pointer' htmlFor={cat.name}>
                                     {cat.name}
                                     {categoryCounts[cat.name] ? ` (${categoryCounts[cat.name]})` : ""}
                                 </Label>
@@ -81,10 +141,10 @@ const FilterBar = () => {
                             <li key={price.label} className="flex items-center gap-3">
                                 <Checkbox
                                     id={price.label}
-                                    checked={selected.includes(price.id)}
+                                    checked={selectedPrices.includes(price.id)}
                                     onCheckedChange={() => togglePrice(price.id)}
                                 />
-                                <Label className='font-light' htmlFor={price.label}>{price.label}</Label>
+                                <Label className='font-light cursor-pointer' htmlFor={price.label}>${price.label}</Label>
                             </li>
                         ))}
                     </ul>
@@ -93,21 +153,24 @@ const FilterBar = () => {
 
             {/* type  */}
             <div className='flex flex-col gap-1'>
-                <h2>Tempalte Type</h2>
+                <h2>Template Type</h2>
                 <div className='p-2  rounded-md bg-gray-700/15 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)]'>
                     <ul className="space-y-3">
-
                         <li className="flex items-center gap-3">
                             <Checkbox
                                 id='info'
+                                checked={selectedTypes.includes('info')}
+                                onCheckedChange={() => toggleType('info')}
                             />
-                            <Label className='font-light' htmlFor='info'>Info Only</Label>
+                            <Label className='font-light cursor-pointer' htmlFor='info'>Info Only</Label>
                         </li>
                         <li className="flex items-center gap-3">
                             <Checkbox
                                 id='photos'
+                                checked={selectedTypes.includes('photos')}
+                                onCheckedChange={() => toggleType('photos')}
                             />
-                            <Label className='font-light' htmlFor='photos'>With Photos</Label>
+                            <Label className='font-light cursor-pointer' htmlFor='photos'>With Photos</Label>
                         </li>
                     </ul>
                 </div>
