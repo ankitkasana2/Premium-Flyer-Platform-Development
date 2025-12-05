@@ -5,10 +5,15 @@ import { getApiUrl } from "@/config/api"
 export type Banner = {
   id: number
   title: string
-  description: string
+  description: string | null
+  button_text: string | null
+  button_enabled: boolean
+  link_type: 'category' | 'flyer' | 'external' | 'none'
+  link_value: string | null
+  display_order: number
   image: string
-  link?: string
-  status: number
+  image_url: string
+  status: boolean
   created_at: string
   updated_at: string
 }
@@ -26,14 +31,12 @@ export class BannerStore {
   async fetchBanners() {
     this.loading = true
     this.error = null
-    
+
     try {
       const response = await fetch(`${getApiUrl()}/api/banners`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${yourAuthToken}`
         }
       })
 
@@ -42,10 +45,11 @@ export class BannerStore {
       }
 
       const data = await response.json()
-      
+
       if (data.success) {
         runInAction(() => {
           this.banners = data.data
+          console.log('📢 Banners loaded:', data.data)
         })
       } else {
         throw new Error(data.message || 'Failed to fetch banners')
@@ -67,9 +71,32 @@ export class BannerStore {
     return this.banners.find(banner => banner.id === id)
   }
 
-  // Get active banners
+  // Get active banners (status is boolean now)
   get activeBanners(): Banner[] {
-    return this.banners.filter(banner => banner.status === 1)
+    return this.banners.filter(banner => banner.status === true)
+  }
+
+  // Generate link based on link_type and link_value
+  getBannerLink(banner: Banner): string | null {
+    if (banner.link_type === 'none' || !banner.link_value) {
+      return null
+    }
+
+    switch (banner.link_type) {
+      case 'category':
+        // Convert category name to slug
+        const categorySlug = banner.link_value.toLowerCase().replace(/\s+/g, '-')
+        return `/categories?slug=${categorySlug}`
+
+      case 'flyer':
+        return `/flyer/${banner.link_value}`
+
+      case 'external':
+        return banner.link_value
+
+      default:
+        return null
+    }
   }
 }
 

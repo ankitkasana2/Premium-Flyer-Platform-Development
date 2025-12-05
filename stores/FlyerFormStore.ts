@@ -1,4 +1,4 @@
-import { makeAutoObservable, toJS } from "mobx"
+import { makeAutoObservable, toJS, runInAction } from "mobx"
 import { SAMPLE_FLYERS } from "@/lib/types"
 import { getApiUrl } from "@/config/api"
 
@@ -135,28 +135,43 @@ export class FlyerFormStore {
 //   }
 // }
 async fetchFlyer(id: string) {
+  console.log('🚀 fetchFlyer called with ID:', id);
   try {
-    const res = await fetch(`http://193.203.161.174:3007/api/flyers/flyers/${id}`, {
+    const res = await fetch(`http://193.203.161.174:3007/api/flyers/${id}`, {
       cache: "no-store",
     });
 
     const data = await res.json();
+    console.log('📦 API response received:', data);
 
     runInAction(() => {
-      this.flyer = {
-        ...data,
-        name: data.title,               // FIX NAME
-        image_url: data.image_url,      // FIX IMAGE
-      };
-
+      console.log('🔍 FlyerFormStore - Raw API data:', data);
+      
       // FIX PRICE
       const rawPrice = data.price;
       const numericPrice = rawPrice
         ? Number(String(rawPrice).replace(/[^0-9.]/g, ""))
         : null;
 
+      console.log('🔍 Price parsing:', {
+        rawPrice,
+        numericPrice,
+        isNaN: Number.isNaN(numericPrice),
+        finalPrice: numericPrice || 0
+      });
+
+      this.flyer = {
+        ...data,
+        name: data.title,               // FIX NAME
+        image_url: data.image_url,      // FIX IMAGE
+        price: numericPrice || 0,        // Store parsed numeric price
+      };
+
       if (!Number.isNaN(numericPrice)) {
         this.basePrice = numericPrice;
+        console.log('✅ BasePrice set to:', this.basePrice);
+      } else {
+        console.log('❌ Failed to set basePrice - numericPrice is NaN');
       }
 
       // FIX FLYER ID

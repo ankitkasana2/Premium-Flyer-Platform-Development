@@ -212,13 +212,24 @@ const EventBookingForm = () => {
 
   const flyerImage = flyer?.image_url || flyer?.imageUrl || image || "/placeholder.svg";
   const flyerName = flyer?.name || name || "";
-  const basePrice = flyer?.price ?? priceFromQuery;
+  const basePrice = flyerFormStore.basePrice ?? flyer?.price ?? priceFromQuery;
   const computedSubtotal = flyerFormStore.subtotal;
   const totalDisplay = computedSubtotal > 0 ? computedSubtotal : basePrice;
+
+  // Debug logging
+  console.log('🔍 Price Debug:', {
+    routeFlyerId,
+    basePrice: flyerFormStore.basePrice,
+    flyerPrice: flyer?.price,
+    priceFromQuery,
+    totalDisplay,
+    flyer: flyer
+  });
 
   useEffect(() => {
     if (routeFlyerId) {
       flyerFormStore.setFlyerId(routeFlyerId);
+      flyerFormStore.fetchFlyer(routeFlyerId);
     }
   }, [routeFlyerId, flyerFormStore]);
 
@@ -232,13 +243,6 @@ const EventBookingForm = () => {
       flyerFormStore.setCategoryId(String(categoryId));
     }
   }, [flyer, categoryFromQuery, flyerFormStore]);
-
-  useEffect(() => {
-    const priceCandidate = flyer?.price ?? priceFromQuery;
-    if (priceCandidate && !Number.isNaN(priceCandidate)) {
-      flyerFormStore.setBasePrice(priceCandidate);
-    }
-  }, [flyer?.price, priceFromQuery, flyerFormStore]);
 
   // Fetch cart data when user is logged in
   useEffect(() => {
@@ -811,7 +815,7 @@ const handleTestOrder = async () => {
         {/* Left Side - Event Flyer */}
         <div className="space-y-6">
           {/* Cart Information Section */}
-          {authStore.user?.id && (
+          {/* {authStore.user?.id && (
             <div className="bg-gradient-to-br from-blue-950/20 to-black p-4 rounded-2xl border border-gray-800 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white">Your Cart</h3>
@@ -865,7 +869,7 @@ const handleTestOrder = async () => {
                 </div>
               )}
             </div>
-          )}
+          )} */}
           <div className="relative bg-gradient-to-br from-orange-900/20 via-black to-purple-900/20 rounded-2xl overflow-hidden  glow-effect transition-all duration-300 ">
 
 
@@ -994,7 +998,7 @@ const handleTestOrder = async () => {
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-sm font-semibold flex items-center gap-2">
                         <Music className="w-4 h-4 text-theme text-sm" />
-                        Main DJ or Artist {index + 1}
+                        Main DJ or Artist * {index + 1}
                       </Label>
 
                       {/* Remove Field Button (same as photo version) */}
@@ -1095,6 +1099,106 @@ const handleTestOrder = async () => {
                 disabled={isSubmitting}
                 className="bg-primary hover:bg-red-550 text-white px-3 
                rounded-lg hover:cursor-pointer transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-900/50"
+              onClick={async () => {
+                  console.log('Testing with real FormData...')
+                  
+                  // Check if user is authenticated
+                  if (!authStore.user?.id) {
+                    toast.error("Please sign in to test order submission.")
+                    authStore.handleAuthModal()
+                    return
+                  }
+                  
+                  // Create FormData to send real form data and files
+                  const formData = new FormData()
+                  
+                  // Add text fields from the form
+                  formData.append('presenting', flyerFormStore.flyerFormDetail.eventDetails?.presenting || '')
+                  formData.append('event_title', flyerFormStore.flyerFormDetail.eventDetails?.mainTitle || '')
+                  formData.append('event_date', flyerFormStore.flyerFormDetail.eventDetails?.date?.toISOString()?.split('T')[0] || '2025-11-27')
+                  formData.append('flyer_info', flyerFormStore.flyerFormDetail.eventDetails?.flyerInfo || '')
+                  formData.append('address_phone', flyerFormStore.flyerFormDetail.eventDetails?.addressAndPhone || '')
+                  formData.append('story_size_version', String(flyerFormStore.flyerFormDetail.extras?.storySizeVersion || false))
+                  formData.append('custom_flyer', String(flyerFormStore.flyerFormDetail.extras?.customFlyer || false))
+                  formData.append('animated_flyer', String(flyerFormStore.flyerFormDetail.extras?.animatedFlyer || false))
+                  formData.append('instagram_post_size', String(flyerFormStore.flyerFormDetail.extras?.instagramPostSize || true))
+                  formData.append('custom_notes', flyerFormStore.flyerFormDetail.customNote || '')
+                  formData.append('flyer_is', flyer?.id || '26')
+                  formData.append('category_id', (flyer as any)?.category_id || '9')
+                  formData.append('user_id', authStore.user.id)
+                  formData.append('delivery_time', flyerFormStore.flyerFormDetail.deliveryTime || '1 Hour')
+                  formData.append('total_price', String(totalDisplay))
+                  formData.append('subtotal', String(totalDisplay))
+                  formData.append('image_url', image || 'https://images.unsplash.com/photo.jpg')
+                  formData.append('email', authStore.user.email || '')
+                  formData.append('web_user_id', '')
+                  
+                  // Add JSON fields
+                  formData.append('djs', JSON.stringify(flyerFormStore.flyerFormDetail.djsOrArtists || []))
+                  formData.append('host', JSON.stringify(flyerFormStore.flyerFormDetail.host || { name: '' }))
+                  formData.append('sponsors', JSON.stringify([
+                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor1 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor1.name }] : []),
+                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor2 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor2.name }] : []),
+                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor3 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor3.name }] : [])
+                  ]))
+                  
+                  // Add files if they exist
+                  if (flyerFormStore.flyerFormDetail.eventDetails?.venueLogo) {
+                    formData.append('venue_logo', flyerFormStore.flyerFormDetail.eventDetails.venueLogo)
+                  }
+                  if (flyerFormStore.flyerFormDetail.host?.image) {
+                    formData.append('host_file', flyerFormStore.flyerFormDetail.host.image)
+                  }
+                  
+                  // Add DJ files
+                  flyerFormStore.flyerFormDetail.djsOrArtists.forEach((dj, index) => {
+                    if (dj.image) {
+                      formData.append(`dj_${index}`, dj.image)
+                    }
+                  })
+                  
+                  // Add sponsor files
+                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor1) {
+                    formData.append('sponsor_0', flyerFormStore.flyerFormDetail.sponsors.sponsor1)
+                  }
+                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor2) {
+                    formData.append('sponsor_1', flyerFormStore.flyerFormDetail.sponsors.sponsor2)
+                  }
+                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor3) {
+                    formData.append('sponsor_2', flyerFormStore.flyerFormDetail.sponsors.sponsor3)
+                  }
+                  
+                  // Add the duplicate total_price field with space
+                  formData.append(' total_price', String(totalDisplay))
+                  
+                  console.log('Sending FormData with entries:')
+                  for (let [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                      console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`)
+                    } else {
+                      console.log(`  ${key}: ${value}`)
+                    }
+                  }
+                  
+                  try {
+                    const response = await fetch('/api/test-order', {
+                      method: 'POST',
+                      body: formData // Send FormData, not JSON
+                    })
+                    const result = await response.json()
+                    console.log(' order result:', result)
+                    if (result.success) {
+                      // toast.success(' order created successfully!')
+                      // window.location.href = `/thank-you?orderId=${result.data.id || result.data.orderId}`
+                    } else {
+                      toast.error(` failed: ${result.error}`)
+                    }
+                  } catch (error) {
+                    console.error(' error:', error)
+                    toast.error(' failed - check console')
+                  }
+                }}
+              
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
@@ -1110,7 +1214,7 @@ const handleTestOrder = async () => {
               </Button>
 
               {/* Test Button - Send Real FormData */}
-              <Button
+              {/* <Button
                 type="button"
                 onClick={async () => {
                   console.log('Testing with real FormData...')
@@ -1214,7 +1318,7 @@ const handleTestOrder = async () => {
                 className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 rounded-lg"
               >
                 Test FormData
-              </Button>
+              </Button> */}
 
               {/* Add to Cart Button */}
               <Button
