@@ -11,6 +11,7 @@ import "react-multi-carousel/lib/styles.css"
 import { StoreProvider } from "@/stores/StoreProvider"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import GlobalLoader from "@/components/ui/global-loader"
 
 
 export const metadata: Metadata = {
@@ -29,11 +30,12 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <StoreProvider>
+              <GlobalLoader />
               <Header />
               {children}
               <Footer />
             </StoreProvider>
-            <Toaster position="top-left"/>
+            <Toaster position="top-left" />
             <Analytics />
           </Suspense>
         </AuthProvider>

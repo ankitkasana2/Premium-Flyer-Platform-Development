@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
+import { IOSLoader } from "@/components/ui/ios-loader";
 
 const HeroSection = observer(() => {
   const router = useRouter();
@@ -15,6 +16,7 @@ const HeroSection = observer(() => {
 
   // Fetch banners on component mount
   useEffect(() => {
+    console.log('🎬 HeroSection mounted, fetching banners...');
     bannerStore.fetchBanners();
   }, []);
 
@@ -64,34 +66,38 @@ const HeroSection = observer(() => {
     }
   };
 
-  // Loading state
+  // Loading state - only small red loader like Apple devices
   if (bannerStore.loading) {
+    console.log('🔄 Banners are loading...');
     return (
-      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center">
-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center justify-center bg-black">
+        <IOSLoader size="sm" color="text-red-500" />
       </section>
     );
   }
 
-  // Error state
+  // Error state - only small red loader like Apple devices
   if (bannerStore.error) {
+    console.error('❌ Banner error:', bannerStore.error);
     return (
-      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center justify-center bg-red-50 text-red-600">
-        Error loading banners: {bannerStore.error}
+      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center justify-center bg-black">
+        <IOSLoader size="sm" color="text-red-500" />
       </section>
     );
   }
 
-  // No banners state
+  // No banners state - only small red loader like Apple devices
   if (bannerStore.activeBanners.length === 0) {
+    console.warn('⚠️ No active banners found. Total banners:', bannerStore.banners.length);
+    console.log('All banners:', bannerStore.banners);
     return (
-      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center">
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-500">
-          No banners available
-        </div>
+      <section className="relative px-4 min-h-[60vh] sm:min-h-[60vh] flex items-center justify-center bg-black">
+        <IOSLoader size="sm" color="text-red-500" />
       </section>
     );
   }
+
+  console.log('✅ Showing banner:', currentImageIndex + 1, 'of', bannerStore.activeBanners.length);
 
   const currentBanner = bannerStore.activeBanners[currentImageIndex];
   const bannerImageUrl = currentBanner.image_url ||
