@@ -91,7 +91,7 @@
 
 // //       // 🔹 OTP Verification
 // //       if (mode === "otp") {
-       
+
 // //           await signIn(formData.email, formData.password)
 // //           toast({
 // //             title: "Welcome back!",
@@ -948,34 +948,34 @@ const AuthModal = observer(({
   const getFriendlyErrorMessage = (error: any): string => {
     // This function is now mainly for fallback, as AuthStore handles most error messages
     const errorMessage = error?.message || 'Something went wrong';
-    
+
     // Handle any remaining error messages not covered in AuthStore
     if (errorMessage.includes('User already exists')) {
       return 'An account with this email already exists. Please sign in or use a different email.';
     }
-    
+
     if (errorMessage.includes('Incorrect username or password')) {
       return 'Incorrect email or password. Please try again.';
     }
-    
+
     if (errorMessage.includes('Password did not conform with policy')) {
       return 'Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.';
     }
-    
+
     if (errorMessage.includes('Invalid verification code')) {
       return 'The verification code is invalid or has expired. Please request a new one.';
     }
-    
+
     if (errorMessage.includes('User is not confirmed')) {
       return 'Please verify your email address before signing in. Check your inbox for the verification code.';
     }
-    
+
     return errorMessage;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Basic validation
     if (mode === 'signup') {
       if (formData.password.length < 8) {
@@ -986,7 +986,7 @@ const AuthModal = observer(({
         });
         return;
       }
-      
+
       if (!/[A-Z]/.test(formData.password)) {
         toast({
           title: 'Password requirements not met',
@@ -995,7 +995,7 @@ const AuthModal = observer(({
         });
         return;
       }
-      
+
       if (!/[a-z]/.test(formData.password)) {
         toast({
           title: 'Password requirements not met',
@@ -1004,7 +1004,7 @@ const AuthModal = observer(({
         });
         return;
       }
-      
+
       if (!/[0-9]/.test(formData.password)) {
         toast({
           title: 'Password requirements not met',
@@ -1013,7 +1013,7 @@ const AuthModal = observer(({
         });
         return;
       }
-      
+
       if (!/[^A-Za-z0-9]/.test(formData.password)) {
         toast({
           title: 'Password requirements not met',
@@ -1023,7 +1023,7 @@ const AuthModal = observer(({
         return;
       }
     }
-    
+
     setIsLoading(true)
 
     try {
@@ -1049,7 +1049,7 @@ const AuthModal = observer(({
         if (!emailRegex.test(formData.email)) {
           throw new Error('Please enter a valid email address.');
         }
-        
+
         const registerResult = await authStore.register({
           fullname: formData.name,
           email: formData.email,
@@ -1071,7 +1071,7 @@ const AuthModal = observer(({
           // Store email and password for auto-login after OTP verification
           setUserEmail(formData.email)
           setUserPassword(formData.password)
-          
+
           // Show OTP input and store email
           setShowOtp(true)
           setFormData(prev => ({ ...prev, password: "" })) // Clear password field
@@ -1110,7 +1110,7 @@ const AuthModal = observer(({
         username: userEmail,
         confirmationCode: formData.otp
       });
-      
+
       if (isSignUpComplete) {
         // Auto-login after successful email verification
         if (userEmail && userPassword) {
@@ -1170,7 +1170,7 @@ const AuthModal = observer(({
       const { destination, deliveryMedium } = await resendSignUpCode({
         username: userEmail
       });
-      
+
       toast({
         title: "Verification Code Sent",
         description: `A new verification code has been sent to ${destination} via ${deliveryMedium}.`,
@@ -1188,16 +1188,18 @@ const AuthModal = observer(({
   const handleSocialSignIn = async (provider: "google" | "apple") => {
     try {
       setIsLoading(true)
+
+      // Use direct OAuth (not Cognito)
       if (provider === "google") {
-        await authStore.signInWithProvider("google")
+        const { signInWithGoogle } = await import("@/lib/oauth-client")
+        await signInWithGoogle()
       } else {
-        await authStore.signInWithProvider("apple")
+        const { signInWithApple } = await import("@/lib/oauth-client")
+        await signInWithApple()
       }
-      toast({
-        title: "Welcome!",
-        description: `Successfully signed in with ${provider}.`,
-      })
-      onClose()
+
+      // The redirect will happen in the OAuth client
+      // User will be redirected to /auth/callback/google or /auth/callback/apple
     } catch (error: any) {
       toast({
         title: "Error",
@@ -1214,8 +1216,8 @@ const AuthModal = observer(({
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-center text-card-foreground">
-            {showOtp ? "Verify Your Email" : 
-             mode === "signin" ? "Sign In to Grodify" : "Create Your Account"}
+            {showOtp ? "Verify Your Email" :
+              mode === "signin" ? "Sign In to Grodify" : "Create Your Account"}
           </DialogTitle>
         </DialogHeader>
 
@@ -1225,7 +1227,7 @@ const AuthModal = observer(({
               <p className="text-center text-sm text-muted-foreground">
                 Enter the verification code sent to <b>{userEmail}</b>
               </p>
-              
+
               <div className="space-y-2">
                 <Label>Verification Code</Label>
                 <div className="relative">
@@ -1241,7 +1243,7 @@ const AuthModal = observer(({
                   {/* <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" /> */}
                 </div>
               </div>
-              
+
               <Button
                 type="button"
                 onClick={handleVerifyOtp}
@@ -1250,7 +1252,7 @@ const AuthModal = observer(({
               >
                 {isLoading ? "Verifying..." : "Verify Code"}
               </Button>
-              
+
               <p className="text-xs text-muted-foreground text-center">
                 Didn't receive a code?{" "}
                 <button
@@ -1262,7 +1264,7 @@ const AuthModal = observer(({
                   Resend
                 </button>
               </p>
-              
+
               <Button
                 type="button"
                 variant="ghost"
@@ -1324,7 +1326,7 @@ const AuthModal = observer(({
                     </div>
                   </div>
                 )}
-                
+
                 {mode === "signup" && (
                   <div className="space-y-2">
                     <Label>Full Name</Label>
@@ -1368,8 +1370,8 @@ const AuthModal = observer(({
                       required
                       disabled={isLoading}
                       className={
-                        formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) 
-                          ? "border-red-500/50" 
+                        formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                          ? "border-red-500/50"
                           : ""
                       }
                     />
@@ -1396,11 +1398,10 @@ const AuthModal = observer(({
                       }}
                       required
                       disabled={isLoading}
-                      className={`pr-10 ${
-                        formData.password && formData.password.length > 0 && formData.password.length < 8 
-                          ? "border-red-500/50" 
+                      className={`pr-10 ${formData.password && formData.password.length > 0 && formData.password.length < 8
+                          ? "border-red-500/50"
                           : ""
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"
@@ -1465,8 +1466,8 @@ const AuthModal = observer(({
                   {isLoading
                     ? "Processing..."
                     : mode === "signin"
-                    ? "Sign In"
-                    : "Create Account"}
+                      ? "Sign In"
+                      : "Create Account"}
                 </Button>
               </form>
 

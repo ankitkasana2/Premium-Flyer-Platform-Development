@@ -789,4 +789,24 @@ export class AuthStore {
   handleAuthModal = () => {
     this.authModal = !this.authModal
   }
+
+  // Set user from direct OAuth (Google/Apple without Cognito)
+  setOAuthUser = (oauthUser: { id: string; email: string; name: string; picture?: string; provider: 'google' | 'apple' }) => {
+    const normalized = this.normalizeUser({
+      id: oauthUser.id,
+      email: oauthUser.email,
+      name: oauthUser.name,
+      provider: oauthUser.provider,
+    })
+
+    console.log('Setting OAuth user:', normalized)
+
+    // Create a simple token (you might want to get this from your backend)
+    const simpleToken = `oauth_${oauthUser.provider}_${oauthUser.id}`
+
+    runInAction(() => {
+      this.setSession(normalized, simpleToken)
+      this.authModal = false
+    })
+  }
 }
