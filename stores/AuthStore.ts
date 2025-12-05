@@ -1,6 +1,7 @@
 // stores/AuthStore.ts
 import { makeAutoObservable, runInAction, autorun } from "mobx"
 import { getApiUrl } from "@/config/api"
+import { registerUserInDatabase, formatCognitoUserId } from "@/lib/api-client"
 import { Amplify } from 'aws-amplify'
 import { Hub } from '@aws-amplify/core'
 import {
@@ -94,7 +95,7 @@ export class AuthStore {
     // Set up new auth state listener with proper typing
     this.authListener = Hub.listen('auth', async ({ payload }: { payload: AuthHubPayload }) => {
       if (!payload) return;
-      
+
       switch (payload.event) {
         case 'signedIn':
           await this.updateUserFromAmplify()
@@ -208,9 +209,9 @@ export class AuthStore {
         username: email,
         password,
       }
-      
+
       const { isSignedIn, nextStep } = await awsSignIn(signInInput)
-      
+
       if (!isSignedIn) {
         // Handle additional authentication steps
         if (nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
@@ -221,29 +222,29 @@ export class AuthStore {
         }
         throw new Error('Additional authentication steps required. Please try again.')
       }
-      
+
       return await this.updateUserFromAmplify()
     } catch (error: any) {
       let errorMessage = "Login failed"
-      
+
       // Handle specific AWS Cognito errors
       const errorString = error?.message || error?.toString() || ''
-      
+
       // User not found scenarios - Comprehensive coverage
-      if (errorString.includes('UserNotFoundException') || 
-          errorString.includes('User does not exist') ||
-          errorString.includes('user not found') ||
-          errorString.includes('USER_NOT_FOUND') ||
-          errorString.includes('User not found') ||
-          errorString.includes('Username does not exist') ||
-          errorString.includes('username does not exist') ||
-          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
-          errorString.includes('Invalid username') ||
-          errorString.includes('invalid username') ||
-          errorString.includes('INVALID_USERNAME') ||
-          errorString.includes('No such user') ||
-          errorString.includes('no such user') ||
-          errorString.includes('NO_SUCH_USER')) {
+      if (errorString.includes('UserNotFoundException') ||
+        errorString.includes('User does not exist') ||
+        errorString.includes('user not found') ||
+        errorString.includes('USER_NOT_FOUND') ||
+        errorString.includes('User not found') ||
+        errorString.includes('Username does not exist') ||
+        errorString.includes('username does not exist') ||
+        errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+        errorString.includes('Invalid username') ||
+        errorString.includes('invalid username') ||
+        errorString.includes('INVALID_USERNAME') ||
+        errorString.includes('No such user') ||
+        errorString.includes('no such user') ||
+        errorString.includes('NO_SUCH_USER')) {
         errorMessage = 'No account found with this email address. Please check your email or create a new account.'
       } else if (errorString.includes('NotAuthorizedException')) {
         if (errorString.includes('Incorrect username or password')) {
@@ -284,7 +285,7 @@ export class AuthStore {
       } else if (error?.message) {
         errorMessage = error.message
       }
-      
+
       runInAction(() => {
         this.error = errorMessage
       })
@@ -306,32 +307,77 @@ export class AuthStore {
       const user = await getCurrentUser()
       const session = await fetchAuthSession()
       const token = session.tokens?.idToken?.toString() || ''
-      
+
       console.log('Raw user from AWS:', user);
       console.log('Session tokens:', session.tokens);
       console.log('ID Token exists:', !!token);
-      
-      // Try to extract email from JWT token
+
+      // Extract data from JWT token
       let emailFromToken = ''
+      let nameFromToken = ''
+      let providerFromToken = 'cognito' // default
+
       if (token) {
         try {
           // Simple JWT decode (without verification since it's from AWS)
           const payload = JSON.parse(atob(token.split('.')[1]))
           console.log('JWT payload:', payload);
+
           emailFromToken = payload.email || ''
           console.log('Email from token:', emailFromToken);
+
+          // Extract name from token (different providers use different fields)
+          nameFromToken = payload.name || payload.given_name || payload.nickname || ''
+          console.log('Name from token:', nameFromToken);
+
+          // Detect provider from token
+          // Google: identities array contains google
+          // Apple: identities array contains apple
+          // Cognito: no identities or identities is empty
+          if (payload.identities && Array.isArray(payload.identities) && payload.identities.length > 0) {
+            const providerName = payload.identities[0].providerName?.toLowerCase() || ''
+            if (providerName.includes('google')) {
+              providerFromToken = 'google'
+            } else if (providerName.includes('apple')) {
+              providerFromToken = 'apple'
+            }
+          }
+          console.log('Provider from token:', providerFromToken);
+
         } catch (e) {
-          console.warn('Could not extract email from token:', e)
+          console.warn('Could not extract data from token:', e)
         }
       }
-      
+
       const normalized = this.normalizeUser({
         id: user.userId,
         email: emailFromToken || user.signInDetails?.loginId || '',
-        name: user.username || user.userId,
+        name: nameFromToken || user.username || emailFromToken || user.userId,
+        provider: providerFromToken,
       })
 
       console.log('Normalized user:', normalized);
+
+      // Register user in backend database
+      try {
+        const formattedUserId = formatCognitoUserId(user.userId, providerFromToken)
+        console.log('Formatted user ID for database:', formattedUserId);
+
+        const result = await registerUserInDatabase({
+          fullname: normalized.name,
+          email: normalized.email,
+          user_id: formattedUserId,
+        })
+
+        if (result.success) {
+          console.log('✅ User successfully registered/updated in database:', result);
+        } else {
+          console.error('❌ Failed to register user in database:', result.message);
+        }
+      } catch (dbError) {
+        console.error('❌ Error registering user in database:', dbError);
+        // Continue with authentication even if database registration fails
+      }
 
       runInAction(() => {
         this.setSession(normalized, token)
@@ -383,9 +429,30 @@ export class AuthStore {
           },
         },
       }
-      
+
       const { isSignUpComplete, userId, nextStep } = await awsSignUp(signUpInput)
-      
+
+      // Register user in backend database immediately after Cognito registration
+      try {
+        const formattedUserId = formatCognitoUserId(userId, 'cognito')
+        console.log('Registering user in database with ID:', formattedUserId);
+
+        const result = await registerUserInDatabase({
+          fullname: fullname,
+          email: email,
+          user_id: formattedUserId,
+        })
+
+        if (result.success) {
+          console.log('✅ User successfully registered in database:', result);
+        } else {
+          console.error('❌ Failed to register user in database:', result.message);
+        }
+      } catch (dbError) {
+        console.error('❌ Error registering user in database:', dbError);
+        // Continue with authentication even if database registration fails
+      }
+
       // If sign up is complete, automatically sign in the user
       if (isSignUpComplete) {
         try {
@@ -394,9 +461,9 @@ export class AuthStore {
             username: email,
             password,
           }
-          
+
           const { isSignedIn } = await awsSignIn(signInInput)
-          
+
           if (isSignedIn) {
             await this.updateUserFromAmplify()
             return {
@@ -437,7 +504,7 @@ export class AuthStore {
           }
         }
       }
-      
+
       // Return for manual verification (email verification required)
       return {
         success: isSignUpComplete,
@@ -451,10 +518,10 @@ export class AuthStore {
       }
     } catch (error: any) {
       let errorMessage = "Registration failed"
-      
+
       // Handle specific AWS Cognito errors
       const errorString = error?.message || error?.toString() || ''
-      
+
       if (errorString.includes('UsernameExistsException') || errorString.includes('User already exists')) {
         errorMessage = 'An account with this email already exists. Please sign in or use a different email.'
       } else if (errorString.includes('InvalidPasswordException')) {
@@ -490,7 +557,7 @@ export class AuthStore {
       } else if (error?.message) {
         errorMessage = error.message
       }
-      
+
       runInAction(() => {
         this.error = errorMessage
       })
@@ -527,10 +594,10 @@ export class AuthStore {
       await awsSignInWithRedirect(signInInput)
     } catch (error: any) {
       console.error('Error signing in with provider:', error)
-      
+
       let errorMessage = `Failed to sign in with ${provider}`
       const errorString = error?.message || error?.toString() || ''
-      
+
       if (errorString.includes('NotAuthorizedException')) {
         errorMessage = `${provider} sign-in not authorized. Please check your ${provider} account settings.`
       } else if (errorString.includes('UserNotConfirmedException')) {
@@ -548,7 +615,7 @@ export class AuthStore {
       } else if (error?.message) {
         errorMessage = error.message
       }
-      
+
       throw new Error(errorMessage)
     }
   }
@@ -568,34 +635,34 @@ export class AuthStore {
 
       const resetPasswordInput: ResetPasswordInput = { username: email }
       const result = await awsResetPassword(resetPasswordInput)
-      
+
       // In v6, resetPassword doesn't return a boolean, so we assume success if no error is thrown
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Password reset code sent to your email.',
         nextStep: result.nextStep
       }
     } catch (error: any) {
       console.error('Error sending OTP:', error)
-      
+
       let errorMessage = 'Failed to send password reset code'
       const errorString = error?.message || error?.toString() || ''
-      
+
       // User not found scenarios - Comprehensive coverage for password reset
-      if (errorString.includes('UserNotFoundException') || 
-          errorString.includes('User does not exist') ||
-          errorString.includes('user not found') ||
-          errorString.includes('USER_NOT_FOUND') ||
-          errorString.includes('User not found') ||
-          errorString.includes('Username does not exist') ||
-          errorString.includes('username does not exist') ||
-          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
-          errorString.includes('Invalid username') ||
-          errorString.includes('invalid username') ||
-          errorString.includes('INVALID_USERNAME') ||
-          errorString.includes('No such user') ||
-          errorString.includes('no such user') ||
-          errorString.includes('NO_SUCH_USER')) {
+      if (errorString.includes('UserNotFoundException') ||
+        errorString.includes('User does not exist') ||
+        errorString.includes('user not found') ||
+        errorString.includes('USER_NOT_FOUND') ||
+        errorString.includes('User not found') ||
+        errorString.includes('Username does not exist') ||
+        errorString.includes('username does not exist') ||
+        errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+        errorString.includes('Invalid username') ||
+        errorString.includes('invalid username') ||
+        errorString.includes('INVALID_USERNAME') ||
+        errorString.includes('No such user') ||
+        errorString.includes('no such user') ||
+        errorString.includes('NO_SUCH_USER')) {
         errorMessage = 'No account found with this email address. Please check your email or create a new account.'
       } else if (errorString.includes('InvalidParameterException')) {
         if (errorString.includes('email')) {
@@ -616,7 +683,7 @@ export class AuthStore {
       } else if (error?.message) {
         errorMessage = error.message
       }
-      
+
       throw new Error(errorMessage)
     }
   }
@@ -649,35 +716,35 @@ export class AuthStore {
         confirmationCode: code,
         newPassword,
       }
-      
+
       // In v6, confirmResetPassword doesn't return a boolean
       await awsConfirmResetPassword(confirmResetPasswordInput)
-      
-      return { 
-        success: true, 
-        message: 'Password reset successful. You can now sign in with your new password.' 
+
+      return {
+        success: true,
+        message: 'Password reset successful. You can now sign in with your new password.'
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error)
-      
+
       let errorMessage = 'Failed to reset password'
       const errorString = error?.message || error?.toString() || ''
-      
+
       // User not found scenarios - Comprehensive coverage for OTP verification
-      if (errorString.includes('UserNotFoundException') || 
-          errorString.includes('User does not exist') ||
-          errorString.includes('user not found') ||
-          errorString.includes('USER_NOT_FOUND') ||
-          errorString.includes('User not found') ||
-          errorString.includes('Username does not exist') ||
-          errorString.includes('username does not exist') ||
-          errorString.includes('USERNAME_DOES_NOT_EXIST') ||
-          errorString.includes('Invalid username') ||
-          errorString.includes('invalid username') ||
-          errorString.includes('INVALID_USERNAME') ||
-          errorString.includes('No such user') ||
-          errorString.includes('no such user') ||
-          errorString.includes('NO_SUCH_USER')) {
+      if (errorString.includes('UserNotFoundException') ||
+        errorString.includes('User does not exist') ||
+        errorString.includes('user not found') ||
+        errorString.includes('USER_NOT_FOUND') ||
+        errorString.includes('User not found') ||
+        errorString.includes('Username does not exist') ||
+        errorString.includes('username does not exist') ||
+        errorString.includes('USERNAME_DOES_NOT_EXIST') ||
+        errorString.includes('Invalid username') ||
+        errorString.includes('invalid username') ||
+        errorString.includes('INVALID_USERNAME') ||
+        errorString.includes('No such user') ||
+        errorString.includes('no such user') ||
+        errorString.includes('NO_SUCH_USER')) {
         errorMessage = 'No account found with this email address. Please check your email or create a new account.'
       } else if (errorString.includes('InvalidParameterException')) {
         if (errorString.includes('code')) {
@@ -714,7 +781,7 @@ export class AuthStore {
       } else if (error?.message) {
         errorMessage = error.message
       }
-      
+
       throw new Error(errorMessage)
     }
   }
