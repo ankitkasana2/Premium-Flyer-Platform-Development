@@ -64,7 +64,7 @@ const EventDetails = observer(() => {
         >
             <h2 className="text-xl font-bold flex items-center gap-3">
                 <CalendarIcon className="w-4 h-4" />
-                Event Details
+                Event Details *
             </h2>
 
             <div className="grid grid-cols-2 gap-6">

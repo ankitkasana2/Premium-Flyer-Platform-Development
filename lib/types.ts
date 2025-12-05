@@ -9,6 +9,7 @@ export interface Flyer {
   tags: string[]
   isRecentlyAdded?: boolean
   isFeatured?: boolean
+  form_type?: string
 }
 
 export interface Category {
@@ -141,7 +142,7 @@ export const extractFlyerCategories = (flyer: any): string[] => {
   const names = new Set<string>()
 
   if (Array.isArray(flyer.categories)) {
-    flyer.categories.forEach((category) => {
+    flyer.categories.forEach((category: any) => {
       const name = normalizeCategoryName(category)
       if (name) names.add(name)
     })
@@ -167,5 +168,64 @@ export const getCategoryCounts = (flyers: any[] = SAMPLE_FLYERS): Record<string,
 export const getCategoriesWithFlyers = (flyers: any[] = SAMPLE_FLYERS): Category[] => {
   const counts = getCategoryCounts(flyers)
   return FLYER_CATEGORIES.filter((category) => ALWAYS_VISIBLE_CATEGORIES.has(category.name) || counts[category.name])
+}
+
+// Generate categories dynamically from API flyers data
+export const getDynamicCategoriesFromFlyers = (apiFlyers: any[]): Category[] => {
+  if (!apiFlyers || apiFlyers.length === 0) {
+    // Return default categories if no flyers
+    return FLYER_CATEGORIES.filter(cat => cat.homePage)
+  }
+
+  const categoryCounts: Record<string, number> = {}
+
+  // Count flyers per category
+  apiFlyers.forEach((flyer) => {
+    if (Array.isArray(flyer.categories)) {
+      flyer.categories.forEach((categoryName: string) => {
+        categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1
+      })
+    }
+  })
+
+  console.log('📊 Category counts from API:', categoryCounts)
+
+  // Create category objects for categories that have flyers
+  const dynamicCategories: Category[] = []
+  const processedNames = new Set<string>()
+
+  // First, add predefined categories that have flyers
+  FLYER_CATEGORIES.forEach((category) => {
+    if (ALWAYS_VISIBLE_CATEGORIES.has(category.name) || categoryCounts[category.name]) {
+      // Override homePage to true for categories with flyers
+      dynamicCategories.push({
+        ...category,
+        homePage: true // Force all categories with flyers to show on homepage
+      })
+      processedNames.add(category.name)
+    }
+  })
+
+  // Then add any new categories from API that aren't in our predefined list
+  Object.keys(categoryCounts).forEach((categoryName) => {
+    if (!processedNames.has(categoryName)) {
+      // Create a slug from the category name
+      const slug = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+      dynamicCategories.push({
+        id: `dynamic-${slug}`,
+        name: categoryName,
+        slug: slug,
+        homePage: true // Show all categories with flyers on home page
+      })
+
+      console.log('🆕 New category from API:', categoryName)
+    }
+  })
+
+  console.log('✅ Total dynamic categories:', dynamicCategories.length)
+  console.log('📋 Category names:', dynamicCategories.map(c => c.name))
+
+  return dynamicCategories
 }
 

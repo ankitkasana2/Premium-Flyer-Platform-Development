@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       data: responseData,
-      message: 'Test order created successfully'
+      message: ' order created successfully'
     })
   } catch (error) {
-    console.error('Test order error:', error)
+    console.error(' order error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

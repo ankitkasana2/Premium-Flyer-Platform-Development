@@ -19,22 +19,28 @@ import { useSearchParams } from "next/navigation"
 const CategoriesPage = () => {
 
   const searchParams = useSearchParams()
-  const { authStore, filterBarStore, categoryStore } = useStore()
+  const { authStore, filterBarStore, categoryStore, flyersStore } = useStore()
   const [filter, setFilter] = useState({
     price: [],
     category: '',
     type: ''
   })
 
+  // Fetch flyers from API on mount
+  useEffect(() => {
+    if (!flyersStore.flyers.length && !flyersStore.loading) {
+      flyersStore.fetchFlyers()
+    }
+  }, [flyersStore])
 
   useEffect(() => {
     const value = searchParams.get('slug')
     if (searchParams.size == 0) {
       categoryStore.setFlyer('Recently Added')
-    }else{
-      categoryStore.setFlyer(value? value : '')
+    } else {
+      categoryStore.setFlyer(value ? value : '')
     }
-  }, [searchParams])
+  }, [searchParams, flyersStore.flyers]) // Re-run when flyers are loaded
 
 
 
@@ -45,7 +51,7 @@ const CategoriesPage = () => {
         <FilterBar />
       </div>
 
-      {/* carsoul bar  */}
+      {/* carousel bar  */}
       <div className="col-span-9 ">
         {/* Featured Flyers */}
         <FlyersCategorySection />

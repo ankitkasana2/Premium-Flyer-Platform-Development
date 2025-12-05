@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart } from "lucide-react"
-// import type { Flyer } from "@/lib/types"
+import type { Flyer } from "@/lib/types"
 import Link from "next/link"
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
@@ -33,7 +33,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
     e.preventDefault() // ⛔ prevent Link navigation
     e.stopPropagation() // ⛔ stop event bubbling
     if (!user) {
-     authStore.handleAuthModal()
+      authStore.handleAuthModal()
       return
     }
 
@@ -51,22 +51,37 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
     }
   }
 
+  // 🎀 Ribbon Logic
+  const getPrice = (f: any) => {
+    if (typeof f.price === 'number') return f.price;
+    if (typeof f.price === 'string') return parseFloat(f.price.replace('$', ''));
+    return 0;
+  }
+
+  const price = getPrice(flyer);
+  const isPremium = price === 40;
+
+  const hasPhotoRibbon =
+    flyer.form_type === 'With Image' ||
+    flyer.form_type === 'With Photo' ||
+    flyer.hasPhotos === true;
+
 
   return (
-    
-    
+
+
     // <Link href={`/flyer/${flyer.id}`}>
     <Link
-  href={{
-    pathname: `/flyer/${flyer.id}`,
-    query: {
-      image: flyer.image_url,
-      name: flyer.name,
-      // price: flyer.price,
-      price:10,
-    },
-  }}
->
+      href={{
+        pathname: `/flyer/${flyer.id}`,
+        query: {
+          image: flyer.image_url,
+          name: flyer.name,
+          // price: flyer.price,
+          price: 10,
+        },
+      }}
+    >
 
       <div
         className="group bg-card border rounded-xl overflow-hidden transition-all duration-300 
@@ -85,7 +100,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
           <Button
             size="icon"
             variant="ghost"
-            className="absolute top-2 right-2 bg-black/20 hover:bg-black/40 hover:cursor-pointer"
+            className="absolute top-2 right-2 bg-black/20 hover:bg-black/40 hover:cursor-pointer z-30"
             onClick={handleToggleFavorite}
           >
             <Heart
@@ -95,31 +110,52 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
           </Button>
 
           {/* 💰 Price Badge */}
-          <div className="absolute bottom-2 right-2">
+          <div className="absolute bottom-2 right-2 z-30">
             <Badge
               className={`${getPriceColor(
-                flyer.priceType
+                flyer.priceType || (isPremium ? 'premium' : 'regular')
               )} shadow-[0_0_10px_3px_rgba(0,0,0,0.6)]`}
             >
-              ${flyer.price}
+              {/* $ */}
+              {flyer.price}
             </Badge>
           </div>
 
-          {/* 🌟 Premium Ribbon */}
-          {flyer.priceType === "premium" && (
-            <div className="absolute top-0 left-0 w-22 h-20 overflow-hidden">
-              <div
-                className="absolute top-5 -left-5 w-25 bg-[#FFB700] text-black text-xs font-bold text-center 
-                      shadow-[0_0_5px_rgba(0,0,0,0.5)] transform -rotate-45"
+          {/* 🎀 Ribbons System */}
+          <div className="absolute top-0 left-0 w-32 h-32 overflow-hidden pointer-events-none z-20">
+
+            {/* 🏆 Premium Ribbon */}
+            {isPremium && (
+              <div style={{
+    left: "-35px",
+    top: "11px",
+   
+  }}
+                className="absolute top-[22px] -left-[30px] w-[120px] bg-[#FFB700] text-black text-[10px] font-bold text-center 
+                      shadow-md transform -rotate-45 z-20 py-1 uppercase tracking-wider border-y border-white/20"
               >
                 Premium
               </div>
-            </div>
-          )}
+            )}
+
+            {/* 🟥 Photo Ribbon */}
+            {hasPhotoRibbon && (
+              <div
+                className={`absolute w-[120px] text-white text-[9px] font-bold text-center 
+                      shadow-md transform -rotate-45 z-10 py-0.5 uppercase tracking-wider border-y border-white/20
+                      ${isPremium
+                    ? 'top-[27px] -left-[21px] bg-[#D32F2F]' // Position below Premium
+                    : 'top-[22px] -left-[30px] bg-[#D32F2F]' // Position at top (same as Premium)
+                  }`}
+              >
+                PHOTO
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>
-    
+
   )
 }
 

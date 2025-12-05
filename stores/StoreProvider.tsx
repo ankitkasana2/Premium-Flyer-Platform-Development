@@ -27,6 +27,9 @@ export class RootStore {
     this.categoryStore = new CategoryStore()
     this.flyerFormStore = new FlyerFormStore()
     this.cartStore = new CartStore()
+
+    // Connect CategoryStore with FlyersStore
+    this.categoryStore.setFlyersStore(this.flyersStore)
   }
 }
 

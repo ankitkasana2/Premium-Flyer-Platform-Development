@@ -52,9 +52,25 @@ useEffect(() => {
           {/* Logo */}
 
           {/* <Image src="/logo.png" height={10} alt="Logo" width={10} className="w-24 sm:w-32 md:w-36" /> */}
-          <Link href="/" className="flex items-center space-x-2">
+          {/* <Link href="/" className="flex items-center space-x-2">
             <Image src='/logo.png' alt="logo" width={10} height={1} className="w-32 h-20 object-contain block" />
-          </Link>
+          </Link> */}
+          
+<Link
+  href="/"
+  className="inline-flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
+>
+  <Image
+    src="/logo.png"
+    alt="Grodify Logo"
+    width={120}
+    height={60}
+    className="object-contain"
+  />
+</Link>
+
+
+
 
 
 

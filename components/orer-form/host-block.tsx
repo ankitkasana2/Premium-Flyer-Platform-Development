@@ -50,7 +50,7 @@ const HostSection = observer(() => {
   // -----------------------------
   return (
     <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-      <h2 className="text-xl font-bold">Host</h2>
+      <h2 className="text-xl font-bold">Host *</h2>
 
       <div className="grid grid-cols-2 gap-6 mb-4">
         {flyerFormStore.flyer?.hasPhotos ? <div className="col-span-2">

@@ -1,3 +1,5 @@
+'use client'
+
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
@@ -5,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FlyerCard } from "@/components/flyer/flyer-card"
 import { Star, Zap, Clock, Shield } from "lucide-react"
-import { getCategoriesWithFlyers } from "@/lib/types"
+import { getDynamicCategoriesFromFlyers } from "@/lib/types"
 import Link from "next/link"
 import FlyersSection from "@/components/home/FlyersSection"
 import HeroSection from "@/components/home/HeroSection"
@@ -13,7 +15,7 @@ import FeaturedCategories from "@/components/home/FeaturedCategories"
 import { observer } from "mobx-react-lite"
 import { useStore } from "@/stores/StoreProvider"
 import { toJS } from "mobx"
-import React from "react"
+import React, { useEffect, useState } from "react"
 
 type HomeSectionProps = {
   type: {
@@ -28,16 +30,68 @@ type HomeSectionProps = {
 
 
 const HomePage: React.FC<HomeSectionProps> = () => {
+  const { flyersStore } = useStore()
+  const [categories, setCategories] = useState<any[]>([])
 
-  const categories = getCategoriesWithFlyers().filter((cat) => cat.homePage)
+  // Fetch flyers on mount
+  useEffect(() => {
+    if (!flyersStore.flyers.length && !flyersStore.loading) {
+      flyersStore.fetchFlyers()
+    }
+  }, [flyersStore])
+
+  // Update categories when flyers are loaded
+  useEffect(() => {
+    if (flyersStore.flyers.length > 0) {
+      const dynamicCategories = getDynamicCategoriesFromFlyers(toJS(flyersStore.flyers))
+      // Show ALL categories that have flyers (removed homePage filter)
+      setCategories(dynamicCategories)
+      console.log('📊 Dynamic categories loaded:', dynamicCategories)
+      console.log('📊 Total categories:', dynamicCategories.length)
+    }
+  }, [flyersStore.flyers])
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <HeroSection />
 
-      {categories && categories.map(cat => (<FlyersSection key={cat.id} type={cat} />))}
+      {/* Loading state */}
+      {flyersStore.loading && (
+        <section className="py-8 px-5">
+          <div className="flex flex-col gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <div className="h-6 w-40 rounded bg-gray-800/30 animate-pulse" />
+                <div className="h-48 w-full rounded-xl bg-gray-900/40 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
+      {/* Error state */}
+      {flyersStore.error && (
+        <section className="py-8 px-5">
+          <div className="text-center text-red-500">
+            <p>Error loading flyers: {flyersStore.error}</p>
+          </div>
+        </section>
+      )}
+
+      {/* Categories with flyers */}
+      {!flyersStore.loading && categories.length > 0 &&
+        categories.map(cat => <FlyersSection key={cat.id} type={cat} />)
+      }
+
+      {/* No flyers state */}
+      {!flyersStore.loading && !flyersStore.error && categories.length === 0 && (
+        <section className="py-8 px-5">
+          <div className="text-center text-muted-foreground">
+            <p>No flyers available at the moment.</p>
+          </div>
+        </section>
+      )}
 
 
 
@@ -151,7 +205,7 @@ const HomePage: React.FC<HomeSectionProps> = () => {
   )
 }
 
-export default HomePage;
+export default observer(HomePage);
 
 
 
