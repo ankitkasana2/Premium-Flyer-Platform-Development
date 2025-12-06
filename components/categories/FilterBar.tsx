@@ -58,13 +58,18 @@ const FilterBar = () => {
         // Step 3: Filter by type (if any selected)
         if (types.length > 0) {
             filtered = filtered.filter((flyer: any) => {
-                if (types.includes('info')) {
-                    return !flyer.hasPhotos && !flyer.has_photos
-                }
-                if (types.includes('photos')) {
-                    return flyer.hasPhotos || flyer.has_photos
-                }
-                return true
+                const hasPhotos = flyer.hasPhotos || flyer.has_photos
+
+                // Check if flyer matches ANY of the selected types (OR logic)
+                return types.some(type => {
+                    if (type === 'info') {
+                        return !hasPhotos  // Info only (no photos)
+                    }
+                    if (type === 'photos') {
+                        return hasPhotos  // With photos
+                    }
+                    return false
+                })
             })
             console.log("🎨 After type filter:", filtered.length, "flyers")
         }
