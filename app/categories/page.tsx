@@ -19,7 +19,7 @@ import { useSearchParams } from "next/navigation"
 const CategoriesPage = () => {
 
   const searchParams = useSearchParams()
-  const { authStore, filterBarStore, categoryStore, flyersStore } = useStore()
+  const { authStore, filterBarStore, categoryStore, flyersStore, favoritesStore } = useStore()
   const [filter, setFilter] = useState({
     price: [],
     category: '',
@@ -32,6 +32,14 @@ const CategoriesPage = () => {
       flyersStore.fetchFlyers()
     }
   }, [flyersStore])
+
+  // Fetch favorites on mount if user is logged in
+  useEffect(() => {
+    if (authStore.user?.id) {
+      console.log("📂 Categories page: Fetching favorites for user:", authStore.user.id)
+      favoritesStore.fetchFavorites(authStore.user.id)
+    }
+  }, [authStore.user?.id, favoritesStore])
 
   useEffect(() => {
     const value = searchParams.get('slug')

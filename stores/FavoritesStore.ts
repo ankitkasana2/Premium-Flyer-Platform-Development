@@ -79,7 +79,7 @@ export class FavoritesStore {
 
     try {
       const response = await fetch(getApiUrl(`/api/favorites/remove`), {
-        method: "DELETE",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },

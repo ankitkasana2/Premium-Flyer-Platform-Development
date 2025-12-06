@@ -30,7 +30,7 @@ type HomeSectionProps = {
 
 
 const HomePage: React.FC<HomeSectionProps> = () => {
-  const { flyersStore } = useStore()
+  const { flyersStore, authStore, favoritesStore } = useStore()
   const [categories, setCategories] = useState<any[]>([])
 
   // Fetch flyers on mount
@@ -39,6 +39,14 @@ const HomePage: React.FC<HomeSectionProps> = () => {
       flyersStore.fetchFlyers()
     }
   }, [flyersStore])
+
+  // Fetch favorites on mount if user is logged in
+  useEffect(() => {
+    if (authStore.user?.id) {
+      console.log("🏠 Home page: Fetching favorites for user:", authStore.user.id)
+      favoritesStore.fetchFavorites(authStore.user.id)
+    }
+  }, [authStore.user?.id, favoritesStore])
 
   // Update categories when flyers are loaded
   useEffect(() => {

@@ -57,7 +57,7 @@ Response:
 
 ### **3. Remove from Favorites**
 ```typescript
-DELETE http://193.203.161.174:3007/api/favorites/remove
+POST http://193.203.161.174:3007/api/favorites/remove
 
 Request Body:
 {

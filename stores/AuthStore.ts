@@ -73,8 +73,12 @@ export class AuthStore {
   error: string | null = null
   authModal = false
   private authListener: any = null
+  private cartStore: any = null
+  private favoritesStore: any = null
 
-  constructor() {
+  constructor(cartStore?: any, favoritesStore?: any) {
+    this.cartStore = cartStore
+    this.favoritesStore = favoritesStore
     makeAutoObservable(this)
     this.initializeAuthListener()
   }
@@ -570,12 +574,30 @@ export class AuthStore {
   }
 
   logout = async () => {
+    const userId = this.user?.id // Save userId before clearing
+
     try {
+      console.log("🚪 Logging out user...")
       await awsSignOut()
     } catch (error) {
       console.error('Error during sign out:', error)
     } finally {
+      // Clear user session
       this.clearUser()
+
+      // Clear cart and favorites stores
+      if (this.cartStore) {
+        console.log("🛒 Clearing cart...")
+        // Clear local cart items immediately
+        this.cartStore.cartItems = []
+      }
+
+      if (this.favoritesStore) {
+        console.log("❤️ Clearing favorites...")
+        this.favoritesStore.clearLocalFavorites()
+      }
+
+      console.log("✅ Logout complete - all data cleared")
     }
   }
 

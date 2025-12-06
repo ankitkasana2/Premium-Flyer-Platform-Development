@@ -24,12 +24,14 @@ export class RootStore {
 
   constructor() {
     this.favoritesStore = new FavoritesStore()
-    this.authStore = new AuthStore()
+    this.cartStore = new CartStore()
     this.filterBarStore = new FilterBarStore()
     this.categoryStore = new CategoryStore()
     this.flyerFormStore = new FlyerFormStore()
-    this.cartStore = new CartStore()
     this.loadingStore = new LoadingStore()
+
+    // Create AuthStore and pass other stores for cleanup on logout
+    this.authStore = new AuthStore(this.cartStore, this.favoritesStore)
 
     // Connect CategoryStore with FlyersStore
     this.categoryStore.setFlyersStore(this.flyersStore)
