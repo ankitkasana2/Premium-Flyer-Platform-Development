@@ -20,13 +20,13 @@ export const Header = observer(() => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // const cart = CartStore((s) => s.cart);
 
-useEffect(() => {
+  useEffect(() => {
     // Load cart for logged-in user only
     if (authStore.user?.id) {
       console.log('Header: Loading cart for user:', authStore.user.id)
       cartStore.load(authStore.user.id)
     }
-    
+
     // Also try to load cart if user data becomes available later
     const checkUser = setInterval(() => {
       if (authStore.user?.id) {
@@ -35,16 +35,16 @@ useEffect(() => {
         clearInterval(checkUser)
       }
     }, 1000)
-    
+
     // Cleanup interval after 10 seconds
     setTimeout(() => clearInterval(checkUser), 10000)
-    
+
     return () => clearInterval(checkUser)
   }, [authStore.user?.id, cartStore])
 
-// const cartCount = cartStore.count;
+  // const cartCount = cartStore.count;
 
-// alert("Cart Count: " + JSON.stringify(cartCount));
+  // alert("Cart Count: " + JSON.stringify(cartCount));
   return (
     <header className="sticky top-0 z-[50] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full px-2 sm:px-4">
@@ -55,19 +55,19 @@ useEffect(() => {
           {/* <Link href="/" className="flex items-center space-x-2">
             <Image src='/logo.png' alt="logo" width={10} height={1} className="w-32 h-20 object-contain block" />
           </Link> */}
-          
-<Link
-  href="/"
-  className="inline-flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
->
-  <Image
-    src="/logo.png"
-    alt="Grodify Logo"
-    width={120}
-    height={60}
-    className="object-contain"
-  />
-</Link>
+
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
+          >
+            <Image
+              src="/logo.png"
+              alt="Grodify Logo"
+              width={120}
+              height={60}
+              className="object-contain"
+            />
+          </Link>
 
 
 
@@ -123,23 +123,23 @@ useEffect(() => {
               </Link>
             </div> */}
             <div className="relative cursor-pointer">
-  <Link href="/cart">
-    <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
-  </Link>
+              <Link href="/cart">
+                <ShoppingCart className="w-5 h-5 sm:h-6 sm:w-6" />
+              </Link>
 
- {cartStore.count > 0 && (
-        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {cartStore.count}
-        </span>
-      )}
-      
-      {/* Show loading indicator when cart is being loaded */}
-      {cartStore.isLoading && (
-        <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-          ...
-        </span>
-      )}
-</div>
+              {cartStore.count > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartStore.count}
+                </span>
+              )}
+
+              {/* Show loading indicator when cart is being loaded */}
+              {cartStore.isLoading && (
+                <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  ...
+                </span>
+              )}
+            </div>
             <div className="flex items-center">
               <UserMenu />
             </div>
