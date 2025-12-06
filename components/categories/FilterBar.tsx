@@ -20,6 +20,70 @@ const FilterBar = () => {
     const [selectedPrices, setSelectedPrices] = useState<string[]>([])
     const [selectedTypes, setSelectedTypes] = useState<string[]>([])
 
+    // Unified function to apply all filters together
+    const applyAllFilters = (categories: string[], prices: string[], types: string[]) => {
+        console.log("🔍 Applying filters:", { categories, prices, types })
+
+        const allFlyers = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
+        let filtered = allFlyers
+
+        // Step 1: Filter by categories (if any selected)
+        if (categories.length > 0) {
+            filtered = filtered.filter((flyer: any) => {
+                if (Array.isArray(flyer.categories)) {
+                    return categories.some(cat => flyer.categories.includes(cat))
+                }
+                return categories.includes(flyer.category)
+            })
+            console.log("📂 After category filter:", filtered.length, "flyers")
+        }
+
+        // Step 2: Filter by price (if any selected)
+        if (prices.length > 0) {
+            filtered = filtered.filter((flyer: any) => {
+                const price = typeof flyer.price === 'string'
+                    ? parseFloat(flyer.price.replace('$', ''))
+                    : flyer.price
+
+                let priceType = 'regular'
+                if (price === 10) priceType = 'basic'
+                else if (price === 40) priceType = 'premium'
+                else if (price === 15) priceType = 'regular'
+
+                return prices.includes(priceType)
+            })
+            console.log("💰 After price filter:", filtered.length, "flyers")
+        }
+
+        // Step 3: Filter by type (if any selected)
+        if (types.length > 0) {
+            filtered = filtered.filter((flyer: any) => {
+                if (types.includes('info')) {
+                    return !flyer.hasPhotos && !flyer.has_photos
+                }
+                if (types.includes('photos')) {
+                    return flyer.hasPhotos || flyer.has_photos
+                }
+                return true
+            })
+            console.log("🎨 After type filter:", filtered.length, "flyers")
+        }
+
+        // Update category store
+        categoryStore.flyers = filtered
+
+        // Set category name
+        if (categories.length > 0) {
+            categoryStore.category = categories.join(', ')
+        } else if (categoryStore.category) {
+            // Keep current category if no category filter
+        } else {
+            categoryStore.category = 'All Flyers'
+        }
+
+        console.log("✅ Final filtered flyers:", filtered.length)
+    }
+
     const toggleCategory = (categoryName: string) => {
         const newSelected = selectedCategories.includes(categoryName)
             ? selectedCategories.filter((c) => c !== categoryName)
@@ -28,26 +92,8 @@ const FilterBar = () => {
         setSelectedCategories(newSelected)
         filterBarStore.categoryFilter(categoryName)
 
-        // Apply category filter
-        if (newSelected.length > 0) {
-            // Filter flyers by selected categories
-            const allFlyers = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
-            const filtered = allFlyers.filter((flyer: any) => {
-                // Check if flyer has categories array (API format)
-                if (Array.isArray(flyer.categories)) {
-                    return newSelected.some(cat => flyer.categories.includes(cat))
-                }
-                // Fallback to old format
-                return newSelected.includes(flyer.category)
-            })
-            categoryStore.flyers = filtered
-            categoryStore.category = newSelected.join(', ')
-        } else {
-            // No category selected, show current category or all
-            if (categoryStore.category) {
-                categoryStore.setFlyer(categoryStore.category)
-            }
-        }
+        // Apply all filters together
+        applyAllFilters(newSelected, selectedPrices, selectedTypes)
     }
 
     const togglePrice = (id: string) => {
@@ -58,8 +104,8 @@ const FilterBar = () => {
         setSelectedPrices(newSelected)
         filterBarStore.priceFilter(id)
 
-        // Apply price filter to current category
-        categoryStore.setFlyerByFilter(filterBarStore.price)
+        // Apply all filters together
+        applyAllFilters(selectedCategories, newSelected, selectedTypes)
     }
 
     const toggleType = (type: string) => {
@@ -70,25 +116,8 @@ const FilterBar = () => {
         setSelectedTypes(newSelected)
         filterBarStore.typeFilter(type)
 
-        // Apply type filter
-        if (newSelected.length > 0) {
-            const allFlyers = flyersStore.flyers.length ? flyersStore.flyers : SAMPLE_FLYERS
-            const filtered = allFlyers.filter((flyer: any) => {
-                if (newSelected.includes('info')) {
-                    return !flyer.hasPhotos && !flyer.has_photos
-                }
-                if (newSelected.includes('photos')) {
-                    return flyer.hasPhotos || flyer.has_photos
-                }
-                return true
-            })
-            categoryStore.flyers = filtered
-        } else {
-            // Reset to current category
-            if (categoryStore.category) {
-                categoryStore.setFlyer(categoryStore.category)
-            }
-        }
+        // Apply all filters together
+        applyAllFilters(selectedCategories, selectedPrices, newSelected)
     }
 
     useEffect(() => {
