@@ -25,6 +25,7 @@ const CategoriesPage = () => {
     category: '',
     type: ''
   })
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch flyers from API on mount
   useEffect(() => {
@@ -41,12 +42,21 @@ const CategoriesPage = () => {
     }
   }, [authStore.user?.id, favoritesStore])
 
+  // Handle search query from URL
   useEffect(() => {
-    const value = searchParams.get('slug')
-    if (searchParams.size == 0) {
-      categoryStore.setFlyer('Recently Added')
+    const search = searchParams.get('search')
+    if (search) {
+      console.log("🔍 Search query:", search)
+      setSearchQuery(search)
+      categoryStore.searchFlyers(search)
     } else {
-      categoryStore.setFlyer(value ? value : '')
+      setSearchQuery('')
+      const value = searchParams.get('slug')
+      if (searchParams.size == 0) {
+        categoryStore.setFlyer('Recently Added')
+      } else {
+        categoryStore.setFlyer(value ? value : '')
+      }
     }
   }, [searchParams, flyersStore.flyers]) // Re-run when flyers are loaded
 

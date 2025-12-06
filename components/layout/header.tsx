@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import UserMenu from "@/components/auth/user-menu"
@@ -16,8 +17,10 @@ import { observer } from "mobx-react-lite";
 // const cartCount =7;
 
 export const Header = observer(() => {
+  const router = useRouter()
   const { authStore, cartStore } = useStore()
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   // const cart = CartStore((s) => s.cart);
 
   useEffect(() => {
@@ -41,6 +44,27 @@ export const Header = observer(() => {
 
     return () => clearInterval(checkUser)
   }, [authStore.user?.id, cartStore])
+
+  // Handle search
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      console.log("🔍 Searching for:", searchQuery)
+      // Navigate to categories page with search query
+      router.push(`/categories?search=${encodeURIComponent(searchQuery.trim())}`)
+      setIsSearchOpen(false) // Close mobile search
+    }
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch(e as any)
+    }
+  }
 
   // const cartCount = cartStore.count;
 
@@ -72,21 +96,21 @@ export const Header = observer(() => {
 
 
 
-
-
-
           {/* Desktop Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
+            <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyPress={handleKeyPress}
                 placeholder="Search flyers..."
                 className="pl-10 bg-card border-border text-input-text shadow-md
                 focus-visible:!ring-0 focus-visible:!outline-none
                 focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
                 transition-all duration-300"
               />
-            </div>
+            </form>
           </div>
 
           {/* Links */}
@@ -154,16 +178,19 @@ export const Header = observer(() => {
           isSearchOpen ? "max-h-20 opacity-100 px-3 pb-3 " : "max-h-0 opacity-0"
         )}
       >
-        <div className="relative">
+        <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyPress={handleKeyPress}
             placeholder="Search flyers..."
             className="pl-10 bg-card border-border text-input-text shadow-md
             focus-visible:!ring-0 focus-visible:!outline-none
             focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
             transition-all duration-300"
           />
-        </div>
+        </form>
       </div>
     </header>
   )

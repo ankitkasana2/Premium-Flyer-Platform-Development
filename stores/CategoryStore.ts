@@ -130,6 +130,42 @@ export class CategoryStore {
         }
     }
 
+    // Search flyers by query
+    searchFlyers(query: string) {
+        const allFlyers = this.allFlyers
+        const searchLower = query.toLowerCase().trim()
+
+        if (!searchLower) {
+            this.flyers = allFlyers
+            this.category = 'All Flyers'
+            return
+        }
+
+        console.log("🔍 Searching flyers for:", searchLower)
+
+        this.flyers = allFlyers.filter((fly: any) => {
+            // Search in name
+            const nameMatch = fly.name?.toLowerCase().includes(searchLower)
+
+            // Search in title
+            const titleMatch = fly.title?.toLowerCase().includes(searchLower)
+
+            // Search in categories
+            const categoryMatch = Array.isArray(fly.categories)
+                ? fly.categories.some((cat: string) => cat.toLowerCase().includes(searchLower))
+                : fly.category?.toLowerCase().includes(searchLower)
+
+            // Search in tags
+            const tagsMatch = Array.isArray(fly.tags)
+                ? fly.tags.some((tag: string) => tag.toLowerCase().includes(searchLower))
+                : false
+
+            return nameMatch || titleMatch || categoryMatch || tagsMatch
+        })
+
+        this.category = `Search Results for "${query}"`
+        console.log("✅ Found", this.flyers.length, "flyers")
+    }
 
 
 
