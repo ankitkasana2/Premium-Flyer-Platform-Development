@@ -1,362 +1,440 @@
-# 🤖 AI Agent Documentation
+# 📚 Grodify Project Documentation Index
 
-**Generated:** December 6, 2025  
-**Purpose:** Complete project analysis and understanding documentation
-
----
-
-## 📚 What's in This Folder?
-
-This folder contains comprehensive documentation created by AI analysis of the entire Grodify project. These documents provide deep insights into the project's architecture, features, and implementation.
+Welcome to the comprehensive documentation for the **Grodify Premium Flyer Platform**. This index will help you navigate through all the documentation files and find the information you need.
 
 ---
 
 ## 🎯 Start Here
 
-### For Complete Understanding:
-Read these documents in order:
+### **New to the Project?**
+1. 📋 **[EXECUTIVE_SUMMARY.md](./EXECUTIVE_SUMMARY.md)** - High-level overview and key features
+2. 📊 **[PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)** - Comprehensive project analysis
+3. 🏛️ **[ARCHITECTURE_OVERVIEW.md](./ARCHITECTURE_OVERVIEW.md)** - System architecture and diagrams
 
-1. **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)**  
-   📖 Complete index of all project documentation  
-   ⏱️ 5 min read
-
-2. **[COMPLETE_UNDERSTANDING_SUMMARY.md](./COMPLETE_UNDERSTANDING_SUMMARY.md)**  
-   ✅ High-level project overview and summary  
-   ⏱️ 10 min read
-
-3. **[PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)**  
-   🔍 Detailed technical analysis of all components  
-   ⏱️ 30 min read
-
-4. **[QUICK_PROJECT_REFERENCE.md](./QUICK_PROJECT_REFERENCE.md)**  
-   ⚡ Quick reference for daily development  
-   ⏱️ 5 min read
-
-5. **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)**  
-   🏛️ Visual architecture diagrams and data flows  
-   ⏱️ 15 min read
+### **Ready to Develop?**
+4. 🚀 **[DEVELOPER_QUICK_REFERENCE.md](./DEVELOPER_QUICK_REFERENCE.md)** - Quick reference for common tasks
 
 ---
 
-## 📋 Document Descriptions
+## 📖 Documentation Overview
 
-### DOCUMENTATION_INDEX.md
-**Purpose:** Master index of all 44+ documentation files  
-**Contains:**
-- Complete documentation library
-- Documentation map by use case
-- Quick navigation by topic
-- Learning paths for different skill levels
+### **1. Executive Summary** 📋
+**File**: `EXECUTIVE_SUMMARY.md`
 
-**Best for:** Finding the right documentation quickly
+**What's Inside:**
+- Project overview and key features
+- Technical architecture summary
+- Project statistics
+- Current status and roadmap
+- Quick facts and metrics
 
----
-
-### COMPLETE_UNDERSTANDING_SUMMARY.md
-**Purpose:** Demonstrate complete project understanding  
-**Contains:**
-- What was analyzed (files, features, architecture)
-- Project summary and business model
-- Technical architecture overview
-- Core features explanation
-- Data flow patterns
-- Security understanding
-- Deployment knowledge
-- Recommendations for next steps
-
-**Best for:** Getting a comprehensive overview
+**Best For:**
+- Project stakeholders
+- New team members
+- Quick project overview
+- Management presentations
 
 ---
 
-### PROJECT_ANALYSIS.md
-**Purpose:** Deep technical analysis of the entire project  
-**Contains:**
-- Complete project overview
-- Technology stack breakdown
-- Detailed file structure
-- Authentication system deep dive
-- E-commerce features analysis
-- Data management patterns
-- Design system documentation
-- Backend integration details
-- Banner system explanation
-- Responsive design notes
-- State management flow
-- Testing and debugging tips
-- Recent changes summary
+### **2. Project Analysis** 📊
+**File**: `PROJECT_ANALYSIS.md`
 
-**Best for:** Understanding technical implementation
+**What's Inside:**
+- Complete project architecture
+- Technology stack details
+- Core features breakdown
+- Data flow diagrams
+- File structure analysis
+- Security features
+- Performance optimizations
+- Known issues and limitations
 
----
+**Best For:**
+- Developers joining the project
+- Technical deep-dive
+- Understanding system design
+- Code review preparation
+- Architecture decisions
 
-### QUICK_PROJECT_REFERENCE.md
-**Purpose:** Quick reference for common development tasks  
-**Contains:**
-- Quick start commands
-- Key directories overview
-- Core stores usage examples
-- Color scheme reference
-- API endpoints list
-- Common components
-- Common patterns
-- Authentication flows
-- Cart & checkout flow
-- Responsive breakpoints
-- Dynamic categories explanation
-- Debugging tips
-- Important files list
-- Environment variables
-- Common issues & solutions
-- Pro tips
-
-**Best for:** Daily development work
+**Key Sections:**
+- 🏗️ Project Architecture
+- 🔑 Core Features
+- 🌐 Backend Integration
+- 🎨 Design System
+- 🔄 State Management
+- 📱 Responsive Design
+- 🔐 Security Features
+- 📊 Data Flow
+- 🧪 Testing & Development
 
 ---
 
-### SYSTEM_ARCHITECTURE.md
-**Purpose:** Visual representation of system architecture  
-**Contains:**
-- High-level architecture diagram
-- Data flow diagrams:
-  - User authentication flow
-  - Flyer browsing flow
-  - Shopping cart flow
-  - Payment flow
-- Component hierarchy tree
-- Store dependencies graph
+### **3. Architecture Overview** 🏛️
+**File**: `ARCHITECTURE_OVERVIEW.md`
+
+**What's Inside:**
+- Visual architecture diagrams
+- High-level system design
+- Component hierarchy
+- Data flow visualizations
 - API integration points
-- UI component library structure
-- Security architecture layers
-- State management flow
-- Deployment architecture
+- Security architecture
+- Performance optimization strategies
+- Deployment pipeline
 
-**Best for:** Understanding how components connect
+**Best For:**
+- Understanding system architecture
+- Visual learners
+- System design discussions
+- Architecture reviews
+- Integration planning
 
----
-
-## 🎓 How to Use This Documentation
-
-### If You're New to the Project:
-```
-1. Start with DOCUMENTATION_INDEX.md
-2. Read COMPLETE_UNDERSTANDING_SUMMARY.md
-3. Skim PROJECT_ANALYSIS.md
-4. Bookmark QUICK_PROJECT_REFERENCE.md
-```
-
-### If You're Developing:
-```
-1. Keep QUICK_PROJECT_REFERENCE.md open
-2. Refer to SYSTEM_ARCHITECTURE.md for data flows
-3. Check PROJECT_ANALYSIS.md for detailed info
-```
-
-### If You're Debugging:
-```
-1. Check QUICK_PROJECT_REFERENCE.md (Common Issues)
-2. Review SYSTEM_ARCHITECTURE.md (Data Flows)
-3. Consult relevant troubleshooting docs in root
-```
+**Key Diagrams:**
+- 📐 High-Level Architecture
+- 🔄 Data Flow Architecture
+- 🗂️ Component Hierarchy
+- 📦 State Management
+- 🔌 API Integration Points
+- 🔒 Security Layers
+- 📱 Responsive Design Strategy
+- 🚀 Deployment Pipeline
 
 ---
 
-## 🔍 What Was Analyzed
+### **4. Developer Quick Reference** 🚀
+**File**: `DEVELOPER_QUICK_REFERENCE.md`
 
-### Files Reviewed:
-- ✅ Package.json and dependencies
-- ✅ All 44 files in `/app` directory
-- ✅ All 96 files in `/components` directory
-- ✅ All 11 MobX store files
-- ✅ All configuration files
-- ✅ Type definitions
-- ✅ Global styles
-- ✅ 30+ existing documentation files
+**What's Inside:**
+- Quick start guide
+- Common development tasks
+- Code snippets and examples
+- API integration examples
+- Styling guide
+- Authentication patterns
+- Troubleshooting tips
+- Useful commands
 
-### Deep Analysis Areas:
-- Authentication system (813-line AuthStore)
-- State management (9 MobX stores)
-- Data flow patterns
-- Component architecture
-- Business logic (cart, checkout, orders)
-- Dynamic category system
-- Banner system
-- Payment integration
+**Best For:**
+- Daily development work
+- Quick code references
+- Common task examples
+- Troubleshooting issues
+- Copy-paste code snippets
+
+**Key Sections:**
+- 🛠️ Quick Start
+- 📂 Key Directories
+- 🔑 Environment Variables
+- 🎯 Common Tasks
+- 🔌 API Integration
+- 🎨 Styling Guide
+- 🔐 Authentication
+- 💳 Stripe Integration
+- 🛒 Cart Operations
+- 🐛 Debugging Tips
+
+---
+
+## 🗺️ Documentation Roadmap
+
+### **Phase 1: Understanding** (You Are Here)
+✅ Read Executive Summary
+✅ Review Project Analysis
+✅ Study Architecture Overview
+
+### **Phase 2: Setup**
+1. Set up development environment
+2. Configure environment variables
+3. Install dependencies
+4. Run development server
+
+### **Phase 3: Development**
+1. Use Developer Quick Reference
+2. Follow code patterns
+3. Implement features
+4. Test thoroughly
+
+### **Phase 4: Deployment**
+1. Build for production
+2. Configure production environment
+3. Deploy application
+4. Monitor performance
+
+---
+
+## 📁 Additional Documentation Files
+
+The project includes **50+ additional documentation files** in the root directory:
+
+### **Implementation Guides**
+- `IMPLEMENTATION_SUMMARY.md` - Cognito + Backend integration
+- `BACKEND_INTEGRATION_COMPLETE.md` - Backend database integration
+- `STRIPE_INTEGRATION.md` - Stripe checkout integration
+- `DYNAMIC_CATEGORIES_IMPLEMENTATION.md` - Dynamic categories
+- `ORDERS_PAGE_IMPLEMENTATION.md` - Orders page
+- `FOOTER_PAGES_COMPLETE.md` - Footer pages
+
+### **Setup & Configuration**
+- `ENV_SETUP.md` - Environment variables setup
+- `OAUTH_CREDENTIALS_SETUP.md` - OAuth configuration
+- `DIRECT_OAUTH_SETUP.md` - Direct OAuth implementation
+- `AWS_AMPLIFY_CONFIG.md` - AWS Amplify configuration
+
+### **Testing Guides**
+- `TESTING_GUIDE.md` - Comprehensive testing guide
+- `BACKEND_DATABASE_TESTING.md` - Database testing
+- `TEST_ORDER_GUIDE.md` - Order testing
+- `TEST_ORDER_FUNCTIONALITY.md` - Order functionality testing
+
+### **Troubleshooting**
+- `BANNER_TROUBLESHOOTING.md` - Banner issues
+- `AUTH_ERROR_HANDLING.md` - Authentication errors
+- `OAUTH_ERROR_HANDLING.md` - OAuth errors
+- `QUICK_FIX_REFERENCE.md` - Quick fixes
+
+### **Feature Documentation**
+- `AUTO_LOGIN_FEATURE.md` - Auto-login after registration
+- `BANNER_BUTTON_IMPLEMENTATION.md` - Banner buttons
+- `CHECKOUT_ORDER_FLOW.md` - Checkout flow
+- `LOADER_IMPLEMENTATION_COMPLETE.md` - Loading states
+- `IOS_LOADER_GUIDE.md` - iOS-style loader
+
+### **Quick References**
+- `QUICK_REFERENCE.md` - General quick reference
+- `OAUTH_QUICK_REFERENCE.md` - OAuth quick reference
+- `QUICK_START_DYNAMIC_CATEGORIES.md` - Categories quick start
+
+---
+
+## 🎯 Finding What You Need
+
+### **I want to...**
+
+#### **Understand the project**
+→ Start with `EXECUTIVE_SUMMARY.md`
+→ Then read `PROJECT_ANALYSIS.md`
+
+#### **See the architecture**
+→ Read `ARCHITECTURE_OVERVIEW.md`
+→ Review the visual diagrams
+
+#### **Start developing**
+→ Use `DEVELOPER_QUICK_REFERENCE.md`
+→ Follow the quick start guide
+
+#### **Implement authentication**
+→ Read `IMPLEMENTATION_SUMMARY.md`
+→ Check `AUTH_ERROR_HANDLING.md`
+→ Review `OAUTH_QUICK_REFERENCE.md`
+
+#### **Integrate payments**
+→ Read `STRIPE_INTEGRATION.md`
+→ Check `CHECKOUT_ORDER_FLOW.md`
+
+#### **Add new features**
+→ Use `DEVELOPER_QUICK_REFERENCE.md`
+→ Follow existing patterns in `PROJECT_ANALYSIS.md`
+
+#### **Fix bugs**
+→ Check `QUICK_FIX_REFERENCE.md`
+→ Review troubleshooting guides
+→ Use `DEVELOPER_QUICK_REFERENCE.md` debugging section
+
+#### **Deploy the app**
+→ Read `EC2_DEPLOYMENT_GUIDE.md`
+→ Check production configuration
 
 ---
 
 ## 📊 Documentation Statistics
 
-### AI-Generated Documents: 5
-1. DOCUMENTATION_INDEX.md
-2. COMPLETE_UNDERSTANDING_SUMMARY.md
-3. PROJECT_ANALYSIS.md
-4. QUICK_PROJECT_REFERENCE.md
-5. SYSTEM_ARCHITECTURE.md
-
-### Total Project Documentation: 44+
-- Authentication: 11 docs
-- Features: 10 docs
-- Payments: 3 docs
-- Backend: 4 docs
-- Testing: 3 docs
-- Deployment: 3 docs
-- Troubleshooting: 5 docs
-- Quick References: 4 docs
-
-### Coverage:
-- ✅ Architecture: 100%
-- ✅ Authentication: 100%
-- ✅ Features: 100%
-- ✅ Payments: 100%
-- ✅ Testing: 100%
-- ✅ Deployment: 100%
+| Category | Count |
+|----------|-------|
+| **Core Documentation** | 4 files |
+| **Implementation Guides** | 15+ files |
+| **Setup & Configuration** | 10+ files |
+| **Testing Guides** | 8+ files |
+| **Troubleshooting** | 6+ files |
+| **Feature Documentation** | 12+ files |
+| **Quick References** | 5+ files |
+| **Total Documentation** | 60+ files |
 
 ---
 
-## 🎯 Key Insights from Analysis
+## 🔍 Search Tips
 
-### Project Strengths:
-1. **Well-Architected** - Clean separation of concerns
-2. **Type-Safe** - TypeScript throughout
-3. **Scalable** - Dynamic categories, no hardcoding
-4. **Documented** - Extensive documentation (44+ files)
-5. **Modern Stack** - Latest technologies
-6. **Secure** - AWS Cognito + Stripe
-7. **User-Friendly** - Comprehensive error handling
+### **By Topic**
 
-### Technical Highlights:
-- Next.js 14 with App Router
-- MobX for state management
-- AWS Cognito multi-provider auth
-- Stripe payment integration
-- Dynamic category generation
-- Netflix-inspired design
-- Responsive mobile-first design
+| Topic | Files to Check |
+|-------|----------------|
+| **Authentication** | `IMPLEMENTATION_SUMMARY.md`, `AUTH_ERROR_HANDLING.md`, `OAUTH_QUICK_REFERENCE.md` |
+| **Payments** | `STRIPE_INTEGRATION.md`, `CHECKOUT_ORDER_FLOW.md` |
+| **Orders** | `ORDERS_PAGE_IMPLEMENTATION.md`, `TEST_ORDER_GUIDE.md` |
+| **Cart** | `PROJECT_ANALYSIS.md` (Cart section) |
+| **Banners** | `BANNER_TROUBLESHOOTING.md`, `BANNER_BUTTON_IMPLEMENTATION.md` |
+| **Categories** | `DYNAMIC_CATEGORIES_IMPLEMENTATION.md`, `QUICK_START_DYNAMIC_CATEGORIES.md` |
+| **Deployment** | `EC2_DEPLOYMENT_GUIDE.md` |
+| **Testing** | `TESTING_GUIDE.md`, `BACKEND_DATABASE_TESTING.md` |
 
----
+### **By Role**
 
-## 🚀 Ready to Help
-
-The AI assistant has:
-- ✅ Read and understood the entire codebase
-- ✅ Analyzed all 44+ documentation files
-- ✅ Mapped the complete architecture
-- ✅ Understood all data flows
-- ✅ Documented all features
-- ✅ Created comprehensive references
-
-**The AI can now:**
-- Answer any questions about the codebase
-- Implement new features
-- Fix bugs and issues
-- Optimize performance
-- Add new integrations
-- Update documentation
-- Provide technical guidance
+| Role | Recommended Reading |
+|------|---------------------|
+| **Project Manager** | `EXECUTIVE_SUMMARY.md` |
+| **Developer** | `DEVELOPER_QUICK_REFERENCE.md`, `PROJECT_ANALYSIS.md` |
+| **Architect** | `ARCHITECTURE_OVERVIEW.md`, `PROJECT_ANALYSIS.md` |
+| **QA Engineer** | `TESTING_GUIDE.md`, `TEST_ORDER_FUNCTIONALITY.md` |
+| **DevOps** | `EC2_DEPLOYMENT_GUIDE.md`, `ENV_SETUP.md` |
+| **Designer** | `PROJECT_ANALYSIS.md` (Design System section) |
 
 ---
 
-## 📞 Getting Help
+## 🆕 Recently Updated
 
-### Quick Questions:
-Ask the AI assistant - it has complete project understanding
+1. ✨ **PROJECT_ANALYSIS.md** - Comprehensive project analysis (New)
+2. ✨ **ARCHITECTURE_OVERVIEW.md** - Visual architecture diagrams (New)
+3. ✨ **DEVELOPER_QUICK_REFERENCE.md** - Developer guide (New)
+4. ✨ **EXECUTIVE_SUMMARY.md** - Executive summary (New)
 
-### Detailed Information:
-Refer to the appropriate document:
-- **Overview:** COMPLETE_UNDERSTANDING_SUMMARY.md
-- **Technical:** PROJECT_ANALYSIS.md
-- **Quick Ref:** QUICK_PROJECT_REFERENCE.md
-- **Architecture:** SYSTEM_ARCHITECTURE.md
-- **Index:** DOCUMENTATION_INDEX.md
+---
 
-### Specific Topics:
-Check DOCUMENTATION_INDEX.md for topic-specific docs
+## 📝 Documentation Standards
+
+All documentation follows these standards:
+
+### **Structure**
+- Clear headings and sections
+- Table of contents for long documents
+- Visual diagrams where helpful
+- Code examples with syntax highlighting
+- Step-by-step instructions
+
+### **Content**
+- Up-to-date information
+- Practical examples
+- Troubleshooting tips
+- Links to related documentation
+- Version information
+
+### **Format**
+- Markdown format (.md)
+- Consistent styling
+- Emoji for visual clarity
+- Tables for structured data
+- Code blocks for examples
 
 ---
 
 ## 🔄 Keeping Documentation Updated
 
-### When to Update:
-- New feature added
-- Architecture changed
-- New integration added
-- Bug fix with lessons learned
+### **When to Update**
+- After implementing new features
+- When fixing bugs
+- After architecture changes
+- When updating dependencies
+- After deployment changes
 
-### How to Update:
-1. Update relevant document
-2. Add entry to DOCUMENTATION_INDEX.md
-3. Update this README if needed
-4. Cross-reference related docs
-
----
-
-## 📚 Additional Resources
-
-### Project Root Documentation:
-The project root contains 30+ additional documentation files covering:
-- Implementation guides
-- OAuth setup
-- Backend integration
-- Testing procedures
-- Deployment guides
-- Troubleshooting tips
-
-See **DOCUMENTATION_INDEX.md** for complete list.
+### **How to Update**
+1. Edit the relevant .md file
+2. Update version information
+3. Add "Last Updated" date
+4. Update this index if needed
+5. Commit changes with clear message
 
 ---
 
-## 🎉 Documentation Quality
+## 💡 Tips for Using This Documentation
 
-### Strengths:
-- ✅ Comprehensive coverage
-- ✅ Well-organized
-- ✅ Easy to navigate
-- ✅ Visual diagrams
-- ✅ Code examples
-- ✅ Beginner-friendly
-- ✅ Regularly updated
+### **For Learning**
+1. Start with Executive Summary
+2. Read Project Analysis thoroughly
+3. Study Architecture Overview
+4. Practice with Developer Quick Reference
 
-### Format:
-- Clear markdown structure
-- Consistent formatting
-- Emoji navigation aids
-- Code syntax highlighting
-- Cross-references
-- Table of contents
+### **For Development**
+1. Keep Developer Quick Reference open
+2. Refer to Project Analysis for patterns
+3. Use Architecture Overview for context
+4. Check troubleshooting guides when stuck
 
----
-
-## 💡 Pro Tips
-
-1. **Bookmark QUICK_PROJECT_REFERENCE.md** - Use it daily
-2. **Start with COMPLETE_UNDERSTANDING_SUMMARY.md** - Best overview
-3. **Use DOCUMENTATION_INDEX.md** - Find docs quickly
-4. **Check SYSTEM_ARCHITECTURE.md** - Understand data flows
-5. **Read PROJECT_ANALYSIS.md** - Deep technical details
+### **For Onboarding**
+1. Day 1: Executive Summary + Project Analysis
+2. Day 2: Architecture Overview + Setup
+3. Day 3: Developer Quick Reference + First task
+4. Week 1: Explore additional documentation
 
 ---
 
-## 📈 Next Steps
+## 🎓 Learning Path
 
-### For New Developers:
-1. Read COMPLETE_UNDERSTANDING_SUMMARY.md
-2. Explore the codebase
-3. Refer to QUICK_PROJECT_REFERENCE.md
-4. Start coding!
+### **Beginner** (New to Project)
+1. 📋 Executive Summary (15 min)
+2. 📊 Project Analysis - Overview sections (30 min)
+3. 🚀 Developer Quick Reference - Quick Start (15 min)
+4. 🛠️ Set up development environment (30 min)
 
-### For Experienced Developers:
-1. Skim PROJECT_ANALYSIS.md
-2. Review SYSTEM_ARCHITECTURE.md
-3. Check relevant feature docs
-4. Dive into code
+### **Intermediate** (Ready to Code)
+1. 📊 Project Analysis - Deep dive (1-2 hours)
+2. 🏛️ Architecture Overview (1 hour)
+3. 🚀 Developer Quick Reference - All sections (1 hour)
+4. 📚 Relevant feature documentation (as needed)
+
+### **Advanced** (Contributing Features)
+1. 🏛️ Architecture Overview - Complete (2 hours)
+2. 📊 Project Analysis - Complete (3 hours)
+3. 📚 All implementation guides (as needed)
+4. 🧪 Testing guides (1 hour)
 
 ---
 
-**Analysis Date:** December 6, 2025  
-**Analysis Status:** ✅ Complete  
-**Understanding Level:** Expert  
-**Ready to Assist:** Yes
+## 📞 Getting Help
+
+### **Documentation Issues**
+- Check if documentation is outdated
+- Look for related documentation files
+- Search for keywords in all files
+
+### **Technical Issues**
+- Check troubleshooting guides
+- Review error handling documentation
+- Use Developer Quick Reference debugging section
+
+### **Feature Questions**
+- Check implementation guides
+- Review Project Analysis feature sections
+- Look at code examples in documentation
 
 ---
 
-*This folder contains AI-generated documentation based on comprehensive analysis of the entire Grodify project. All documents are accurate, up-to-date, and ready for use.*
+## 🎉 Conclusion
+
+This documentation suite provides everything you need to understand, develop, and maintain the Grodify platform. Whether you're a new developer, project manager, or stakeholder, you'll find the information you need organized and accessible.
+
+**Start with the Executive Summary and work your way through based on your role and needs!**
+
+---
+
+## 📋 Quick Links
+
+### **Core Documentation**
+- [Executive Summary](./EXECUTIVE_SUMMARY.md)
+- [Project Analysis](./PROJECT_ANALYSIS.md)
+- [Architecture Overview](./ARCHITECTURE_OVERVIEW.md)
+- [Developer Quick Reference](./DEVELOPER_QUICK_REFERENCE.md)
+
+### **External Resources**
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [MobX Documentation](https://mobx.js.org)
+- [Stripe Documentation](https://stripe.com/docs)
+- [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito)
+
+---
+
+**Last Updated**: December 6, 2025
+**Documentation Version**: 1.0
+**Project Version**: 0.1.0
+
+---
+
+**Happy Coding! 🚀**

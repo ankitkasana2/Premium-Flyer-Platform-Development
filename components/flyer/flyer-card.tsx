@@ -11,8 +11,6 @@ import Link from "next/link"
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth"
-import { AuthModal } from "../auth/auth-modal"
 import { toJS } from "mobx"
 
 interface FlyerCardProps {
@@ -26,20 +24,55 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
 
   const [isHovered, setIsHovered] = useState(false)
   const { authStore, favoritesStore } = useStore()
-  const { user, signOut } = useAuth()
-  const [isFavorited, setIsFavorited] = useState(favoritesStore.favorites.includes(flyer.id))
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
+  // Use authStore.user instead of useAuth() to work with AWS Cognito
+  const user = authStore.user
+
+  const [isFavorited, setIsFavorited] = useState(favoritesStore.isFavorited(flyer.id))
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
+
+  // Update isFavorited when favoritesStore changes
+  useEffect(() => {
+    setIsFavorited(favoritesStore.isFavorited(flyer.id))
+  }, [favoritesStore.favorites, flyer.id])
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    console.log("❤️ Heart button clicked!", { flyerId: flyer.id, user: user?.id })
+
     e.preventDefault() // ⛔ prevent Link navigation
     e.stopPropagation() // ⛔ stop event bubbling
+
     if (!user) {
+      console.log("⚠️ No user logged in, showing auth modal")
       authStore.handleAuthModal()
       return
     }
 
-    favoritesStore.handleFavorites(flyer.id)
-    setIsFavorited(favoritesStore.favorites.includes(flyer.id))
-    onToggleFavorite?.(flyer)
+    if (isTogglingFavorite) {
+      console.log("⚠️ Already toggling, skipping")
+      return // Prevent double-click
+    }
+
+    setIsTogglingFavorite(true)
+
+    try {
+      console.log("🔄 Toggling favorite for flyer:", flyer.id)
+      await favoritesStore.toggleFavorite(user.id, Number(flyer.id))
+
+      // Show success toast
+      if (favoritesStore.isFavorited(flyer.id)) {
+        toast.success("Added to favorites!")
+      } else {
+        toast.success("Removed from favorites")
+      }
+
+      onToggleFavorite?.(flyer)
+    } catch (error: any) {
+      console.error("❌ Error toggling favorite:", error)
+      toast.error(error.message || "Failed to update favorites")
+    } finally {
+      setIsTogglingFavorite(false)
+    }
   }
 
   const getPriceColor = (priceType: string) => {
@@ -97,17 +130,15 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
           />
 
           {/* ❤️ Favorite Button */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="absolute top-2 right-2 bg-black/20 hover:bg-black/40 hover:cursor-pointer z-30"
+          <button
+            type="button"
+            className="absolute top-2 right-2 bg-black/20 hover:bg-black/40 hover:cursor-pointer z-50 pointer-events-auto inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 size-9"
             onClick={handleToggleFavorite}
           >
             <Heart
-              className={`w-6 h-6 ${isFavorited ? "fill-primary text-primary" : "text-white"
-                }`}
+              className={`w-6 h-6 ${isFavorited ? "fill-primary text-primary" : "text-white"}`}
             />
-          </Button>
+          </button>
 
           {/* 💰 Price Badge */}
           <div className="absolute bottom-2 right-2 z-30">
@@ -127,10 +158,10 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
             {/* 🏆 Premium Ribbon */}
             {isPremium && (
               <div style={{
-    left: "-35px",
-    top: "11px",
-   
-  }}
+                left: "-35px",
+                top: "11px",
+
+              }}
                 className="absolute top-[22px] -left-[30px] w-[120px] bg-[#FFB700] text-black text-[10px] font-bold text-center 
                       shadow-md transform -rotate-45 z-20 py-1 uppercase tracking-wider border-y border-white/20"
               >

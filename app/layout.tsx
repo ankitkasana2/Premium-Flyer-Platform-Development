@@ -12,6 +12,7 @@ import { StoreProvider } from "@/stores/StoreProvider"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import PageTransitionLoader from "@/components/ui/page-transition-loader"
+import { FavoritesSync } from "@/components/favorites/FavoritesSync"
 
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <StoreProvider>
+              <FavoritesSync />
               <PageTransitionLoader />
               <Header />
               {children}
