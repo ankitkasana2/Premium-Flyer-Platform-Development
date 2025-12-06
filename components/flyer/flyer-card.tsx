@@ -36,6 +36,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
     setIsFavorited(favoritesStore.isFavorited(flyer.id))
   }, [favoritesStore.favorites, flyer.id])
 
+
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     console.log("❤️ Heart button clicked!", { flyerId: flyer.id, user: user?.id })
 
@@ -55,6 +56,11 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
 
     setIsTogglingFavorite(true)
 
+    // 🚀 OPTIMISTIC UI UPDATE - Toggle immediately for instant feedback
+    const wasAlreadyFavorited = isFavorited
+    setIsFavorited(!wasAlreadyFavorited)
+    console.log("⚡ Optimistic update: setting favorited to", !wasAlreadyFavorited)
+
     try {
       console.log("🔄 Toggling favorite for flyer:", flyer.id)
       await favoritesStore.toggleFavorite(user.id, Number(flyer.id))
@@ -69,6 +75,11 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
       onToggleFavorite?.(flyer)
     } catch (error: any) {
       console.error("❌ Error toggling favorite:", error)
+
+      // 🔄 REVERT OPTIMISTIC UPDATE on error
+      setIsFavorited(wasAlreadyFavorited)
+      console.log("🔄 Reverted optimistic update due to error")
+
       toast.error(error.message || "Failed to update favorites")
     } finally {
       setIsTogglingFavorite(false)
