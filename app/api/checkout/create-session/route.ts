@@ -5,10 +5,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
 })
 
-// In-memory storage for order data (temporary until payment completes)
-// In production, use Redis or database
-const orderDataStore = new Map<string, any>()
-
 export async function POST(request: Request) {
   try {
     const { amount, orderData } = await request.json()
@@ -22,27 +18,67 @@ export async function POST(request: Request) {
       total_price: orderData.formData?.total_price
     })
 
-    // Generate a unique temp session ID for storing order data
-    const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    // Encode order data as base64 to store in Stripe metadata
+    const orderDataString = JSON.stringify(orderData)
+    const orderDataBase64 = Buffer.from(orderDataString).toString('base64')
 
-    // Store complete order data temporarily (will be retrieved after payment)
-    orderDataStore.set(tempSessionId, {
-      orderData,
-      timestamp: Date.now()
-    })
+    console.log('📦 Order data size:', orderDataString.length, 'bytes')
+    console.log('📦 Base64 size:', orderDataBase64.length, 'bytes')
 
-    console.log('🔑 Temp session ID created:', tempSessionId)
-    console.log('💾 Order data stored in memory')
+    // Check if metadata is too large (Stripe limit is 500 chars per field)
+    if (orderDataBase64.length > 500) {
+      console.error('❌ Order data too large for Stripe metadata:', orderDataBase64.length, 'bytes')
+      console.log('💡 Splitting into multiple metadata fields...')
 
-    // Clean up old entries (older than 1 hour)
-    const oneHourAgo = Date.now() - (60 * 60 * 1000)
-    for (const [key, value] of orderDataStore.entries()) {
-      if (value.timestamp < oneHourAgo) {
-        orderDataStore.delete(key)
+      // Split into chunks of 500 characters
+      const chunkSize = 500
+      const chunks = []
+      for (let i = 0; i < orderDataBase64.length; i += chunkSize) {
+        chunks.push(orderDataBase64.substring(i, i + chunkSize))
       }
+
+      console.log(`📦 Split into ${chunks.length} chunks`)
+
+      // Create metadata object with chunks
+      const metadata: any = {
+        userId: orderData.userId || '',
+        userEmail: orderData.userEmail || '',
+        totalPrice: amount.toString(),
+        chunkCount: chunks.length.toString()
+      }
+
+      // Add each chunk (Stripe allows up to 50 metadata keys)
+      chunks.forEach((chunk, index) => {
+        metadata[`orderData_${index}`] = chunk
+      })
+
+      // Create Stripe session with chunked metadata
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Flyer Design Order',
+                description: `Custom flyer for ${orderData.formData?.presenting || 'Event'}`,
+              },
+              unit_amount: Math.round(amount * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout`,
+        metadata: metadata,
+      })
+
+      console.log('✅ Stripe session created with chunked metadata:', session.id)
+      return NextResponse.json({ sessionId: session.id })
     }
 
-    // Create a Stripe Checkout Session with minimal metadata
+    // If data fits in one field, use simple approach
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -53,7 +89,7 @@ export async function POST(request: Request) {
               name: 'Flyer Design Order',
               description: `Custom flyer for ${orderData.formData?.presenting || 'Event'}`,
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
@@ -62,8 +98,7 @@ export async function POST(request: Request) {
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout`,
       metadata: {
-        // Store only essential data (Stripe has 500 char limit per metadata value)
-        tempSessionId: tempSessionId,
+        orderData: orderDataBase64,
         userId: orderData.userId || '',
         userEmail: orderData.userEmail || '',
         totalPrice: amount.toString(),
@@ -71,53 +106,14 @@ export async function POST(request: Request) {
     })
 
     console.log('✅ Stripe session created:', session.id)
+    return NextResponse.json({ sessionId: session.id })
 
-    return NextResponse.json({
-      sessionId: session.id,
-      tempSessionId: tempSessionId // Return to client for backup storage
-    })
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Stripe checkout error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
-      { status: 500 }
-    )
-  }
-}
-
-// Export function to retrieve stored order data
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tempSessionId = searchParams.get('tempSessionId')
-
-    if (!tempSessionId) {
-      return NextResponse.json(
-        { error: 'Missing tempSessionId' },
-        { status: 400 }
-      )
-    }
-
-    const stored = orderDataStore.get(tempSessionId)
-
-    if (!stored) {
-      return NextResponse.json(
-        { error: 'Order data not found or expired' },
-        { status: 404 }
-      )
-    }
-
-    // Return the order data and delete it (one-time use)
-    orderDataStore.delete(tempSessionId)
-
-    return NextResponse.json({
-      success: true,
-      orderData: stored.orderData
-    })
-  } catch (error) {
-    console.error('❌ Error retrieving order data:', error)
-    return NextResponse.json(
-      { error: 'Failed to retrieve order data' },
+      { error: error.message || 'Failed to create checkout session' },
       { status: 500 }
     )
   }

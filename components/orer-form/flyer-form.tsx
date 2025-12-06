@@ -137,8 +137,8 @@ const mapToApiRequest = (
 
     djs: Array.isArray(data?.djsOrArtists)
       ? data.djsOrArtists.map((dj: any) => ({
-          name: dj?.name || ""
-        }))
+        name: dj?.name || ""
+      }))
       : [],
 
     host: {
@@ -420,7 +420,7 @@ const EventBookingForm = () => {
   //           subtotal: totalDisplay
   //         }
   //       })
-      
+
   //     }
   //   );
 
@@ -436,318 +436,303 @@ const EventBookingForm = () => {
   //   try {
   //      await handleCheckout();
   //     await handleCreate();
-     
+
   //   } finally {
   //     setIsSubmitting(false);
   //   }
   // };
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!authStore.user?.id) {
-    toast.error("Please sign in to continue with checkout.");
-    authStore.handleAuthModal();
-    return;
-  }
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+    try {
+      e.preventDefault();
 
-  const { valid, errors } = flyerFormStore.validateForm();
-  if (!valid) {
-    toast.error(errors.join("\n"));
-    return;
-  }
+      console.log('🚀 Checkout started...');
 
-  setIsSubmitting(true);
-  flyerFormStore.setUserId(authStore.user.id);
+      if (!authStore.user?.id) {
+        toast.error("Please sign in to continue with checkout.");
+        authStore.handleAuthModal();
+        return;
+      }
 
-  // Debug: Log the actual form store data
-  console.log('🔍 DEBUG - Raw form store data:', toJS(flyerFormStore.flyerFormDetail));
-  console.log('🔍 DEBUG - Event details:', toJS(flyerFormStore.flyerFormDetail.eventDetails));
-  console.log('🔍 DEBUG - DJs:', toJS(flyerFormStore.flyerFormDetail.djsOrArtists));
-  console.log('🔍 DEBUG - Host:', toJS(flyerFormStore.flyerFormDetail.host));
-  console.log('🔍 DEBUG - Sponsors:', toJS(flyerFormStore.flyerFormDetail.sponsors));
+      console.log('✅ User authenticated:', authStore.user.id);
 
-  const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-    userId: authStore.user.id,
-    flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
-    categoryId:
-      (flyer as any)?.category_id ??
-      flyer?.category ??
-      flyerFormStore.flyerFormDetail.categoryId,
-    subtotal: totalDisplay,
-    image_url: image || ""
-  });
+      const { valid, errors } = flyerFormStore.validateForm();
+      if (!valid) {
+        console.log('❌ Form validation failed:', errors);
+        toast.error(errors.join("\n"));
+        return;
+      }
 
-  console.log('🔍 REAL form data being stored:', {
-    event_title: apiBody.event_title,
-    presenting: apiBody.presenting,
-    djs: apiBody.djs,
-    host: apiBody.host,
-    sponsors: apiBody.sponsors,
-    delivery_time: apiBody.delivery_time,
-    custom_notes: apiBody.custom_notes,
-    total_price: apiBody.total_price
-  });
+      console.log('✅ Form validation passed');
 
-  // Store order data in session storage for post-payment processing
-  const orderData = {
-    ...apiBody,
-    web_user_id: authStore.user.id,
-    email: authStore.user.email || authStore.user.name || 'unknown@example.com',
-    // Store file references
-    hasImage: !!image,
-    hasVenueLogo: !!flyerFormStore.flyerFormDetail.eventDetails.venueLogo,
-    djImages: flyerFormStore.flyerFormDetail.djsOrArtists.map(dj => !!dj.image),
-    hostImage: !!flyerFormStore.flyerFormDetail.host?.image,
-    sponsorImages: Object.values(flyerFormStore.flyerFormDetail.sponsors).map(s => !!s)
+      setIsSubmitting(true);
+      flyerFormStore.setUserId(authStore.user.id);
+
+      // Debug: Log the actual form store data
+      console.log('🔍 DEBUG - Raw form store data:', toJS(flyerFormStore.flyerFormDetail));
+
+      const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+        userId: authStore.user.id,
+        flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+        categoryId:
+          (flyer as any)?.category_id ??
+          flyer?.category ??
+          flyerFormStore.flyerFormDetail.categoryId,
+        subtotal: totalDisplay,
+        image_url: flyerImage
+      });
+
+      console.log('🔍 Order data prepared:', {
+        event_title: apiBody.event_title,
+        presenting: apiBody.presenting,
+        total_price: apiBody.total_price,
+        user_id: authStore.user.id,
+        image_url: apiBody.image_url
+      });
+
+      // Create Stripe checkout session with order data
+      console.log('📡 Creating Stripe checkout session...');
+      const res = await fetch("/api/checkout/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: totalDisplay,
+          orderData: {
+            userId: authStore.user.id,
+            userEmail: authStore.user.email || authStore.user.name || 'unknown@example.com',
+            formData: apiBody
+          }
+        })
+      });
+
+      console.log('📡 Response status:', res.status);
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => null);
+        console.error("❌ Checkout session error response:", text);
+        toast.error("Unable to create checkout session. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const data = await res.json();
+      console.log('✅ Stripe session created:', data);
+
+      if (!data?.sessionId) {
+        console.error("❌ Stripe response missing sessionId", data);
+        toast.error("Checkout session not generated. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Get the Stripe Checkout URL from the session
+      console.log('� Getting Stripe checkout URL...');
+      const stripeSession = await fetch(`/api/checkout/get-session-url?sessionId=${data.sessionId}`);
+
+      if (!stripeSession.ok) {
+        console.error('❌ Failed to get session URL');
+        toast.error("Failed to get payment URL. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { url } = await stripeSession.json();
+
+      if (!url) {
+        console.error('❌ No checkout URL returned');
+        toast.error("Failed to get payment URL. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('🔄 Redirecting to Stripe checkout...');
+      // Redirect to Stripe Checkout URL
+      window.location.href = url;
+
+    } catch (err) {
+      console.error("❌ Checkout error:", err);
+      console.error("Error details:", {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        error: err
+      });
+      toast.error("An error occurred during checkout. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
-  // Store in session storage
-  console.log('Storing order data in sessionStorage:', orderData);
-  sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-  console.log('SessionStorage after storing:', Object.keys(sessionStorage));
+  // Test order function
+  const handleTestOrder = async () => {
+    console.log('🧪 Test order button clicked!');
 
-  try {
-    // First call checkout session to get the Stripe session ID
-    console.log('Creating Stripe checkout session...');
-    const res = await fetch("/api/checkout/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item: { ...apiBody, subtotal: totalDisplay } })
-    });
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => null);
-      console.error("Checkout session error response:", text);
-      toast.error("Unable to create checkout session. Please try again.");
+    if (!authStore.user?.id) {
+      console.log('❌ User not logged in');
+      toast.error("Please sign in to create a test order.");
+      authStore.handleAuthModal();
       return;
     }
 
-    const data = await res.json();
-    if (!data?.url) {
-      console.error("Stripe response missing url", data);
-      toast.error("Checkout URL not generated. Please try again.");
+    console.log('✅ User logged in:', authStore.user.id);
+
+    const { valid, errors } = flyerFormStore.validateForm();
+    console.log('📋 Form validation:', { valid, errors });
+
+    if (!valid) {
+      console.log('❌ Form validation failed:', errors);
+      toast.error(errors.join("\n"));
       return;
     }
 
-    // Store order data BEFORE redirecting to Stripe
-    console.log('Storing order data before checkout...');
-    
-    // Generate a temporary session ID for storage
-    const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    const storeResponse = await fetch("/api/checkout/store-order-data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        sessionId: tempSessionId,
-        orderData: {
-          ...apiBody,
-          web_user_id: authStore.user.id,
-          email: authStore.user.email || authStore.user.name || 'unknown@example.com',
-          djs: flyerFormStore.flyerFormDetail.djsOrArtists,
-          host: flyerFormStore.flyerFormDetail.host,
-          sponsors: flyerFormStore.flyerFormDetail.sponsors,
-          extras: flyerFormStore.flyerFormDetail.extras,
-          deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime,
-          customNote: flyerFormStore.flyerFormDetail.customNote
+    console.log('✅ Form validation passed');
+    setIsSubmitting(true);
+    flyerFormStore.setUserId(authStore.user.id);
+
+    try {
+      console.log('🚀 Starting test order creation...');
+
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+
+      // Get the form data
+      const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
+        userId: authStore.user.id,
+        flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
+        categoryId:
+          (flyer as any)?.category_id ??
+          flyer?.category ??
+          flyerFormStore.flyerFormDetail.categoryId,
+        subtotal: totalDisplay,
+        image_url: image || ""
+      });
+
+      console.log('📦 API body prepared:', apiBody);
+
+      // Add individual form fields (matching Postman format)
+      formData.append('presenting', apiBody.presenting);
+      formData.append('event_title', apiBody.event_title);
+      formData.append('event_date', apiBody.event_date);
+      formData.append('flyer_info', apiBody.flyer_info);
+      formData.append('address_phone', apiBody.address_phone);
+
+      // Add DJs as JSON string
+      formData.append('djs', JSON.stringify(apiBody.djs));
+
+      // Add host as JSON string
+      formData.append('host', JSON.stringify(apiBody.host));
+
+      // Add sponsors as JSON string
+      formData.append('sponsors', JSON.stringify(apiBody.sponsors));
+
+      // Add boolean fields
+      formData.append('story_size_version', apiBody.story_size_version.toString());
+      formData.append('custom_flyer', apiBody.custom_flyer.toString());
+      formData.append('animated_flyer', apiBody.animated_flyer.toString());
+      formData.append('instagram_post_size', apiBody.instagram_post_size.toString());
+
+      // Add other fields
+      formData.append('delivery_time', apiBody.delivery_time);
+      formData.append('custom_notes', apiBody.custom_notes);
+      formData.append('flyer_is', apiBody.flyer_id);
+
+      // Add user information
+      console.log('👤 User object:', authStore.user);
+      console.log('📧 User email:', authStore.user.email);
+      console.log('👤 User name:', authStore.user.name);
+      formData.append('web_user_id', authStore.user.id);
+      formData.append('email', authStore.user.email || authStore.user.name || 'unknown@example.com');
+
+      // Add files if they exist
+      if (image && typeof image === 'object' && 'name' in image && 'size' in image) {
+        console.log('🖼️ Adding image file:', image.name);
+        formData.append('image', image as File);
+      }
+
+      // Add venue logo if it exists
+      if (flyerFormStore.flyerFormDetail.eventDetails.venueLogo) {
+        const venueLogo = flyerFormStore.flyerFormDetail.eventDetails.venueLogo;
+        if (typeof venueLogo === 'object' && venueLogo !== null && 'name' in venueLogo && 'size' in venueLogo) {
+          console.log('🏢 Adding venue logo:', venueLogo.name);
+          formData.append('venue_logo', venueLogo as File);
         }
-      })
-    });
-
-    if (!storeResponse.ok) {
-      console.error("Failed to store order data");
-      toast.error("Unable to prepare order. Please try again.");
-      return;
-    }
-
-    // Store temp session ID in sessionStorage for retrieval after payment
-    sessionStorage.setItem('tempSessionId', tempSessionId);
-    console.log('Stored temp session ID:', tempSessionId);
-
-    // redirect to Stripe (this will navigate away)
-    window.location.href = data.url;
-    return;
-
-  } catch (err) {
-    console.error("Checkout error", err);
-    toast.error("An error occurred during checkout. Please try again.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// Test order function
-const handleTestOrder = async () => {
-  console.log('🧪 Test order button clicked!');
-  
-  if (!authStore.user?.id) {
-    console.log('❌ User not logged in');
-    toast.error("Please sign in to create a test order.");
-    authStore.handleAuthModal();
-    return;
-  }
-
-  console.log('✅ User logged in:', authStore.user.id);
-
-  const { valid, errors } = flyerFormStore.validateForm();
-  console.log('📋 Form validation:', { valid, errors });
-  
-  if (!valid) {
-    console.log('❌ Form validation failed:', errors);
-    toast.error(errors.join("\n"));
-    return;
-  }
-
-  console.log('✅ Form validation passed');
-  setIsSubmitting(true);
-  flyerFormStore.setUserId(authStore.user.id);
-
-  try {
-    console.log('🚀 Starting test order creation...');
-    
-    // Create FormData to handle file uploads
-    const formData = new FormData();
-    
-    // Get the form data
-    const apiBody = mapToApiRequest(flyerFormStore.flyerFormDetail, {
-      userId: authStore.user.id,
-      flyerId: flyer?.id ?? flyerFormStore.flyerFormDetail.flyerId,
-      categoryId:
-        (flyer as any)?.category_id ??
-        flyer?.category ??
-        flyerFormStore.flyerFormDetail.categoryId,
-      subtotal: totalDisplay,
-      image_url: image || ""
-    });
-
-    console.log('📦 API body prepared:', apiBody);
-
-    // Add individual form fields (matching Postman format)
-    formData.append('presenting', apiBody.presenting);
-    formData.append('event_title', apiBody.event_title);
-    formData.append('event_date', apiBody.event_date);
-    formData.append('flyer_info', apiBody.flyer_info);
-    formData.append('address_phone', apiBody.address_phone);
-    
-    // Add DJs as JSON string
-    formData.append('djs', JSON.stringify(apiBody.djs));
-    
-    // Add host as JSON string
-    formData.append('host', JSON.stringify(apiBody.host));
-    
-    // Add sponsors as JSON string
-    formData.append('sponsors', JSON.stringify(apiBody.sponsors));
-    
-    // Add boolean fields
-    formData.append('story_size_version', apiBody.story_size_version.toString());
-    formData.append('custom_flyer', apiBody.custom_flyer.toString());
-    formData.append('animated_flyer', apiBody.animated_flyer.toString());
-    formData.append('instagram_post_size', apiBody.instagram_post_size.toString());
-    
-    // Add other fields
-    formData.append('delivery_time', apiBody.delivery_time);
-    formData.append('custom_notes', apiBody.custom_notes);
-    formData.append('flyer_is', apiBody.flyer_id);
-    
-    // Add user information
-    console.log('👤 User object:', authStore.user);
-    console.log('📧 User email:', authStore.user.email);
-    console.log('👤 User name:', authStore.user.name);
-    formData.append('web_user_id', authStore.user.id);
-    formData.append('email', authStore.user.email || authStore.user.name || 'unknown@example.com');
-
-    // Add files if they exist
-    if (image && typeof image === 'object' && 'name' in image && 'size' in image) {
-      console.log('🖼️ Adding image file:', image.name);
-      formData.append('image', image as File);
-    }
-
-    // Add venue logo if it exists
-    if (flyerFormStore.flyerFormDetail.eventDetails.venueLogo) {
-      const venueLogo = flyerFormStore.flyerFormDetail.eventDetails.venueLogo;
-      if (typeof venueLogo === 'object' && venueLogo !== null && 'name' in venueLogo && 'size' in venueLogo) {
-        console.log('🏢 Adding venue logo:', venueLogo.name);
-        formData.append('venue_logo', venueLogo as File);
       }
-    }
 
-    // Add DJ/Artist images
-    flyerFormStore.flyerFormDetail.djsOrArtists.forEach((dj, index) => {
-      if (dj.image && 
-          typeof dj.image === 'object' && 
-          dj.image !== null && 
-          'name' in dj.image && 
+      // Add DJ/Artist images
+      flyerFormStore.flyerFormDetail.djsOrArtists.forEach((dj, index) => {
+        if (dj.image &&
+          typeof dj.image === 'object' &&
+          dj.image !== null &&
+          'name' in dj.image &&
           'size' in dj.image) {
-        console.log(`🎵 Adding DJ ${index} image:`, dj.image.name);
-        formData.append(`dj_${index}`, dj.image as File);
-      }
-    });
+          console.log(`🎵 Adding DJ ${index} image:`, dj.image.name);
+          formData.append(`dj_${index}`, dj.image as File);
+        }
+      });
 
-    // Add host image
-    if (flyerFormStore.flyerFormDetail.host?.image && 
-        typeof flyerFormStore.flyerFormDetail.host.image === 'object' && 
-        flyerFormStore.flyerFormDetail.host.image !== null && 
-        'name' in flyerFormStore.flyerFormDetail.host.image && 
+      // Add host image
+      if (flyerFormStore.flyerFormDetail.host?.image &&
+        typeof flyerFormStore.flyerFormDetail.host.image === 'object' &&
+        flyerFormStore.flyerFormDetail.host.image !== null &&
+        'name' in flyerFormStore.flyerFormDetail.host.image &&
         'size' in flyerFormStore.flyerFormDetail.host.image) {
-      console.log('🎤 Adding host image:', flyerFormStore.flyerFormDetail.host.image.name);
-      formData.append('host', flyerFormStore.flyerFormDetail.host.image as File);
-    }
-
-    // Add sponsor images
-    Object.entries(flyerFormStore.flyerFormDetail.sponsors).forEach(([key, sponsor]) => {
-      if (sponsor && 
-          typeof sponsor === 'object' && 
-          sponsor !== null && 
-          'name' in sponsor && 
-          'size' in sponsor) {
-        console.log(`🏷️ Adding sponsor ${key} image:`, sponsor.name);
-        formData.append(`sponsor_${key}`, sponsor as File);
+        console.log('🎤 Adding host image:', flyerFormStore.flyerFormDetail.host.image.name);
+        formData.append('host', flyerFormStore.flyerFormDetail.host.image as File);
       }
-    });
 
-    console.log("📤 Submitting test order with FormData:", {
-      dataKeys: Array.from(formData.keys()),
-      hasFiles: formData.has('image') || formData.has('venue_logo'),
-      userId: authStore.user.id
-    });
+      // Add sponsor images
+      Object.entries(flyerFormStore.flyerFormDetail.sponsors).forEach(([key, sponsor]) => {
+        if (sponsor &&
+          typeof sponsor === 'object' &&
+          sponsor !== null &&
+          'name' in sponsor &&
+          'size' in sponsor) {
+          console.log(`🏷️ Adding sponsor ${key} image:`, sponsor.name);
+          formData.append(`sponsor_${key}`, sponsor as File);
+        }
+      });
 
-    console.log('🌐 Calling /api/test-order endpoint...');
-    
-    // Send test order to dedicated test-order API
-    const response = await fetch("/api/test-order", {
-      method: "POST",
-      body: formData,
-    });
+      console.log("📤 Submitting test order with FormData:", {
+        dataKeys: Array.from(formData.keys()),
+        hasFiles: formData.has('image') || formData.has('venue_logo'),
+        userId: authStore.user.id
+      });
 
-    console.log('📬 Response status:', response.status);
-    console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('🌐 Calling /api/test-order endpoint...');
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-      console.error("❌ Test order error:", errorData);
-      toast.error(`Test order failed: ${errorData.message || "Please try again."}`);
-      return;
+      // Send test order to dedicated test-order API
+      const response = await fetch("/api/test-order", {
+        method: "POST",
+        body: formData,
+      });
+
+      console.log('📬 Response status:', response.status);
+      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("❌ Test order error:", errorData);
+        toast.error(`Test order failed: ${errorData.message || "Please try again."}`);
+        return;
+      }
+
+      const result = await response.json();
+      console.log("✅ Test order success:", result);
+
+      toast.success("🎉 Test order created successfully!");
+
+      // Show order details
+      if (result.orderId) {
+        toast.success(`📋 Order ID: ${result.orderId}`);
+      }
+      if (result.data?.id) {
+        toast.success(`📋 Order ID: ${result.data.id}`);
+      }
+
+    } catch (error: any) {
+      console.error("❌ Test order error:", error);
+      toast.error(`Test order failed: ${error.message || "Please try again."}`);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const result = await response.json();
-    console.log("✅ Test order success:", result);
-    
-    toast.success("🎉 Test order created successfully!");
-    
-    // Show order details
-    if (result.orderId) {
-      toast.success(`📋 Order ID: ${result.orderId}`);
-    }
-    if (result.data?.id) {
-      toast.success(`📋 Order ID: ${result.data.id}`);
-    }
-
-  } catch (error: any) {
-    console.error("❌ Test order error:", error);
-    toast.error(`Test order failed: ${error.message || "Please try again."}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   // add to cart function 
   const addtoCart = async (id?: string) => {
@@ -784,7 +769,7 @@ const handleTestOrder = async () => {
         venueLogo: flyerFormStore.flyerFormDetail.eventDetails.venueLogo || undefined
       }
     };
-    
+
     const cartFormData = createCartFormData(formDetailForCart, {
       flyerId: resolvedFlyerId,
       categoryId:
@@ -1095,110 +1080,11 @@ const handleTestOrder = async () => {
 
               {/* Submit Button */}
               <Button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
+                onClick={handleSubmit}
                 className="bg-primary hover:bg-red-550 text-white px-3 
                rounded-lg hover:cursor-pointer transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-900/50"
-              onClick={async () => {
-                  console.log('Testing with real FormData...')
-                  
-                  // Check if user is authenticated
-                  if (!authStore.user?.id) {
-                    toast.error("Please sign in to test order submission.")
-                    authStore.handleAuthModal()
-                    return
-                  }
-                  
-                  // Create FormData to send real form data and files
-                  const formData = new FormData()
-                  
-                  // Add text fields from the form
-                  formData.append('presenting', flyerFormStore.flyerFormDetail.eventDetails?.presenting || '')
-                  formData.append('event_title', flyerFormStore.flyerFormDetail.eventDetails?.mainTitle || '')
-                  formData.append('event_date', flyerFormStore.flyerFormDetail.eventDetails?.date?.toISOString()?.split('T')[0] || '2025-11-27')
-                  formData.append('flyer_info', flyerFormStore.flyerFormDetail.eventDetails?.flyerInfo || '')
-                  formData.append('address_phone', flyerFormStore.flyerFormDetail.eventDetails?.addressAndPhone || '')
-                  formData.append('story_size_version', String(flyerFormStore.flyerFormDetail.extras?.storySizeVersion || false))
-                  formData.append('custom_flyer', String(flyerFormStore.flyerFormDetail.extras?.customFlyer || false))
-                  formData.append('animated_flyer', String(flyerFormStore.flyerFormDetail.extras?.animatedFlyer || false))
-                  formData.append('instagram_post_size', String(flyerFormStore.flyerFormDetail.extras?.instagramPostSize || true))
-                  formData.append('custom_notes', flyerFormStore.flyerFormDetail.customNote || '')
-                  formData.append('flyer_is', flyer?.id || '26')
-                  formData.append('category_id', (flyer as any)?.category_id || '9')
-                  formData.append('user_id', authStore.user.id)
-                  formData.append('delivery_time', flyerFormStore.flyerFormDetail.deliveryTime || '1 Hour')
-                  formData.append('total_price', String(totalDisplay))
-                  formData.append('subtotal', String(totalDisplay))
-                  formData.append('image_url', image || 'https://images.unsplash.com/photo.jpg')
-                  formData.append('email', authStore.user.email || '')
-                  formData.append('web_user_id', '')
-                  
-                  // Add JSON fields
-                  formData.append('djs', JSON.stringify(flyerFormStore.flyerFormDetail.djsOrArtists || []))
-                  formData.append('host', JSON.stringify(flyerFormStore.flyerFormDetail.host || { name: '' }))
-                  formData.append('sponsors', JSON.stringify([
-                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor1 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor1.name }] : []),
-                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor2 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor2.name }] : []),
-                    ...(flyerFormStore.flyerFormDetail.sponsors?.sponsor3 ? [{ name: flyerFormStore.flyerFormDetail.sponsors.sponsor3.name }] : [])
-                  ]))
-                  
-                  // Add files if they exist
-                  if (flyerFormStore.flyerFormDetail.eventDetails?.venueLogo) {
-                    formData.append('venue_logo', flyerFormStore.flyerFormDetail.eventDetails.venueLogo)
-                  }
-                  if (flyerFormStore.flyerFormDetail.host?.image) {
-                    formData.append('host_file', flyerFormStore.flyerFormDetail.host.image)
-                  }
-                  
-                  // Add DJ files
-                  flyerFormStore.flyerFormDetail.djsOrArtists.forEach((dj, index) => {
-                    if (dj.image) {
-                      formData.append(`dj_${index}`, dj.image)
-                    }
-                  })
-                  
-                  // Add sponsor files
-                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor1) {
-                    formData.append('sponsor_0', flyerFormStore.flyerFormDetail.sponsors.sponsor1)
-                  }
-                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor2) {
-                    formData.append('sponsor_1', flyerFormStore.flyerFormDetail.sponsors.sponsor2)
-                  }
-                  if (flyerFormStore.flyerFormDetail.sponsors?.sponsor3) {
-                    formData.append('sponsor_2', flyerFormStore.flyerFormDetail.sponsors.sponsor3)
-                  }
-                  
-                  // Add the duplicate total_price field with space
-                  formData.append(' total_price', String(totalDisplay))
-                  
-                  console.log('Sending FormData with entries:')
-                  for (let [key, value] of formData.entries()) {
-                    if (value instanceof File) {
-                      console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`)
-                    } else {
-                      console.log(`  ${key}: ${value}`)
-                    }
-                  }
-                  
-                  try {
-                    const response = await fetch('/api/test-order', {
-                      method: 'POST',
-                      body: formData // Send FormData, not JSON
-                    })
-                    const result = await response.json()
-                    console.log(' order result:', result)
-                    if (result.success) {
-                      // toast.success(' order created successfully!')
-                      // window.location.href = `/thank-you?orderId=${result.data.id || result.data.orderId}`
-                    } else {
-                      toast.error(` failed: ${result.error}`)
-                    }
-                  } catch (error) {
-                    console.error(' error:', error)
-                    toast.error(' failed - check console')
-                  }
-                }}
-              
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">

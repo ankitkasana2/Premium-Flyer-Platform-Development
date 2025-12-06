@@ -40,41 +40,48 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Payment verified successfully!')
 
-    // Get tempSessionId from metadata
-    const tempSessionId = session.metadata?.tempSessionId
+    // Get order data from Stripe metadata
+    let orderDataBase64 = session.metadata?.orderData
+    const chunkCount = session.metadata?.chunkCount
 
-    if (!tempSessionId) {
-      console.error('❌ No tempSessionId found in session metadata')
+    // Check if data was chunked
+    if (chunkCount) {
+      console.log(`📦 Reassembling ${chunkCount} chunks...`)
+      const chunks = []
+      for (let i = 0; i < parseInt(chunkCount); i++) {
+        const chunk = session.metadata?.[`orderData_${i}`]
+        if (chunk) {
+          chunks.push(chunk)
+        }
+      }
+      orderDataBase64 = chunks.join('')
+      console.log('✅ Chunks reassembled, total size:', orderDataBase64.length, 'bytes')
+    }
+
+    if (!orderDataBase64) {
+      console.error('❌ No order data found in session metadata')
       return NextResponse.redirect(
-        new URL(`/success?session_id=${sessionId}&error=${encodeURIComponent('Order data reference not found')}`, request.url)
+        new URL(`/success?session_id=${sessionId}&error=${encodeURIComponent('Order data not found')}`, request.url)
       )
     }
 
-    console.log('🔑 Temp session ID from metadata:', tempSessionId)
+    console.log('📦 Decoding order data from metadata...')
 
-    // Retrieve order data from temporary storage
+    // Decode order data from base64
     let orderData
     try {
-      const retrieveResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/checkout/create-session?tempSessionId=${tempSessionId}`
-      )
+      const orderDataString = Buffer.from(orderDataBase64, 'base64').toString('utf-8')
+      orderData = JSON.parse(orderDataString)
 
-      if (!retrieveResponse.ok) {
-        console.error('❌ Failed to retrieve order data from storage')
-        throw new Error('Order data not found in storage')
-      }
-
-      const retrieveData = await retrieveResponse.json()
-      orderData = retrieveData.orderData
-      console.log('✅ Retrieved order data from storage:', {
+      console.log('✅ Order data decoded successfully:', {
         userId: orderData.userId,
         presenting: orderData.formData?.presenting,
         total_price: orderData.formData?.total_price
       })
-    } catch (retrieveError) {
-      console.error('❌ Error retrieving order data:', retrieveError)
+    } catch (decodeError) {
+      console.error('❌ Error decoding order data:', decodeError)
       return NextResponse.redirect(
-        new URL(`/success?session_id=${sessionId}&error=${encodeURIComponent('Order data not found or expired')}`, request.url)
+        new URL(`/success?session_id=${sessionId}&error=${encodeURIComponent('Failed to decode order data')}`, request.url)
       )
     }
 
