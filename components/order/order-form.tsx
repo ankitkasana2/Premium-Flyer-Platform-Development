@@ -149,25 +149,15 @@ export function OrderForm({ selectedFlyer, onCancel }: OrderFormProps) {
 
     console.log('Submitting order:', orderSubmission)
 
-    // For testing, submit directly without Stripe
-    try {
-      const result = await handleSubmitOrder(orderSubmission)
-      console.log('Order submission result:', result)
-    } catch (error) {
-      console.error('Order submission error:', error)
-    }
+    // Process checkout with Stripe
+    setOrderData(orderSubmission)
 
-    // TODO: Uncomment this when Stripe is configured
-    // setOrderData(orderSubmission)
-    // 
-    // // Process checkout with Stripe
-    // const result = await processCheckout(orderSubmission)
-    // 
-    // if (!result.success) {
-    //   // If Stripe fails, fall back to direct order submission for testing
-    //   console.error('Stripe checkout failed, submitting order directly')
-    //   await handleSubmitOrder(orderSubmission)
-    // }
+    const result = await processCheckout(orderSubmission)
+
+    if (!result.success) {
+      // If Stripe fails, show error
+      console.error('Stripe checkout failed:', result.error)
+    }
   }
 
   return (
@@ -566,7 +556,7 @@ export function OrderForm({ selectedFlyer, onCancel }: OrderFormProps) {
             )}
           </Button>
         </div>
-        
+
         {/* Error Display */}
         {(checkoutError || submissionError) && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
