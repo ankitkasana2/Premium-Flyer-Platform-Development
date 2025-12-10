@@ -57,10 +57,10 @@ const Cart = observer(() => {
         <div className="flex flex-col md:flex-row">
           {/* Image Section */}
           <div className="w-full md:w-48 h-48 bg-gray-100 relative">
-            {item.image_url ? (
-              <img 
-                src={item.image_url} 
-                alt={item.event_title}
+            {item.flyer?.image || item.image_url ? (
+              <img
+                src={item.flyer?.image || item.image_url || ''}
+                alt={item.flyer?.title || item.event_title}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -68,9 +68,11 @@ const Cart = observer(() => {
                 <ImageIcon className="w-12 h-12 text-gray-400" />
               </div>
             )}
-            <Badge className="absolute top-2 right-2" variant="secondary">
-              {item.status}
-            </Badge>
+            {item.status && (
+              <Badge className="absolute top-2 right-2" variant="secondary">
+                {item.status}
+              </Badge>
+            )}
           </div>
 
           {/* Content Section */}
@@ -80,6 +82,16 @@ const Cart = observer(() => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-1">
                   {item.event_title}
                 </h3>
+                {item.flyer && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-xs">
+                      Template: {item.flyer.title}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {item.flyer.type}
+                    </Badge>
+                  </div>
+                )}
                 <p className="text-gray-600 flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   {item.presenting}
@@ -107,10 +119,12 @@ const Cart = observer(() => {
                 <Clock className="w-4 h-4" />
                 <span>{item.delivery_time}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <DollarSign className="w-4 h-4" />
-                <span>Amount: {formatPrice(item.amount)}</span>
-              </div>
+              {item.amount && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <DollarSign className="w-4 h-4" />
+                  <span>Amount: {formatPrice(item.amount)}</span>
+                </div>
+              )}
             </div>
 
             {/* DJs Section */}
@@ -124,8 +138,8 @@ const Cart = observer(() => {
                   {item.djs.map((dj, index) => (
                     <div key={index} className="flex items-center gap-1 text-sm">
                       {dj.image && (
-                        <img 
-                          src={dj.image} 
+                        <img
+                          src={dj.image}
                           alt={dj.name}
                           className="w-6 h-6 rounded-full object-cover"
                         />
@@ -146,8 +160,8 @@ const Cart = observer(() => {
                 </p>
                 <div className="flex items-center gap-2 text-sm">
                   {item.host.image && (
-                    <img 
-                      src={item.host.image} 
+                    <img
+                      src={item.host.image}
                       alt={item.host.name}
                       className="w-6 h-6 rounded-full object-cover"
                     />
@@ -165,8 +179,8 @@ const Cart = observer(() => {
                   {item.sponsors.map((sponsor, index) => (
                     <div key={index} className="text-sm">
                       {sponsor.image ? (
-                        <img 
-                          src={sponsor.image} 
+                        <img
+                          src={sponsor.image}
                           alt={sponsor.name || `Sponsor ${index + 1}`}
                           className="w-8 h-8 rounded object-cover"
                         />
@@ -266,7 +280,7 @@ const Cart = observer(() => {
             <div className="text-center text-red-700">
               <h3 className="text-lg font-semibold mb-2">Error Loading Cart</h3>
               <p>{cartStore.error}</p>
-              <Button 
+              <Button
                 onClick={() => {
                   console.log('Retrying cart load for user:', authStore.user?.id)
                   cartStore.load(authStore.user!.id)

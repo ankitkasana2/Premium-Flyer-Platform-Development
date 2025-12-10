@@ -105,7 +105,12 @@ export async function GET(request: NextRequest) {
     formData.append('instagram_post_size', (formDataObj.instagram_post_size || true).toString())
     formData.append('delivery_time', formDataObj.delivery_time || '24 hours')
     formData.append('custom_notes', formDataObj.custom_notes || '')
-    formData.append('flyer_is', (formDataObj.flyer_is || 1).toString())
+
+    // Log the flyer_id being used
+    const flyerId = formDataObj.flyer_id || formDataObj.flyer_is || 1;
+    console.log('🎯 Using flyer_id:', flyerId, '(from flyer_id:', formDataObj.flyer_id, ', flyer_is:', formDataObj.flyer_is, ')');
+
+    formData.append('flyer_is', flyerId.toString())
     formData.append('category_id', (formDataObj.category_id || 1).toString())
     formData.append('user_id', formDataObj.user_id || orderData.userId || '')
     formData.append('web_user_id', formDataObj.user_id || orderData.userId || '')

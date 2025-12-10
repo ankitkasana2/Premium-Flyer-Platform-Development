@@ -30,7 +30,8 @@ export const signInWithGoogle = async (): Promise<OAuthResponse> => {
 
     try {
         // Build Google OAuth URL
-        const redirectUri = `${window.location.origin}/auth/callback/google`;
+        // Using production redirect URI: https://grodify.com/auth/google/callback
+        const redirectUri = "https://grodify.com/auth/google/callback";
         const scope = "openid email profile";
         const responseType = "code";
 
@@ -43,6 +44,7 @@ export const signInWithGoogle = async (): Promise<OAuthResponse> => {
             `&prompt=consent`;
 
         console.log('Redirecting to Google OAuth...');
+        console.log('Redirect URI:', redirectUri);
 
         // Redirect to Google OAuth
         window.location.href = googleAuthUrl;
@@ -69,7 +71,8 @@ export const signInWithApple = async (): Promise<OAuthResponse> => {
 
     try {
         // Build Apple OAuth URL
-        const redirectUri = `${window.location.origin}/auth/callback/apple`;
+        // Using production redirect URI: https://grodify.com/auth/apple/callback
+        const redirectUri = "https://grodify.com/auth/apple/callback";
         const scope = "name email";
         const responseType = "code";
         const responseMode = "form_post";
@@ -82,6 +85,7 @@ export const signInWithApple = async (): Promise<OAuthResponse> => {
             `&scope=${encodeURIComponent(scope)}`;
 
         console.log('Redirecting to Apple OAuth...');
+        console.log('Redirect URI:', redirectUri);
 
         // Redirect to Apple OAuth
         window.location.href = appleAuthUrl;
@@ -100,7 +104,8 @@ export const handleGoogleCallback = async (code: string): Promise<OAuthResponse>
     try {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
-        const redirectUri = `${window.location.origin}/auth/callback/google`;
+        // Using production redirect URI to match Google Cloud Console configuration
+        const redirectUri = "https://grodify.com/auth/google/callback";
 
         if (!clientId || !clientSecret) {
             throw new Error("Google OAuth credentials not configured");
@@ -183,7 +188,8 @@ export const handleAppleCallback = async (
     try {
         const clientId = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID;
         const clientSecret = process.env.NEXT_PUBLIC_APPLE_CLIENT_SECRET;
-        const redirectUri = `${window.location.origin}/auth/callback/apple`;
+        // Using production redirect URI to match Apple Developer Console configuration
+        const redirectUri = "https://grodify.com/auth/apple/callback";
 
         if (!clientId || !clientSecret) {
             throw new Error("Apple OAuth credentials not configured");

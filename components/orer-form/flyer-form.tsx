@@ -486,7 +486,8 @@ const EventBookingForm = () => {
         presenting: apiBody.presenting,
         total_price: apiBody.total_price,
         user_id: authStore.user.id,
-        image_url: apiBody.image_url
+        image_url: apiBody.image_url,
+        flyer_id: apiBody.flyer_id
       });
 
       // Create Stripe checkout session with order data
