@@ -142,31 +142,41 @@ export interface CartItem {
   user_id: string;
   flyer_is: number;
   added_time: string;
-  status: string;
+  status?: string;
   presenting: string;
   event_title: string;
   image_url: string | null;
   event_date: string;
   address_and_phone: string;
   delivery_time: string;
-  amount: string;
-  venue_logo: string;
+  amount?: string;
+  venue_logo?: string | null;
   djs: DJ[];
   host: Host;
   sponsors: Sponsor[];
   flyer_info: string;
   custom_notes: string;
   email: string | null;
-  story_size_version: number;
-  custom_flyer: number;
-  animated_flyer: number;
-  instagram_post_size: number;
-  total_price: string;
+  story_size_version: number | boolean;
+  custom_flyer: number | boolean;
+  animated_flyer: number | boolean;
+  instagram_post_size: number | boolean;
+  total_price: string | number;
+  flyer?: {
+    id: number;
+    title: string;
+    price: number;
+    image: string;
+    type: string;
+    categories: string[];
+  };
 }
+
 
 export interface CartResponse {
   success: boolean;
-  data: CartItem[];
+  count: number;
+  cart: CartItem[];
 }
 
 export interface AddToCartData {
@@ -225,9 +235,9 @@ export class CartStore {
 
       console.log('Raw API response:', data)
 
-      if (data.success && Array.isArray(data.data)) {
-        this.cartItems = data.data
-        console.log('Cart loaded successfully:', data.data.length, 'items')
+      if (data.success && Array.isArray(data.cart)) {
+        this.cartItems = data.cart
+        console.log('Cart loaded successfully:', data.cart.length, 'items')
       } else {
         this.cartItems = []
         console.log('No cart items found or invalid response:', data)
@@ -253,16 +263,16 @@ export class CartStore {
       })
 
       const data = await response.json()
-      
+
       if (response.ok) {
         console.log('Item added to cart successfully:', data)
-        
+
         // Reload cart to get updated items
         const userId = formData.get('user_id') as string
         if (userId) {
           await this.load(userId)
         }
-        
+
         return { success: true, data }
       } else {
         throw new Error(data.message || 'Failed to add item to cart')
@@ -328,7 +338,7 @@ export class CartStore {
   // Get total price (convert string to number)
   get totalPrice() {
     return this.cartItems.reduce((sum, item) => {
-      const price = parseFloat(item.total_price) || 0
+      const price = parseFloat(String(item.total_price)) || 0
       return sum + price
     }, 0)
   }
@@ -355,10 +365,11 @@ export class CartStore {
   get itemsByStatus() {
     const grouped: Record<string, CartItem[]> = {}
     this.cartItems.forEach(item => {
-      if (!grouped[item.status]) {
-        grouped[item.status] = []
+      const status = item.status || 'pending'
+      if (!grouped[status]) {
+        grouped[status] = []
       }
-      grouped[item.status].push(item)
+      grouped[status].push(item)
     })
     return grouped
   }

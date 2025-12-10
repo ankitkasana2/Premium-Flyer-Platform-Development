@@ -72,9 +72,9 @@ const CartPage = observer(() => {
                     <section className="lg:col-span-2 rounded-lg border border-border bg-card p-4 md:p-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold">Items ({cartItems.length})</h2>
-                            <Button 
-                                variant="ghost" 
-                                className="text-primary" 
+                            <Button
+                                variant="ghost"
+                                className="text-primary"
                                 onClick={() => authStore.user?.id && cartStore.clearCart(authStore.user.id)}
                             >
                                 Clear cart
@@ -85,14 +85,15 @@ const CartPage = observer(() => {
                             {cartItems.map((item) => (
                                 <li key={item.id} className="rounded-md border border-border p-4 overflow-hidden">
                                     <div className="flex items-start gap-4">
-                                        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                                        <div className="h-70 w-50 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
                                             <img
                                                 src={
+                                                    item.flyer?.image ||
                                                     item.image_url ||
                                                     item.venue_logo ||
                                                     "/placeholder.svg"
                                                 }
-                                                alt={item.event_title || "Flyer thumbnail"}
+                                                alt={item.flyer?.title || item.event_title || "Flyer thumbnail"}
                                                 className="h-full w-full object-cover"
                                             />
                                         </div>
@@ -102,6 +103,17 @@ const CartPage = observer(() => {
                                                 <h3 className="font-medium truncate">{item.event_title || "Untitled Flyer"}</h3>
                                                 <Badge>{item.status || 'active'}</Badge>
                                             </div>
+
+                                            {item.flyer && (
+                                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                    <Badge variant="outline" className="text-xs">
+                                                        Template: {item.flyer.title}
+                                                    </Badge>
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {item.flyer.type}
+                                                    </Badge>
+                                                </div>
+                                            )}
 
                                             <div className="mt-2 text-sm text-muted-foreground">
                                                 <p><strong>Presenting:</strong> {item.presenting}</p>
@@ -118,10 +130,10 @@ const CartPage = observer(() => {
 
                                             <div className="mt-3 flex flex-wrap items-center gap-2">
                                                 <span className="text-base font-semibold">{currency(item.total_price)}</span>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    onClick={() => authStore.user?.id && cartStore.removeFromCart(item.id, authStore.user.id)} 
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => authStore.user?.id && cartStore.removeFromCart(item.id, authStore.user.id)}
                                                     className="gap-2"
                                                 >
                                                     <Trash2 className="h-4 w-4" />

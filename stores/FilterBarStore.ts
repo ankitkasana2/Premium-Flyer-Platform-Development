@@ -20,12 +20,27 @@ export class FilterBarStore {
         }
     }
 
+    categoryFilter(category: string) {
+        const index = this.category.indexOf(category);
+        if (index > -1) {
+            this.category.splice(index, 1);
+        } else {
+            this.category.push(category);
+        }
+    }
 
-    //   remove(id: string) {
-    //     this.favorites = this.favorites.filter(fav => fav !== id)
-    //   }
+    typeFilter(type: string) {
+        const index = this.type.indexOf(type);
+        if (index > -1) {
+            this.type.splice(index, 1);
+        } else {
+            this.type.push(type);
+        }
+    }
 
-    //   get count() {
-    //     return this.favorites.length
-    //   }
+    clearFilters() {
+        this.price = []
+        this.category = []
+        this.type = []
+    }
 }

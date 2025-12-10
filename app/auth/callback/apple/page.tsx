@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { handleAppleCallback } from "@/lib/oauth-client";
-import { useAuthStore } from "@/stores/AuthStore";
+import { useStore } from "@/stores/StoreProvider";
 import { IOSLoader } from "@/components/ui/ios-loader";
 
 export default function AppleCallbackPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const authStore = useAuthStore();
+    const { authStore } = useStore();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 

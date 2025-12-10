@@ -19,12 +19,13 @@ import { useSearchParams } from "next/navigation"
 const CategoriesPage = () => {
 
   const searchParams = useSearchParams()
-  const { authStore, filterBarStore, categoryStore, flyersStore } = useStore()
+  const { authStore, filterBarStore, categoryStore, flyersStore, favoritesStore } = useStore()
   const [filter, setFilter] = useState({
     price: [],
     category: '',
     type: ''
   })
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch flyers from API on mount
   useEffect(() => {
@@ -33,12 +34,29 @@ const CategoriesPage = () => {
     }
   }, [flyersStore])
 
+  // Fetch favorites on mount if user is logged in
   useEffect(() => {
-    const value = searchParams.get('slug')
-    if (searchParams.size == 0) {
-      categoryStore.setFlyer('Recently Added')
+    if (authStore.user?.id) {
+      console.log("📂 Categories page: Fetching favorites for user:", authStore.user.id)
+      favoritesStore.fetchFavorites(authStore.user.id)
+    }
+  }, [authStore.user?.id, favoritesStore])
+
+  // Handle search query from URL
+  useEffect(() => {
+    const search = searchParams.get('search')
+    if (search) {
+      console.log("🔍 Search query:", search)
+      setSearchQuery(search)
+      categoryStore.searchFlyers(search)
     } else {
-      categoryStore.setFlyer(value ? value : '')
+      setSearchQuery('')
+      const value = searchParams.get('slug')
+      if (searchParams.size == 0) {
+        categoryStore.setFlyer('Recently Added')
+      } else {
+        categoryStore.setFlyer(value ? value : '')
+      }
     }
   }, [searchParams, flyersStore.flyers]) // Re-run when flyers are loaded
 
