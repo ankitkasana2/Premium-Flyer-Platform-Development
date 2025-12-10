@@ -2,6 +2,8 @@
 import { makeAutoObservable, runInAction } from "mobx"
 import { getApiUrl } from "@/config/api"
 
+
+// banner store
 export type Banner = {
   id: number
   title: string
