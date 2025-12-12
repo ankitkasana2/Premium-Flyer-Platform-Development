@@ -17,7 +17,7 @@ export const FlyerRibbon: React.FC<FlyerRibbonProps> = ({ flyer }) => {
     }
 
     return (
-        <div className="absolute top-0 left-0 w-32 h-32 overflow-visible pointer-events-none z-20">
+        <div className="absolute top-0 left-0 w-10 h-10 overflow-visible pointer-events-none z-20">
             <img
                 src={ribbonConfig.imagePath}
                 alt={ribbonConfig.text || 'Ribbon'}

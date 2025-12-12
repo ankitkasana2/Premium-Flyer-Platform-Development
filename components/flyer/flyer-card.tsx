@@ -12,6 +12,7 @@ import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
 import { toast } from "sonner"
 import { toJS } from "mobx"
+import { FlyerRibbon } from "../orer-form/flyer-ribbon"
 
 interface FlyerCardProps {
   flyer: Flyer
@@ -105,10 +106,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
   const price = getPrice(flyer);
   const isPremium = price === 40;
 
-  const hasPhotoRibbon =
-    flyer.form_type === 'With Image' ||
-    flyer.form_type === 'With Photo' ||
-    flyer.hasPhotos === true;
+
 
 
   return (
@@ -164,36 +162,7 @@ const FlyerCardComponent = ({ flyer, onPreview, onAddToCart, onToggleFavorite }:
           </div>
 
           {/* 🎀 Ribbons System */}
-          <div className="absolute top-0 left-0 w-32 h-32 overflow-hidden pointer-events-none z-20">
-
-            {/* 🏆 Premium Ribbon */}
-            {isPremium && (
-              <div style={{
-                left: "-35px",
-                top: "11px",
-
-              }}
-                className="absolute top-[22px] -left-[30px] w-[120px] bg-[#FFB700] text-black text-[10px] font-bold text-center 
-                      shadow-md transform -rotate-45 z-20 py-1 uppercase tracking-wider border-y border-white/20"
-              >
-                Premium
-              </div>
-            )}
-
-            {/* 🟥 Photo Ribbon */}
-            {hasPhotoRibbon && (
-              <div
-                className={`absolute w-[120px] text-white text-[9px] font-bold text-center 
-                      shadow-md transform -rotate-45 z-10 py-0.5 uppercase tracking-wider border-y border-white/20
-                      ${isPremium
-                    ? 'top-[27px] -left-[21px] bg-[#D32F2F]' // Position below Premium
-                    : 'top-[22px] -left-[30px] bg-[#D32F2F]' // Position at top (same as Premium)
-                  }`}
-              >
-                PHOTO
-              </div>
-            )}
-          </div>
+          <FlyerRibbon flyer={flyer} />
         </div>
       </div>
     </Link>
