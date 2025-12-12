@@ -121,3 +121,4 @@ const FlyersSection: React.FC<FlyersSectionProps> = ({ type }) => {
 };
 
 export default observer(FlyersSection);
+

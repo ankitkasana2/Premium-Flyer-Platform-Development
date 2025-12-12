@@ -38,3 +38,4 @@ export function FlyersCarousel({ flyers }: { flyers: any[] }) {
     </div>
   )
 }
+
