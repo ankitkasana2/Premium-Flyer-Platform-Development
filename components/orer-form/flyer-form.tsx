@@ -339,16 +339,23 @@ const EventBookingForm = () => {
     });
   }
 
-  // ✅ Add new DJ field
+  // ✅ Add new DJ field (max 4)
   const handleAddField = () => {
-    flyerFormStore.addDJ()
     if (flyer?.hasPhotos == true) {
+      if (djList.length >= 4) {
+        toast.error("Maximum 4 DJs allowed");
+        return;
+      }
+      flyerFormStore.addDJ()
       setDjList(prev => [...prev, { name: "", image: null }])
     } else {
+      if (djListText.length >= 4) {
+        toast.error("Maximum 4 DJs allowed");
+        return;
+      }
+      flyerFormStore.addDJ()
       setDjListText(prev => [...prev, { name: '' }])
     }
-
-
   }
 
   const handleRemoveField = (index: number) => {
@@ -1070,9 +1077,10 @@ const EventBookingForm = () => {
             <Button
               type="button"
               onClick={handleAddField}
-              className="mt-2 bg-primary hover:cursor-pointer"
+              disabled={flyer?.hasPhotos ? djList.length >= 4 : djListText.length >= 4}
+              className="mt-2 bg-primary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add More
+              Add More ({flyer?.hasPhotos ? djList.length : djListText.length}/4)
             </Button>
           </div>
 

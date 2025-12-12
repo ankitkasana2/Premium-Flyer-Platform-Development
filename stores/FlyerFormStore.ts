@@ -345,6 +345,11 @@ async fetchFlyer(id: string) {
     if (!event.mainTitle.trim()) errors.push("Event Title is required.")
     if (!event.date) errors.push("Event date is required.")
     if (!event.addressAndPhone?.trim()) errors.push("Address & Phone is required.")
+    
+    // ✅ Venue Logo OR Venue Text (at least one required)
+    if (!event.venueLogo && !event.venueText?.trim()) {
+      errors.push("Venue logo or venue text is required.")
+    }
 
     // ✅ DJs / Artists (at least 1 name required)
     if (djs.length === 0 || !djs.some((dj) => dj.name.trim())) {
