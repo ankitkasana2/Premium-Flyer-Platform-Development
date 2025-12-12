@@ -15,6 +15,7 @@ import ExtrasBlock from "./extra-block";
 import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
 import EventDetails from "./event-details";
+import { FlyerRibbon } from "./flyer-ribbon";
 import { createCartFormData, setUserIdInFormData } from "@/lib/cart";
 
 type Flyer = {
@@ -220,15 +221,8 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
                         alt={flyerName}
                         className="w-full h-full object-cover"
                     />
-                    {/* Photo Ribbon */}
-                    <div className="absolute top-0 left-0 w-32 h-32 overflow-hidden pointer-events-none z-20">
-                        <div
-                            className="absolute top-[22px] -left-[30px] w-[120px] bg-[#D32F2F] text-white text-[9px] font-bold text-center 
-                    shadow-md transform -rotate-45 z-10 py-0.5 uppercase tracking-wider border-y border-white/20"
-                        >
-                            PHOTO
-                        </div>
-                    </div>
+                    {/* Dynamic Ribbon */}
+                    <FlyerRibbon flyer={flyer} />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
                         <h1 className="text-2xl font-bold text-white mb-2">{flyerName}</h1>
                         <div className="flex items-center gap-2">

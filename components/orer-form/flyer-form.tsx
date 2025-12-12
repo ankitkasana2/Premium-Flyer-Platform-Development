@@ -28,6 +28,7 @@ import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
 import HostSection from "./host-block";
 import EventDetails from "./event-details";
+import { FlyerRibbon } from "./flyer-ribbon";
 import BirthdayForm from "./birthday-form";
 import NoPhotoForm from "./no-photo-form";
 import Photo10Form from "./photo-10-form";
@@ -942,12 +943,14 @@ const EventBookingForm = () => {
                 </div>
               </div>
 
-              <div className="aspect-[4/5]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
+              <div className="aspect-[4/5] relative rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
                   src={flyerImage}
                   alt={flyerName || "Event promotional image"}
                   className="w-full h-full object-cover"
                 />
+                {/* Dynamic Ribbon */}
+                <FlyerRibbon flyer={flyer} />
               </div>
 
 
