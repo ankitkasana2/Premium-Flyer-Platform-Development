@@ -81,6 +81,7 @@ type Flyer = {
   price: number;
   priceType: "basic" | "regular" | "premium";
   hasPhotos: boolean;
+  form_type?: string; // "With Photo" | "No Photo" | "Birthday"
   imageUrl: string;
   image_url?: string;
   category_id?: string;
@@ -341,7 +342,9 @@ const EventBookingForm = () => {
 
   // ✅ Add new DJ field (max 4)
   const handleAddField = () => {
-    if (flyer?.hasPhotos == true) {
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
+
+    if (isPhotoForm) {
       if (djList.length >= 4) {
         toast.error("Maximum 4 DJs allowed");
         return;
@@ -360,8 +363,9 @@ const EventBookingForm = () => {
 
   const handleRemoveField = (index: number) => {
     flyerFormStore.removeDJ(index);
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
 
-    if (flyer?.hasPhotos === true) {
+    if (isPhotoForm) {
       setDjList(prev => prev.filter((_, i) => i !== index));
     } else {
       setDjListText(prev => prev.filter((_, i) => i !== index));
@@ -965,7 +969,7 @@ const EventBookingForm = () => {
             >
               <h2 className="text-xl font-bold">DJ or Artist</h2>
 
-              {flyer?.hasPhotos == true ? djList.map((dj, index) => (
+              {(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.map((dj, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold flex items-center gap-2">
@@ -984,53 +988,57 @@ const EventBookingForm = () => {
                     )}
                   </div>
 
-                  {/* Upload Image Button - Prominent */}
-                  <label htmlFor={`dj-upload-${index}`} className="cursor-pointer block">
-                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 border border-primary rounded-lg hover:bg-primary/20 transition-all">
-                      <Upload className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">
-                        {dj.image ? "Change Image" : "Upload Image"}
-                      </span>
-                    </div>
-                    <input
-                      id={`dj-upload-${index}`}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, index)}
-                      className="hidden"
-                    />
-                  </label>
-
-                  {/* Image Preview */}
-                  {dj.image && (
-                    <div className="flex items-center gap-3 bg-gray-950 border border-primary rounded-lg p-3 shadow-md">
-                      <img
-                        src={dj.image}
-                        alt="DJ"
-                        className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
+                  {/* Input field with upload button on RIGHT side */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+                      {/* Name input - takes full width */}
+                      <Input
+                        value={dj.name}
+                        onChange={(e) => handleNameChange(e, index)}
+                        placeholder="Enter DJ name..."
+                        className="bg-transparent border-none text-white placeholder:text-gray-600 
+                          focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
                       />
-                      <span className="text-sm text-gray-300 flex-1">Image uploaded</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="text-primary text-xs hover:underline font-semibold"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
 
-                  {/* Name Input */}
-                  <Input
-                    value={dj.name}
-                    onChange={(e) => handleNameChange(e, index)}
-                    placeholder="Enter DJ name..."
-                    className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
-                      rounded-lg h-10 shadow-md
-                      focus-visible:!ring-0 focus-visible:!outline-none
-                      focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-                      transition-all duration-300"
-                  />
+                      {/* Image preview on RIGHT (if uploaded) */}
+                      {dj.image && (
+                        <>
+                          <div className="flex-shrink-0">
+                            <img
+                              src={dj.image}
+                              alt="DJ"
+                              className="w-8 h-8 rounded object-cover border border-primary"
+                            />
+                          </div>
+
+                          {/* Remove image button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
+
+                      {/* Upload button on RIGHT (only show if NO image) */}
+                      {!dj.image && (
+                        <label htmlFor={`dj-upload-${index}`} className="cursor-pointer flex-shrink-0">
+                          <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                            <Upload className="w-4 h-4 text-primary" />
+                          </div>
+                          <input
+                            id={`dj-upload-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, index)}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))
                 :
@@ -1071,10 +1079,10 @@ const EventBookingForm = () => {
               <Button
                 type="button"
                 onClick={handleAddField}
-                disabled={flyer?.hasPhotos ? djList.length >= 4 : djListText.length >= 4}
+                disabled={(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.length >= 4 : djListText.length >= 4}
                 className="mt-2 bg-primary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full"
               >
-                Add More ({flyer?.hasPhotos ? djList.length : djListText.length}/4)
+                Add More ({(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.length : djListText.length}/4)
               </Button>
             </div>
 

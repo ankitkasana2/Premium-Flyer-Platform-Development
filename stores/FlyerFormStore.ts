@@ -194,15 +194,56 @@ async fetchFlyer(id: string) {
 
 
 
-  fetchSimilarFlyers() {
+  async fetchSimilarFlyers() {
     const flyer = this.flyer
     if (!flyer) return
 
     console.log("flyer:", toJS(flyer))
 
-    this.similarFlyers = SAMPLE_FLYERS.filter(
-      (f) => f.category === flyer.category && f.id !== flyer.id
-    )
+    try {
+      // Get categories from the current flyer
+      const flyerCategories = Array.isArray((flyer as any).categories) 
+        ? (flyer as any).categories 
+        : [flyer.category];
+
+      // Fetch all flyers from API
+      const response = await fetch('http://193.203.161.174:3007/api/flyers');
+      const allFlyers = await response.json();
+
+      // Filter flyers that share at least one category with the current flyer
+      this.similarFlyers = allFlyers.filter((f: any) => {
+        const fCategories = Array.isArray(f.categories) 
+          ? f.categories 
+          : [f.category];
+        
+        // Check if there's any overlap in categories
+        const hasCommonCategory = flyerCategories.some((cat: string) => 
+          fCategories.includes(cat)
+        );
+        
+        return hasCommonCategory && f.id !== flyer.id;
+      });
+
+      console.log("Similar flyers found:", this.similarFlyers.length);
+    } catch (error) {
+      console.error("Error fetching similar flyers:", error);
+      // Fallback to SAMPLE_FLYERS if API fails
+      const flyerCategories = Array.isArray((flyer as any).categories) 
+        ? (flyer as any).categories 
+        : [flyer.category];
+
+      this.similarFlyers = SAMPLE_FLYERS.filter((f) => {
+        const fCategories = Array.isArray((f as any).categories) 
+          ? (f as any).categories 
+          : [f.category];
+        
+        const hasCommonCategory = flyerCategories.some((cat: string) => 
+          fCategories.includes(cat)
+        );
+        
+        return hasCommonCategory && f.id !== flyer.id;
+      });
+    }
   }
 
   // -----------------------------

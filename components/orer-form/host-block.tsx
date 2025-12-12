@@ -52,60 +52,64 @@ const HostSection = observer(() => {
     <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
       <h2 className="text-xl font-bold">Host *</h2>
 
-      {flyerFormStore.flyer?.hasPhotos ? (
+      {(flyerFormStore.flyer?.form_type === "With Photo" || flyerFormStore.flyer?.hasPhotos) ? (
         <div className="space-y-2">
           <Label className="text-sm font-semibold flex items-center gap-2">
             <Music className="w-4 h-4 text-primary" />
             Main Host
           </Label>
 
-          {/* Upload Image Button - Prominent */}
-          <label htmlFor="host-upload" className="cursor-pointer block">
-            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 border border-primary rounded-lg hover:bg-primary/20 transition-all">
-              <Upload className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">
-                {hostPreview || host?.image ? "Change Image" : "Upload Image"}
-              </span>
-            </div>
-            <input
-              id="host-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFileUploadHost}
-              className="hidden"
-            />
-          </label>
-
-          {/* Image Preview */}
-          {(hostPreview || host?.image) && (
-            <div className="flex items-center gap-3 bg-gray-950 border border-primary rounded-lg p-3 shadow-md">
-              <img
-                src={hostPreview || (host?.image ? URL.createObjectURL(host.image) : "")}
-                alt="Host"
-                className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
+          {/* Input field with upload button on RIGHT side */}
+          <div className="relative">
+            <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+              {/* Name input - takes full width */}
+              <Input
+                value={host?.name || ""}
+                onChange={handleHostNameChange}
+                placeholder="Enter host name..."
+                className="bg-transparent border-none text-white placeholder:text-gray-600 
+                  focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
               />
-              <span className="text-sm text-gray-300 flex-1">Image uploaded</span>
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="text-primary text-xs hover:underline font-semibold"
-              >
-                Remove
-              </button>
-            </div>
-          )}
 
-          {/* Name Input */}
-          <Input
-            value={host?.name || ""}
-            onChange={handleHostNameChange}
-            placeholder="Enter host name..."
-            className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
-              rounded-lg h-10 shadow-md
-              focus-visible:!ring-0 focus-visible:!outline-none
-              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-              transition-all duration-300"
-          />
+              {/* Image preview on RIGHT (if uploaded) */}
+              {(hostPreview || host?.image) && (
+                <>
+                  <div className="flex-shrink-0">
+                    <img
+                      src={hostPreview || (host?.image ? URL.createObjectURL(host.image) : "")}
+                      alt="Host"
+                      className="w-8 h-8 rounded object-cover border border-primary"
+                    />
+                  </div>
+
+                  {/* Remove image button */}
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
+
+              {/* Upload button on RIGHT (only show if NO image) */}
+              {!hostPreview && !host?.image && (
+                <label htmlFor="host-upload" className="cursor-pointer flex-shrink-0">
+                  <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                    <Upload className="w-4 h-4 text-primary" />
+                  </div>
+                  <input
+                    id="host-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUploadHost}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         <Input
