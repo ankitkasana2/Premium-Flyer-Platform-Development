@@ -29,6 +29,9 @@ import { FlyersCarousel } from "../home/FlyersCarousel";
 import HostSection from "./host-block";
 import EventDetails from "./event-details";
 import BirthdayForm from "./birthday-form";
+import NoPhotoForm from "./no-photo-form";
+import Photo10Form from "./photo-10-form";
+import Photo15Form from "./photo-15-form";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner"
 import { useSearchParams, useParams } from "next/navigation";
@@ -373,6 +376,43 @@ const EventBookingForm = () => {
   // If Birthday category, render Birthday form instead
   if (isBirthdayCategory) {
     return <BirthdayForm flyer={flyer} />;
+  }
+
+  // Detect form type based on price and category
+  const flyerPrice = flyer?.price || priceFromQuery || 0;
+  const flyerCategory = flyer?.category || categoryFromQuery || "";
+
+  // Check if it's a No-Photo form ($10, $15, or $40 No-Photo)
+  const isNoPhotoForm =
+    flyerCategory.toLowerCase().includes("no-photo") ||
+    flyerCategory.toLowerCase().includes("no photo") ||
+    flyerCategory.toLowerCase().includes("nophoto");
+
+  // Check if it's a With Photo form
+  const isWithPhotoForm =
+    flyerCategory.toLowerCase().includes("with photo") ||
+    flyerCategory.toLowerCase().includes("photo") ||
+    (flyer as any)?.hasPhotos === true;
+
+  // Route to No-Photo forms
+  if (isNoPhotoForm) {
+    if (flyerPrice === 10) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={10} />;
+    } else if (flyerPrice === 15) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={15} />;
+    } else if (flyerPrice === 40 || flyerPrice >= 40) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={40} />;
+    }
+  }
+
+  // Route to $10 With Photo form (partial photo support)
+  if (isWithPhotoForm && flyerPrice === 10) {
+    return <Photo10Form flyer={flyer} />;
+  }
+
+  // Route to $15 With Photo form (full photo support)
+  if (isWithPhotoForm && flyerPrice === 15) {
+    return <Photo15Form flyer={flyer} />;
   }
 
 
