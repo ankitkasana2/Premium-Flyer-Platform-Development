@@ -293,7 +293,8 @@ const EventBookingForm = () => {
 
 
     // 3️⃣ Update local UI preview (if you’re using local state for preview)
-    if (flyer?.hasPhotos == true) {
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
+    if (isPhotoForm) {
       setDjList((prev) => {
         const newList = [...prev];
         newList[index].name = e.target.value; // base64 preview
@@ -997,7 +998,7 @@ const EventBookingForm = () => {
                         onChange={(e) => handleNameChange(e, index)}
                         placeholder="Enter DJ name..."
                         className="bg-transparent border-none text-white placeholder:text-gray-600 
-                          focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
+                          focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3 pointer-events-auto"
                       />
 
                       {/* Image preview on RIGHT (if uploaded) */}
@@ -1024,7 +1025,7 @@ const EventBookingForm = () => {
 
                       {/* Upload button on RIGHT (only show if NO image) */}
                       {!dj.image && (
-                        <label htmlFor={`dj-upload-${index}`} className="cursor-pointer flex-shrink-0">
+                        <label htmlFor={`dj-upload-${index}`} className="cursor-pointer flex-shrink-0 pointer-events-auto">
                           <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
                             <Upload className="w-4 h-4 text-primary" />
                           </div>

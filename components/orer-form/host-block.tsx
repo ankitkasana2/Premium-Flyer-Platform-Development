@@ -68,7 +68,7 @@ const HostSection = observer(() => {
                 onChange={handleHostNameChange}
                 placeholder="Enter host name..."
                 className="bg-transparent border-none text-white placeholder:text-gray-600 
-                  focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
+                  focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3 pointer-events-auto"
               />
 
               {/* Image preview on RIGHT (if uploaded) */}
@@ -95,7 +95,7 @@ const HostSection = observer(() => {
 
               {/* Upload button on RIGHT (only show if NO image) */}
               {!hostPreview && !host?.image && (
-                <label htmlFor="host-upload" className="cursor-pointer flex-shrink-0">
+                <label htmlFor="host-upload" className="cursor-pointer flex-shrink-0 pointer-events-auto">
                   <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
                     <Upload className="w-4 h-4 text-primary" />
                   </div>
