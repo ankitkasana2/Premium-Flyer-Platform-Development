@@ -956,136 +956,131 @@ const EventBookingForm = () => {
           {/* Event Details Section */}
           <EventDetails />
 
-          {/* Additional Information Section */}
-          <div
-            className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
-        rounded-2xl border border-gray-800"
-          >
-            <h2 className="text-xl font-bold">DJ or Artist</h2>
+          {/* Split Layout: DJ/Artist (Left) + Host (Right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* DJ or Artist Section - LEFT SIDE */}
+            <div
+              className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
+          rounded-2xl border border-gray-800"
+            >
+              <h2 className="text-xl font-bold">DJ or Artist</h2>
 
-            {flyer?.hasPhotos == true ? djList.map((dj, index) => (
-              <div key={index} className="grid grid-cols-2 gap-6 mb-4">
-                <div className="col-span-2">
-                  <div className="flex items-center justify-between mb-2">
+              {flyer?.hasPhotos == true ? djList.map((dj, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold flex items-center gap-2">
-                      <Music className="w-4 h-4 text-theme text-sm" />
-                      Main DJ or Artist {index + 1}
+                      <Music className="w-4 h-4 text-primary" />
+                      DJ/Artist {index + 1}
                     </Label>
 
-                    <div className="flex items-center gap-4">
-                      {/* Upload */}
-                      <label htmlFor={`dj-upload-${index}`} className="cursor-pointer">
-                        <div className="flex items-center gap-2 text-primary">
-                          <span className="text-sm font-semibold">Upload Image</span>
-                          <Upload className="w-4 h-4" />
-                        </div>
-                        <input
-                          id={`dj-upload-${index}`}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, index)}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {/* Remove Field Button */}
+                    {djList.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveField(index)}
                         className="text-primary cursor-pointer text-xs hover:underline"
                       >
-                        Remove Field
+                        Remove
                       </button>
-                    </div>
+                    )}
                   </div>
 
-                  <div
-                    className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-                hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
-                transition-all duration-300"
-                  >
-                    {dj.image && (
-                      <>
-                        <img
-                          src={dj.image}
-                          alt="DJ"
-                          className="w-8 h-8 rounded-full object-fill border-2 border-primary"
-                        />
+                  {/* Upload Image Button - Prominent */}
+                  <label htmlFor={`dj-upload-${index}`} className="cursor-pointer block">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 border border-primary rounded-lg hover:bg-primary/20 transition-all">
+                      <Upload className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-primary">
+                        {dj.image ? "Change Image" : "Upload Image"}
+                      </span>
+                    </div>
+                    <input
+                      id={`dj-upload-${index}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, index)}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {/* Image Preview */}
+                  {dj.image && (
+                    <div className="flex items-center gap-3 bg-gray-950 border border-primary rounded-lg p-3 shadow-md">
+                      <img
+                        src={dj.image}
+                        alt="DJ"
+                        className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
+                      />
+                      <span className="text-sm text-gray-300 flex-1">Image uploaded</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="text-primary text-xs hover:underline font-semibold"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Name Input */}
+                  <Input
+                    value={dj.name}
+                    onChange={(e) => handleNameChange(e, index)}
+                    placeholder="Enter DJ name..."
+                    className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
+                      rounded-lg h-10 shadow-md
+                      focus-visible:!ring-0 focus-visible:!outline-none
+                      focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+                      transition-all duration-300"
+                  />
+                </div>
+              ))
+                :
+                djListText.map((dj, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <Music className="w-4 h-4 text-primary" />
+                        DJ/Artist {index + 1}
+                      </Label>
+
+                      {/* Remove Field Button */}
+                      {djListText.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => handleRemoveImage(index)}
-                          className="text-primary text-xs hover:underline"
+                          onClick={() => handleRemoveField(index)}
+                          className="text-primary cursor-pointer text-xs hover:underline"
                         >
-                          Remove Image
+                          Remove
                         </button>
-                      </>
-                    )}
+                      )}
+                    </div>
 
                     <Input
                       value={dj.name}
                       onChange={(e) => handleNameChange(e, index)}
                       placeholder="Enter DJ name..."
-                      className="bg-transparent border-none text-white placeholder:text-gray-600 
-                  focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                      className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
+                        rounded-lg h-10 shadow-md
+                        focus-visible:!ring-0 focus-visible:!outline-none
+                        focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+                        transition-all duration-300"
                     />
-
-                    <span className="text-gray-500 text-sm whitespace-nowrap">
-                      {dj.image ? "Image uploaded" : "No file chosen"}
-                    </span>
                   </div>
-                </div>
-              </div>
-            ))
-              :
-              djListText.map((dj, index) => (
-                <div key={index} className="grid grid-cols-2 gap-6 mb-4">
-                  <div className="col-span-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm font-semibold flex items-center gap-2">
-                        <Music className="w-4 h-4 text-theme text-sm" />
-                        Main DJ or Artist * {index + 1}
-                      </Label>
+                ))
+              }
 
-                      {/* Remove Field Button (same as photo version) */}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveField(index)}
-                        className="text-primary cursor-pointer text-xs hover:underline"
-                      >
-                        Remove Field
-                      </button>
-                    </div>
+              <Button
+                type="button"
+                onClick={handleAddField}
+                disabled={flyer?.hasPhotos ? djList.length >= 4 : djListText.length >= 4}
+                className="mt-2 bg-primary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full"
+              >
+                Add More ({flyer?.hasPhotos ? djList.length : djListText.length}/4)
+              </Button>
+            </div>
 
-                    <div
-                      className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-        hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
-        transition-all duration-300"
-                    >
-                      <Input
-                        value={dj.name}
-                        onChange={(e) => handleNameChange(e, index)}
-                        placeholder="Enter DJ name..."
-                        className="bg-transparent border-none text-white placeholder:text-gray-600 
-          focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))
-            }
-
-            <Button
-              type="button"
-              onClick={handleAddField}
-              disabled={flyer?.hasPhotos ? djList.length >= 4 : djListText.length >= 4}
-              className="mt-2 bg-primary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Add More ({flyer?.hasPhotos ? djList.length : djListText.length}/4)
-            </Button>
+            {/* Host Section - RIGHT SIDE */}
+            <HostSection />
           </div>
-
-          {/* Host Information Section */}
-          <HostSection />
 
           {/* sponser Section */}
           <SponsorsBlock />

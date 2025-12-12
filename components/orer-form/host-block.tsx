@@ -52,85 +52,73 @@ const HostSection = observer(() => {
     <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
       <h2 className="text-xl font-bold">Host *</h2>
 
-      <div className="grid grid-cols-2 gap-6 mb-4">
-        {flyerFormStore.flyer?.hasPhotos ? <div className="col-span-2">
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Music className="w-4 h-4 text-theme text-sm" />
-              Main Host
-            </Label>
+      {flyerFormStore.flyer?.hasPhotos ? (
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Music className="w-4 h-4 text-primary" />
+            Main Host
+          </Label>
 
-            <div className="flex items-center gap-4">
-              {/* Upload Button */}
-              <label htmlFor="host-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 text-primary">
-                  <span className="text-sm font-semibold">Upload Image</span>
-                  <Upload className="w-4 h-4" />
-                </div>
-                <input
-                  id="host-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUploadHost}
-                  className="hidden"
-                />
-              </label>
+          {/* Upload Image Button - Prominent */}
+          <label htmlFor="host-upload" className="cursor-pointer block">
+            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 border border-primary rounded-lg hover:bg-primary/20 transition-all">
+              <Upload className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">
+                {hostPreview || host?.image ? "Change Image" : "Upload Image"}
+              </span>
             </div>
-          </div>
-
-          <div
-            className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-            hover:!ring-0 hover:!outline-none hover:!border-primary
-            hover:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-            transition-all duration-300"
-          >
-            {(hostPreview || host?.image) && (
-              <>
-                <img
-                  src={
-                    hostPreview ||
-                    (host?.image ? URL.createObjectURL(host.image) : "")
-                  }
-                  alt="Host"
-                  className="w-8 h-8 rounded-full object-fill border-2 border-primary"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="text-primary text-xs hover:underline"
-                >
-                  Remove Image
-                </button>
-              </>
-            )}
-
-            <Input
-              value={host?.name || ""}
-              onChange={handleHostNameChange}
-              placeholder="Enter host name..."
-              className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+            <input
+              id="host-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleFileUploadHost}
+              className="hidden"
             />
+          </label>
 
-            <span className="text-gray-500 text-sm whitespace-nowrap">
-              {host?.image ? "Image uploaded" : "No file chosen"}
-            </span>
-          </div>
-        </div>
-          :
-          <div className="col-span-2">
-            <Input
-              value={host?.name || ""}
-              onChange={handleHostNameChange}
-              placeholder="Enter host name..."
-              className="bg-gray-950 border border-gray-800 text-white
-              placeholder:text-gray-600 rounded-lg h-10 shadow-md
+          {/* Image Preview */}
+          {(hostPreview || host?.image) && (
+            <div className="flex items-center gap-3 bg-gray-950 border border-primary rounded-lg p-3 shadow-md">
+              <img
+                src={hostPreview || (host?.image ? URL.createObjectURL(host.image) : "")}
+                alt="Host"
+                className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
+              />
+              <span className="text-sm text-gray-300 flex-1">Image uploaded</span>
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="text-primary text-xs hover:underline font-semibold"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {/* Name Input */}
+          <Input
+            value={host?.name || ""}
+            onChange={handleHostNameChange}
+            placeholder="Enter host name..."
+            className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
+              rounded-lg h-10 shadow-md
               focus-visible:!ring-0 focus-visible:!outline-none
               focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
               transition-all duration-300"
-            />
-          </div>
-        }
-      </div>
+          />
+        </div>
+      ) : (
+        <Input
+          value={host?.name || ""}
+          onChange={handleHostNameChange}
+          placeholder="Enter host name..."
+          className="bg-gray-950 border border-gray-800 text-white
+            placeholder:text-gray-600 rounded-lg h-10 shadow-md
+            focus-visible:!ring-0 focus-visible:!outline-none
+            focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+            transition-all duration-300"
+        />
+      )}
     </div>
   );
 });
