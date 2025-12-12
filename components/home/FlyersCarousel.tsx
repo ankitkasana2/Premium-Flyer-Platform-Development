@@ -24,7 +24,7 @@ export function FlyersCarousel({ flyers }: { flyers: any[] }) {
           {flyers.map((flyer) => (
             <CarouselItem
               key={flyer.id}
-              className="flex-[0_0_auto] w-[180px]"
+              className="flex-[0_0_auto] w-[230px]" // each card ~250px wide, adjusts to screen
             >
               <FlyerCard flyer={flyer} />
             </CarouselItem>
