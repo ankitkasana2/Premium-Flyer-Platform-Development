@@ -53,11 +53,16 @@ export type FlyerFormDetails = {
     instagramPostSize: boolean
   }
 
+
   deliveryTime: string
 
   customNote?: string
 
   subtotal?: number
+
+  // Birthday-specific fields
+  birthdayPersonPhoto?: File | null
+  isBirthdayForm?: boolean
 }
 
 export class FlyerFormStore {
@@ -180,6 +185,9 @@ async fetchFlyer(id: string) {
       // FIX CATEGORY
       this.flyerFormDetail.categoryId =
         data.categories?.[0] ?? this.flyerFormDetail.categoryId;
+
+      // Fetch similar flyers
+      this.fetchSimilarFlyers();
     });
   } catch (err) {
     console.error("Failed to load flyer:", err);
@@ -189,15 +197,64 @@ async fetchFlyer(id: string) {
 
 
 
-  fetchSimilarFlyers() {
+  async fetchSimilarFlyers() {
     const flyer = this.flyer
     if (!flyer) return
 
     console.log("flyer:", toJS(flyer))
 
-    this.similarFlyers = SAMPLE_FLYERS.filter(
-      (f) => f.category === flyer.category && f.id !== flyer.id
-    )
+    try {
+      // Get categories from the current flyer
+      const flyerCategories = Array.isArray((flyer as any).categories) 
+        ? (flyer as any).categories 
+        : [flyer.category];
+
+      // Fetch all flyers from API
+      const response = await fetch('http://193.203.161.174:3007/api/flyers');
+      const allFlyers = await response.json();
+
+      // Filter flyers that share at least one category with the current flyer
+      const filteredFlyers = allFlyers.filter((f: any) => {
+        const fCategories = Array.isArray(f.categories) 
+          ? f.categories 
+          : [f.category];
+        
+        // Check if there's any overlap in categories
+        const hasCommonCategory = flyerCategories.some((cat: string) => 
+          fCategories.includes(cat)
+        );
+        
+        return hasCommonCategory && f.id !== flyer.id;
+      });
+
+      runInAction(() => {
+        this.similarFlyers = filteredFlyers.map((f: any) => ({
+          ...f,
+          name: f.title, // Map title to name for UI
+          price: typeof f.price === 'string' ? Number(f.price.replace(/[^0-9.]/g, "")) : f.price
+        }));
+      });
+
+      console.log("Similar flyers found:", this.similarFlyers.length);
+    } catch (error) {
+      console.error("Error fetching similar flyers:", error);
+      // Fallback to SAMPLE_FLYERS if API fails
+      const flyerCategories = Array.isArray((flyer as any).categories) 
+        ? (flyer as any).categories 
+        : [flyer.category];
+
+      this.similarFlyers = SAMPLE_FLYERS.filter((f) => {
+        const fCategories = Array.isArray((f as any).categories) 
+          ? (f as any).categories 
+          : [f.category];
+        
+        const hasCommonCategory = flyerCategories.some((cat: string) => 
+          fCategories.includes(cat)
+        );
+        
+        return hasCommonCategory && f.id !== flyer.id;
+      });
+    }
   }
 
   // -----------------------------
@@ -340,6 +397,11 @@ async fetchFlyer(id: string) {
     if (!event.mainTitle.trim()) errors.push("Event Title is required.")
     if (!event.date) errors.push("Event date is required.")
     if (!event.addressAndPhone?.trim()) errors.push("Address & Phone is required.")
+    
+    // ✅ Venue Logo OR Venue Text (at least one required)
+    if (!event.venueLogo && !event.venueText?.trim()) {
+      errors.push("Venue logo or venue text is required.")
+    }
 
     // ✅ DJs / Artists (at least 1 name required)
     if (djs.length === 0 || !djs.some((dj) => dj.name.trim())) {

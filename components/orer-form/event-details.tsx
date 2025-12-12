@@ -37,24 +37,51 @@ const EventDetails = observer(() => {
     const { flyerFormStore } = useStore()
     const inputRef = useRef<HTMLInputElement>(null)
     const [open, setOpen] = useState(false)
-    const [fileName, setFileName] = useState<string | null>(null)
+
+    // Venue Logo System State
+    const [venueLogo, setVenueLogo] = useState<File | null>(null)
+    const [venueLogoPreview, setVenueLogoPreview] = useState<string | null>(null)
+    const [showVenueText, setShowVenueText] = useState(false)
 
     const { eventDetails } = flyerFormStore.flyerFormDetail
 
-    // Handle file upload
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle Venue Logo upload
+    const handleVenueLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            setFileName(file.name)
+            setVenueLogo(file)
+            setShowVenueText(false)
+
+            const reader = new FileReader()
+            reader.onload = () => {
+                setVenueLogoPreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+
             flyerFormStore.updateEventDetails("venueLogo", file)
         }
     }
 
+    // Remove Venue Logo
+    const handleRemoveVenueLogo = () => {
+        setVenueLogo(null)
+        setVenueLogoPreview(null)
+        flyerFormStore.updateEventDetails("venueLogo", null)
+    }
+
+    // Toggle to text field if no logo
+    const handleNoLogoClick = () => {
+        setShowVenueText(true)
+        setVenueLogo(null)
+        setVenueLogoPreview(null)
+        flyerFormStore.updateEventDetails("venueLogo", null)
+    }
+
 
     useEffect(() => {
-      console.log(toJS(flyerFormStore.flyerFormDetail))
+        console.log(toJS(flyerFormStore.flyerFormDetail))
     }, [toJS(flyerFormStore.flyerFormDetail)])
-    
+
 
 
     return (
@@ -210,54 +237,81 @@ const EventDetails = observer(() => {
                     />
                 </div>
 
-                {/* Venue Logo Upload */}
-                <div className="col-span-1">
+                {/* Venue Logo (Universal System) */}
+                <div className="col-span-2">
                     <Label htmlFor="logo" className="text-sm mb-2 block font-semibold">
-                        {flyerFormStore.flyer?.hasPhotos ? 'Venue Logo' : 'Venue Text *'}
+                        Venue Logo (Attachment)
                     </Label>
-                    {flyerFormStore.flyer?.hasPhotos ? <div className="flex flex-col gap-2">
-                        <input
-                            id="logo"
-                            ref={inputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="lg"
-                            className="flex items-center gap-2 border-primary text-primary hover:!bg-gray-950 hover:text-primary"
-                            onClick={() => inputRef.current?.click()}
-                        >
-                            <Upload className="h-4 w-4" />
-                            Upload File
-                        </Button>
-                        {fileName && (
-                            <p className="text-sm text-muted-foreground truncate max-w-xs">
-                                {fileName}
-                            </p>
-                        )}
-                    </div>
-                        :
-                        <div className="flex flex-col gap-2">
+                    
+                    {!showVenueText ? (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-4">
+                                <label htmlFor="venue-logo-upload" className="cursor-pointer">
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary rounded-lg hover:bg-primary/20 transition-all">
+                                        <Upload className="w-4 h-4 text-primary" />
+                                        <span className="text-sm font-semibold text-primary">Upload Logo</span>
+                                    </div>
+                                    <input
+                                        id="venue-logo-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleVenueLogoUpload}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+
+                            {venueLogoPreview && (
+                                <div className="flex items-center gap-3 bg-gray-950 border border-gray-800 rounded-lg p-3 shadow-md">
+                                    <img
+                                        src={venueLogoPreview}
+                                        alt="Venue Logo"
+                                        className="w-16 h-16 rounded-lg object-cover border-2 border-primary"
+                                    />
+                                    <span className="text-sm text-gray-300 flex-1">
+                                        {venueLogo?.name || "Logo uploaded"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveVenueLogo}
+                                        className="text-primary text-xs hover:underline font-semibold"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={handleNoLogoClick}
+                                className="text-sm text-primary hover:underline font-medium"
+                            >
+                                Don't have a logo?
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <Label className="text-sm font-semibold text-gray-400">Venue Name (Text)</Label>
                             <Input
-                                id="venue"
                                 value={eventDetails.venueText}
                                 onChange={(e) =>
                                     flyerFormStore.updateEventDetails("venueText", e.target.value)
                                 }
-                                required
-                                placeholder="Enter address & phone number..."
-                                className="bg-gray-950 border border-gray-800 text-white
-              placeholder:text-gray-600 rounded-lg h-10 shadow-md
-              focus-visible:!ring-0 focus-visible:!outline-none
-              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-              transition-all duration-300"
+                                placeholder="Enter venue name..."
+                                className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 rounded-lg h-10 shadow-md
+                                    focus-visible:!ring-0 focus-visible:!outline-none
+                                    focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+                                    transition-all duration-300"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowVenueText(false)}
+                                className="text-sm text-primary hover:underline font-medium"
+                            >
+                                Upload logo instead
+                            </button>
                         </div>
-                    }
+                    )}
                 </div>
             </div>
         </div>

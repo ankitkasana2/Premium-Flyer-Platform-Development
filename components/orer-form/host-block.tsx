@@ -52,85 +52,77 @@ const HostSection = observer(() => {
     <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
       <h2 className="text-xl font-bold">Host *</h2>
 
-      <div className="grid grid-cols-2 gap-6 mb-4">
-        {flyerFormStore.flyer?.hasPhotos ? <div className="col-span-2">
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Music className="w-4 h-4 text-theme text-sm" />
-              Main Host
-            </Label>
+      {(flyerFormStore.flyer?.form_type === "With Photo" || flyerFormStore.flyer?.hasPhotos) ? (
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Music className="w-4 h-4 text-primary" />
+            Main Host
+          </Label>
 
-            <div className="flex items-center gap-4">
-              {/* Upload Button */}
-              <label htmlFor="host-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 text-primary">
-                  <span className="text-sm font-semibold">Upload Image</span>
-                  <Upload className="w-4 h-4" />
-                </div>
-                <input
-                  id="host-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUploadHost}
-                  className="hidden"
-                />
-              </label>
+          {/* Input field with upload button on RIGHT side */}
+          <div className="relative">
+            <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+              {/* Name input - takes full width */}
+              <Input
+                value={host?.name || ""}
+                onChange={handleHostNameChange}
+                placeholder="Enter host name..."
+                className="bg-transparent border-none text-white placeholder:text-gray-600 
+                  focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3 pointer-events-auto"
+              />
+
+              {/* Image preview on RIGHT (if uploaded) */}
+              {(hostPreview || host?.image) && (
+                <>
+                  <div className="flex-shrink-0">
+                    <img
+                      src={hostPreview || (host?.image ? URL.createObjectURL(host.image) : "")}
+                      alt="Host"
+                      className="w-8 h-8 rounded object-cover border border-primary"
+                    />
+                  </div>
+
+                  {/* Remove image button */}
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
+
+              {/* Upload button on RIGHT (only show if NO image) */}
+              {!hostPreview && !host?.image && (
+                <label htmlFor="host-upload" className="cursor-pointer flex-shrink-0 pointer-events-auto">
+                  <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                    <Upload className="w-4 h-4 text-primary" />
+                  </div>
+                  <input
+                    id="host-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUploadHost}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
           </div>
-
-          <div
-            className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-            hover:!ring-0 hover:!outline-none hover:!border-primary
-            hover:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-            transition-all duration-300"
-          >
-            {(hostPreview || host?.image) && (
-              <>
-                <img
-                  src={
-                    hostPreview ||
-                    (host?.image ? URL.createObjectURL(host.image) : "")
-                  }
-                  alt="Host"
-                  className="w-8 h-8 rounded-full object-fill border-2 border-primary"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="text-primary text-xs hover:underline"
-                >
-                  Remove Image
-                </button>
-              </>
-            )}
-
-            <Input
-              value={host?.name || ""}
-              onChange={handleHostNameChange}
-              placeholder="Enter host name..."
-              className="bg-transparent border-none text-white placeholder:text-gray-600 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-            />
-
-            <span className="text-gray-500 text-sm whitespace-nowrap">
-              {host?.image ? "Image uploaded" : "No file chosen"}
-            </span>
-          </div>
         </div>
-          :
-          <div className="col-span-2">
-            <Input
-              value={host?.name || ""}
-              onChange={handleHostNameChange}
-              placeholder="Enter host name..."
-              className="bg-gray-950 border border-gray-800 text-white
-              placeholder:text-gray-600 rounded-lg h-10 shadow-md
-              focus-visible:!ring-0 focus-visible:!outline-none
-              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
-              transition-all duration-300"
-            />
-          </div>
-        }
-      </div>
+      ) : (
+        <Input
+          value={host?.name || ""}
+          onChange={handleHostNameChange}
+          placeholder="Enter host name..."
+          className="bg-gray-950 border border-gray-800 text-white
+            placeholder:text-gray-600 rounded-lg h-10 shadow-md
+            focus-visible:!ring-0 focus-visible:!outline-none
+            focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+            transition-all duration-300"
+        />
+      )}
     </div>
   );
 });

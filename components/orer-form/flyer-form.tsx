@@ -28,6 +28,11 @@ import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
 import HostSection from "./host-block";
 import EventDetails from "./event-details";
+import { FlyerRibbon } from "./flyer-ribbon";
+import BirthdayForm from "./birthday-form";
+import NoPhotoForm from "./no-photo-form";
+import Photo10Form from "./photo-10-form";
+import Photo15Form from "./photo-15-form";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner"
 import { useSearchParams, useParams } from "next/navigation";
@@ -77,6 +82,7 @@ type Flyer = {
   price: number;
   priceType: "basic" | "regular" | "premium";
   hasPhotos: boolean;
+  form_type?: string; // "With Photo" | "No Photo" | "Birthday"
   imageUrl: string;
   image_url?: string;
   category_id?: string;
@@ -288,7 +294,8 @@ const EventBookingForm = () => {
 
 
     // 3️⃣ Update local UI preview (if you’re using local state for preview)
-    if (flyer?.hasPhotos == true) {
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
+    if (isPhotoForm) {
       setDjList((prev) => {
         const newList = [...prev];
         newList[index].name = e.target.value; // base64 preview
@@ -335,22 +342,32 @@ const EventBookingForm = () => {
     });
   }
 
-  // ✅ Add new DJ field
+  // ✅ Add new DJ field (max 4)
   const handleAddField = () => {
-    flyerFormStore.addDJ()
-    if (flyer?.hasPhotos == true) {
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
+
+    if (isPhotoForm) {
+      if (djList.length >= 4) {
+        toast.error("Maximum 4 DJs allowed");
+        return;
+      }
+      flyerFormStore.addDJ()
       setDjList(prev => [...prev, { name: "", image: null }])
     } else {
+      if (djListText.length >= 4) {
+        toast.error("Maximum 4 DJs allowed");
+        return;
+      }
+      flyerFormStore.addDJ()
       setDjListText(prev => [...prev, { name: '' }])
     }
-
-
   }
 
   const handleRemoveField = (index: number) => {
     flyerFormStore.removeDJ(index);
+    const isPhotoForm = flyer?.form_type === "With Photo" || flyer?.hasPhotos;
 
-    if (flyer?.hasPhotos === true) {
+    if (isPhotoForm) {
       setDjList(prev => prev.filter((_, i) => i !== index));
     } else {
       setDjListText(prev => prev.filter((_, i) => i !== index));
@@ -362,6 +379,54 @@ const EventBookingForm = () => {
     // whenever store.flyer changes, update local state
     setFlyer(flyerFormStore.flyer ?? undefined);
   }, [flyerFormStore.flyer]);
+
+  // Detect if this is a Birthday category flyer
+  const isBirthdayCategory =
+    flyer?.category === 'Birthday' ||
+    (Array.isArray((flyer as any)?.categories) && (flyer as any).categories.includes('Birthday')) ||
+    categoryFromQuery === 'Birthday';
+
+  // If Birthday category, render Birthday form instead
+  if (isBirthdayCategory) {
+    return <BirthdayForm flyer={flyer} />;
+  }
+
+  // Detect form type based on price and category
+  const flyerPrice = flyer?.price || priceFromQuery || 0;
+  const flyerCategory = flyer?.category || categoryFromQuery || "";
+
+  // Check if it's a No-Photo form ($10, $15, or $40 No-Photo)
+  const isNoPhotoForm =
+    flyerCategory.toLowerCase().includes("no-photo") ||
+    flyerCategory.toLowerCase().includes("no photo") ||
+    flyerCategory.toLowerCase().includes("nophoto");
+
+  // Check if it's a With Photo form
+  const isWithPhotoForm =
+    flyerCategory.toLowerCase().includes("with photo") ||
+    flyerCategory.toLowerCase().includes("photo") ||
+    (flyer as any)?.hasPhotos === true;
+
+  // Route to No-Photo forms
+  if (isNoPhotoForm) {
+    if (flyerPrice === 10) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={10} />;
+    } else if (flyerPrice === 15) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={15} />;
+    } else if (flyerPrice === 40 || flyerPrice >= 40) {
+      return <NoPhotoForm flyer={flyer} fixedPrice={40} />;
+    }
+  }
+
+  // Route to $10 With Photo form (partial photo support)
+  if (isWithPhotoForm && flyerPrice === 10) {
+    return <Photo10Form flyer={flyer} />;
+  }
+
+  // Route to $15 With Photo form (full photo support)
+  if (isWithPhotoForm && flyerPrice === 15) {
+    return <Photo15Form flyer={flyer} />;
+  }
 
 
   // submit function 
@@ -878,12 +943,14 @@ const EventBookingForm = () => {
                 </div>
               </div>
 
-              <div className="aspect-[4/5]  rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
+              <div className="aspect-[4/5] relative rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-primary hover:scale-[1.02]">
                 <img
                   src={flyerImage}
                   alt={flyerName || "Event promotional image"}
                   className="w-full h-full object-cover"
                 />
+                {/* Dynamic Ribbon */}
+                <FlyerRibbon flyer={flyer} />
               </div>
 
 
@@ -897,152 +964,153 @@ const EventBookingForm = () => {
           {/* Event Details Section */}
           <EventDetails />
 
-          {/* Additional Information Section */}
-          <div
-            className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
-        rounded-2xl border border-gray-800"
-          >
-            <h2 className="text-xl font-bold">DJ or Artist</h2>
+          {/* Split Layout: DJ/Artist (Left) + Host (Right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* DJ or Artist Section - LEFT SIDE */}
+            <div
+              className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 
+          rounded-2xl border border-gray-800"
+            >
+              <h2 className="text-xl font-bold">DJ or Artist</h2>
 
-            {flyer?.hasPhotos == true ? djList.map((dj, index) => (
-              <div key={index} className="grid grid-cols-2 gap-6 mb-4">
-                <div className="col-span-2">
-                  <div className="flex items-center justify-between mb-2">
+              {(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.map((dj, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold flex items-center gap-2">
-                      <Music className="w-4 h-4 text-theme text-sm" />
-                      Main DJ or Artist {index + 1}
+                      <Music className="w-4 h-4 text-primary" />
+                      DJ/Artist {index + 1}
                     </Label>
 
-                    <div className="flex items-center gap-4">
-                      {/* Upload */}
-                      <label htmlFor={`dj-upload-${index}`} className="cursor-pointer">
-                        <div className="flex items-center gap-2 text-primary">
-                          <span className="text-sm font-semibold">Upload Image</span>
-                          <Upload className="w-4 h-4" />
-                        </div>
-                        <input
-                          id={`dj-upload-${index}`}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, index)}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {/* Remove Field Button */}
+                    {djList.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveField(index)}
                         className="text-primary cursor-pointer text-xs hover:underline"
                       >
-                        Remove Field
+                        Remove
                       </button>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-                hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
-                transition-all duration-300"
-                  >
-                    {dj.image && (
-                      <>
-                        <img
-                          src={dj.image}
-                          alt="DJ"
-                          className="w-8 h-8 rounded-full object-fill border-2 border-primary"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(index)}
-                          className="text-primary text-xs hover:underline"
-                        >
-                          Remove Image
-                        </button>
-                      </>
                     )}
-
-                    <Input
-                      value={dj.name}
-                      onChange={(e) => handleNameChange(e, index)}
-                      placeholder="Enter DJ name..."
-                      className="bg-transparent border-none text-white placeholder:text-gray-600 
-                  focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                    />
-
-                    <span className="text-gray-500 text-sm whitespace-nowrap">
-                      {dj.image ? "Image uploaded" : "No file chosen"}
-                    </span>
                   </div>
-                </div>
-              </div>
-            ))
-              :
-              djListText.map((dj, index) => (
-                <div key={index} className="grid grid-cols-2 gap-6 mb-4">
-                  <div className="col-span-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm font-semibold flex items-center gap-2">
-                        <Music className="w-4 h-4 text-theme text-sm" />
-                        Main DJ or Artist * {index + 1}
-                      </Label>
 
-                      {/* Remove Field Button (same as photo version) */}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveField(index)}
-                        className="text-primary cursor-pointer text-xs hover:underline"
-                      >
-                        Remove Field
-                      </button>
-                    </div>
-
-                    <div
-                      className="flex items-center gap-3 bg-gray-950 border rounded-lg p-3 h-10 shadow-md
-        hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)]
-        transition-all duration-300"
-                    >
+                  {/* Input field with upload button on RIGHT side */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+                      {/* Name input - takes full width */}
                       <Input
                         value={dj.name}
                         onChange={(e) => handleNameChange(e, index)}
                         placeholder="Enter DJ name..."
                         className="bg-transparent border-none text-white placeholder:text-gray-600 
-          focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                          focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3 pointer-events-auto"
                       />
+
+                      {/* Image preview on RIGHT (if uploaded) */}
+                      {dj.image && (
+                        <>
+                          <div className="flex-shrink-0">
+                            <img
+                              src={dj.image}
+                              alt="DJ"
+                              className="w-8 h-8 rounded object-cover border border-primary"
+                            />
+                          </div>
+
+                          {/* Remove image button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
+
+                      {/* Upload button on RIGHT (only show if NO image) */}
+                      {!dj.image && (
+                        <label htmlFor={`dj-upload-${index}`} className="cursor-pointer flex-shrink-0 pointer-events-auto">
+                          <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                            <Upload className="w-4 h-4 text-primary" />
+                          </div>
+                          <input
+                            id={`dj-upload-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, index)}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
               ))
-            }
+                :
+                djListText.map((dj, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <Music className="w-4 h-4 text-primary" />
+                        DJ/Artist {index + 1}
+                      </Label>
 
-            <Button
-              type="button"
-              onClick={handleAddField}
-              className="mt-2 bg-primary hover:cursor-pointer"
-            >
-              Add More
-            </Button>
+                      {/* Remove Field Button */}
+                      {djListText.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveField(index)}
+                          className="text-primary cursor-pointer text-xs hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <Input
+                      value={dj.name}
+                      onChange={(e) => handleNameChange(e, index)}
+                      placeholder="Enter DJ name..."
+                      className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600 
+                        rounded-lg h-10 shadow-md
+                        focus-visible:!ring-0 focus-visible:!outline-none
+                        focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
+                        transition-all duration-300"
+                    />
+                  </div>
+                ))
+              }
+
+              <Button
+                type="button"
+                onClick={handleAddField}
+                disabled={(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.length >= 4 : djListText.length >= 4}
+                className="mt-2 bg-primary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full"
+              >
+                Add More ({(flyer?.form_type === "With Photo" || flyer?.hasPhotos) ? djList.length : djListText.length}/4)
+              </Button>
+            </div>
+
+            {/* Host Section - RIGHT SIDE */}
+            <HostSection />
           </div>
-
-          {/* Host Information Section */}
-          <HostSection />
 
           {/* sponser Section */}
           <SponsorsBlock />
 
-          {/* Extras Section */}
-          <ExtrasBlock />
+          {/* Split Layout: Delivery Time (Left) + Extras (Right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DeliveryTimeBlock />
+            <ExtrasBlock />
+          </div>
 
-          {/* Delivery Time Section */}
-          <DeliveryTimeBlock />
-
-          {/* Note Section */}
+          {/* Note for the Designer */}
           <div className="space-y-2">
+            <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
             <Textarea
               value={note}
               rows={3}
               onChange={(e) => (setNote(e.target.value), flyerFormStore.updateCustomNote(e.target.value))}
-              placeholder="Custom note..."
+              placeholder="Add any special instructions for the designer..."
               className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
@@ -1050,6 +1118,14 @@ const EventBookingForm = () => {
              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
              transition-all duration-300"
             />
+          </div>
+
+          {/* Similar Flyers - Moved from bottom */}
+          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+            <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+            <div className="">
+              <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
+            </div>
           </div>
 
           {/* Submit Section */}
@@ -1229,14 +1305,6 @@ const EventBookingForm = () => {
             </div>
           </div>
         </form>
-      </div>
-      {/* Similar Flyers */}
-      <div className="space-y-4 p-4  rounded-2xl mt-10">
-        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-
-        <div className="">
-          <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-        </div>
       </div>
     </div>
   );
