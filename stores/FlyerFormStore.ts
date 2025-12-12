@@ -53,11 +53,16 @@ export type FlyerFormDetails = {
     instagramPostSize: boolean
   }
 
+
   deliveryTime: string
 
   customNote?: string
 
   subtotal?: number
+
+  // Birthday-specific fields
+  birthdayPersonPhoto?: File | null
+  isBirthdayForm?: boolean
 }
 
 export class FlyerFormStore {

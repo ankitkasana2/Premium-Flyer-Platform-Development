@@ -28,6 +28,7 @@ import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
 import HostSection from "./host-block";
 import EventDetails from "./event-details";
+import BirthdayForm from "./birthday-form";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner"
 import { useSearchParams, useParams } from "next/navigation";
@@ -362,6 +363,17 @@ const EventBookingForm = () => {
     // whenever store.flyer changes, update local state
     setFlyer(flyerFormStore.flyer ?? undefined);
   }, [flyerFormStore.flyer]);
+
+  // Detect if this is a Birthday category flyer
+  const isBirthdayCategory =
+    flyer?.category === 'Birthday' ||
+    (Array.isArray((flyer as any)?.categories) && (flyer as any).categories.includes('Birthday')) ||
+    categoryFromQuery === 'Birthday';
+
+  // If Birthday category, render Birthday form instead
+  if (isBirthdayCategory) {
+    return <BirthdayForm flyer={flyer} />;
+  }
 
 
   // submit function 
@@ -1030,19 +1042,20 @@ const EventBookingForm = () => {
           {/* sponser Section */}
           <SponsorsBlock />
 
-          {/* Extras Section */}
-          <ExtrasBlock />
+          {/* Split Layout: Delivery Time (Left) + Extras (Right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DeliveryTimeBlock />
+            <ExtrasBlock />
+          </div>
 
-          {/* Delivery Time Section */}
-          <DeliveryTimeBlock />
-
-          {/* Note Section */}
+          {/* Note for the Designer */}
           <div className="space-y-2">
+            <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
             <Textarea
               value={note}
               rows={3}
               onChange={(e) => (setNote(e.target.value), flyerFormStore.updateCustomNote(e.target.value))}
-              placeholder="Custom note..."
+              placeholder="Add any special instructions for the designer..."
               className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
@@ -1050,6 +1063,14 @@ const EventBookingForm = () => {
              focus-visible:!shadow-[0_0_15px_rgba(185,32,37,0.8)]
              transition-all duration-300"
             />
+          </div>
+
+          {/* Similar Flyers - Moved from bottom */}
+          <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+            <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+            <div className="">
+              <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
+            </div>
           </div>
 
           {/* Submit Section */}
@@ -1229,14 +1250,6 @@ const EventBookingForm = () => {
             </div>
           </div>
         </form>
-      </div>
-      {/* Similar Flyers */}
-      <div className="space-y-4 p-4  rounded-2xl mt-10">
-        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-
-        <div className="">
-          <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-        </div>
       </div>
     </div>
   );
