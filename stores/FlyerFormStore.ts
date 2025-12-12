@@ -185,6 +185,9 @@ async fetchFlyer(id: string) {
       // FIX CATEGORY
       this.flyerFormDetail.categoryId =
         data.categories?.[0] ?? this.flyerFormDetail.categoryId;
+
+      // Fetch similar flyers
+      this.fetchSimilarFlyers();
     });
   } catch (err) {
     console.error("Failed to load flyer:", err);
@@ -211,7 +214,7 @@ async fetchFlyer(id: string) {
       const allFlyers = await response.json();
 
       // Filter flyers that share at least one category with the current flyer
-      this.similarFlyers = allFlyers.filter((f: any) => {
+      const filteredFlyers = allFlyers.filter((f: any) => {
         const fCategories = Array.isArray(f.categories) 
           ? f.categories 
           : [f.category];
@@ -222,6 +225,14 @@ async fetchFlyer(id: string) {
         );
         
         return hasCommonCategory && f.id !== flyer.id;
+      });
+
+      runInAction(() => {
+        this.similarFlyers = filteredFlyers.map((f: any) => ({
+          ...f,
+          name: f.title, // Map title to name for UI
+          price: typeof f.price === 'string' ? Number(f.price.replace(/[^0-9.]/g, "")) : f.price
+        }));
       });
 
       console.log("Similar flyers found:", this.similarFlyers.length);
