@@ -382,13 +382,7 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
                         />
                     </div>
 
-                    {/* Similar Flyers */}
-                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-                        <div className="">
-                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-                        </div>
-                    </div>
+
 
                     {/* Submit Section */}
                     <div className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
@@ -431,6 +425,14 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
                             <span className="text-primary font-bold text-lg">
                                 {formatCurrency(flyerFormStore.subtotal > 0 ? flyerFormStore.subtotal : FIXED_PRICE)}
                             </span>
+                        </div>
+                    </div>
+
+                    {/* Similar Flyers */}
+                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+                        <div className="">
+                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
                         </div>
                     </div>
                 </form>
