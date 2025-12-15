@@ -147,9 +147,11 @@ const mapToApiRequest = (
       }))
       : [],
 
-    host: {
-      name: data?.host?.name || ""
-    },
+    host: Array.isArray(data?.host)
+      ? data.host.map((h) => ({
+        name: h.name || ""
+      }))
+      : [],
 
     sponsors: [
       normalizeSponsor(sponsors.sponsor1),
@@ -707,10 +709,10 @@ const EventBookingForm = () => {
       formData.append('email', authStore.user.email || authStore.user.name || 'unknown@example.com');
 
       // Add files if they exist
-      if (image && typeof image === 'object' && 'name' in image && 'size' in image) {
-        console.log('🖼️ Adding image file:', image.name);
-        formData.append('image', image as File);
-      }
+      // Add files if they exist
+      // Note: 'image' variable is a string/URL from searchParams, not a File object.
+      // If there's a file upload for the main flyer, it should be in the store.
+      // Removing dead code block.
 
       // Add venue logo if it exists
       if (flyerFormStore.flyerFormDetail.eventDetails.venueLogo) {
@@ -733,14 +735,22 @@ const EventBookingForm = () => {
         }
       });
 
-      // Add host image
-      if (flyerFormStore.flyerFormDetail.host?.image &&
-        typeof flyerFormStore.flyerFormDetail.host.image === 'object' &&
-        flyerFormStore.flyerFormDetail.host.image !== null &&
-        'name' in flyerFormStore.flyerFormDetail.host.image &&
-        'size' in flyerFormStore.flyerFormDetail.host.image) {
-        console.log('🎤 Adding host image:', flyerFormStore.flyerFormDetail.host.image.name);
-        formData.append('host', flyerFormStore.flyerFormDetail.host.image as File);
+      // Add host images
+      if (Array.isArray(flyerFormStore.flyerFormDetail.host)) {
+        flyerFormStore.flyerFormDetail.host.forEach((h, index) => {
+          if (h.image &&
+            typeof h.image === 'object' &&
+            h.image !== null &&
+            'name' in h.image &&
+            'size' in h.image) {
+            console.log(`🎤 Adding host ${index} image:`, h.image.name);
+            if (index === 0) {
+              formData.append('host', h.image as File);
+            } else {
+              formData.append(`host_${index}`, h.image as File);
+            }
+          }
+        });
       }
 
       // Add sponsor images
@@ -842,10 +852,10 @@ const EventBookingForm = () => {
         (flyer as any)?.category_id ??
         flyer?.category ??
         flyerFormStore.flyerFormDetail.categoryId,
-      totalPrice: totalDisplay,
-      subtotal: totalDisplay,
+      totalPrice: String(totalDisplay),
+      subtotal: String(totalDisplay),
       deliveryTime: "1 Hour",
-      image_url: image || ""
+      imageUrl: image || ""
     });
 
     // Set the actual user ID

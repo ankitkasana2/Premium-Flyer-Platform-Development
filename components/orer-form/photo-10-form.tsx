@@ -109,19 +109,31 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
         });
     };
 
+    // Ensure store has enough hosts for this form (2 hosts)
+    useEffect(() => {
+        if (!flyerFormStore.flyerFormDetail.host) {
+            flyerFormStore.addHost(); // 1st
+            flyerFormStore.addHost(); // 2nd
+        } else {
+            while (flyerFormStore.flyerFormDetail.host.length < 2) {
+                flyerFormStore.addHost();
+            }
+        }
+    }, [flyerFormStore]);
+
     // Handle Host name change
     const handleHostNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Handle Host photo upload (only for Host 1)
     const handleHostPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const file = e.target.files?.[0];
         if (file && hostList[index].hasPhoto) {
-            flyerFormStore.updateHost("image", file);
+            flyerFormStore.updateHost(index, "image", file);
 
             const reader = new FileReader();
             reader.onload = () => {
@@ -137,7 +149,7 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
 
     // Remove Host photo
     const handleRemoveHostPhoto = (index: number) => {
-        flyerFormStore.updateHost("image", null);
+        flyerFormStore.updateHost(index, "image", null);
         setHostList((prev) => {
             const newList = [...prev];
             newList[index].image = null;
@@ -164,10 +176,10 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
         const cartFormData = createCartFormData(flyerFormStore.flyerFormDetail, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: FIXED_PRICE,
-            subtotal: FIXED_PRICE,
+            totalPrice: String(FIXED_PRICE),
+            subtotal: String(FIXED_PRICE),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);

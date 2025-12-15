@@ -10,7 +10,7 @@ import { Upload, Music, Check, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
 import { toast } from "sonner";
-import SponsorsBlock from "./sponser";
+
 import ExtrasBlock from "./extra-block";
 import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
@@ -67,6 +67,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
         const file = e.target.files?.[0];
         if (file) {
             setBirthdayPersonPhoto(file);
+            flyerFormStore.updateEventDetails("venueLogo", file);
 
             const reader = new FileReader();
             reader.onload = () => {
@@ -80,6 +81,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const handleRemoveBirthdayPhoto = () => {
         setBirthdayPersonPhoto(null);
         setBirthdayPhotoPreview(null);
+        flyerFormStore.updateEventDetails("venueLogo", null);
     };
 
     // Handle DJ name change
@@ -113,13 +115,14 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Add Host field (max 2)
     const handleAddHost = () => {
         if (hostList.length < 2) {
             setHostList([...hostList, { name: "" }]);
+            flyerFormStore.addHost();
         } else {
             toast.error("Maximum 2 hosts allowed for Birthday forms");
         }
@@ -129,6 +132,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const handleRemoveHost = (index: number) => {
         if (hostList.length > 1) {
             setHostList(hostList.filter((_, i) => i !== index));
+            flyerFormStore.removeHost(index);
         }
     };
 
@@ -178,10 +182,10 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
         const cartFormData = createCartFormData(formDetailForCart, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: FIXED_BIRTHDAY_PRICE,
-            subtotal: FIXED_BIRTHDAY_PRICE,
+            totalPrice: String(FIXED_BIRTHDAY_PRICE),
+            subtotal: String(FIXED_BIRTHDAY_PRICE),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
@@ -377,9 +381,6 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
                             )}
                         </div>
                     </div>
-
-                    {/* Sponsors Section */}
-                    <SponsorsBlock />
 
                     {/* Split Layout: Delivery Time (Left) + Extras (Right) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -127,13 +127,14 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Add Host field (max 2)
     const handleAddHost = () => {
         if (hostList.length < 2) {
             setHostList([...hostList, { name: "" }]);
+            flyerFormStore.addHost();
         } else {
             toast.error("Maximum 2 hosts allowed");
         }
@@ -143,6 +144,7 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
     const handleRemoveHost = (index: number) => {
         if (hostList.length > 1) {
             setHostList(hostList.filter((_, i) => i !== index));
+            flyerFormStore.removeHost(index);
         }
     };
 
@@ -193,10 +195,10 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
         const cartFormData = createCartFormData(formDetailForCart, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: fixedPrice,
-            subtotal: fixedPrice,
+            totalPrice: String(fixedPrice),
+            subtotal: String(fixedPrice),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
