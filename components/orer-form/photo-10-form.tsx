@@ -72,6 +72,7 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
 
     const [note, setNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showAllDJs, setShowAllDJs] = useState(false); // Control visibility of DJ 3 & 4
 
     // Handle DJ name change
     const handleDjNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -255,58 +256,88 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* DJ/Artist Section - 2 WITH PHOTO + 2 TEXT ONLY */}
                         <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                            <h2 className="text-xl font-bold">DJ or Artist</h2>
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold">DJ or Artist</h2>
+                                <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md font-semibold">
+                                    $10 Form
+                                </span>
+                            </div>
                             <p className="text-xs text-gray-400">First 2 with photo, Last 2 text-only</p>
 
-                            {djList.map((dj, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
+                            {djList.map((dj, index) => {
+                                // Show DJ 1 & 2 always, DJ 3 & 4 only if showAllDJs is true
+                                if (index >= 2 && !showAllDJs) return null;
+
+                                return (
+                                    <div key={index} className="space-y-2">
                                         <Label className="text-sm font-semibold flex items-center gap-2">
                                             <Music className="w-4 h-4 text-primary" />
                                             DJ/Artist {index + 1} {dj.hasPhoto && "(With Photo)"}
                                         </Label>
-                                        {dj.hasPhoto && (
-                                            <label htmlFor={`dj-upload-${index}`} className="cursor-pointer">
-                                                <div className="flex items-center gap-2 text-primary">
-                                                    <span className="text-xs font-semibold">Upload</span>
-                                                    <Upload className="w-3 h-3" />
-                                                </div>
-                                                <input
-                                                    id={`dj-upload-${index}`}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => handleDjPhotoUpload(e, index)}
-                                                    className="hidden"
+
+                                        {/* Input field with inline upload button and preview */}
+                                        <div className="relative">
+                                            <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+                                                {/* Name input - takes full width */}
+                                                <Input
+                                                    value={dj.name}
+                                                    onChange={(e) => handleDjNameChange(e, index)}
+                                                    placeholder="Enter DJ name..."
+                                                    className="bg-transparent border-none text-white placeholder:text-gray-600 
+                                                      focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
                                                 />
-                                            </label>
-                                        )}
-                                    </div>
 
-                                    {dj.hasPhoto && dj.image && (
-                                        <div className="flex items-center gap-3 bg-gray-950 border rounded-lg p-2">
-                                            <img
-                                                src={dj.image}
-                                                alt="DJ"
-                                                className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveDjPhoto(index)}
-                                                className="text-primary text-xs hover:underline"
-                                            >
-                                                Remove
-                                            </button>
+                                                {/* Image preview (if uploaded) */}
+                                                {dj.hasPhoto && dj.image && (
+                                                    <>
+                                                        <div className="flex-shrink-0">
+                                                            <img
+                                                                src={dj.image}
+                                                                alt="DJ"
+                                                                className="w-8 h-8 rounded object-cover border border-primary"
+                                                            />
+                                                        </div>
+
+                                                        {/* Remove image button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveDjPhoto(index)}
+                                                            className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </>
+                                                )}
+
+                                                {/* Upload button (only show if hasPhoto and NO image) */}
+                                                {dj.hasPhoto && !dj.image && (
+                                                    <label htmlFor={`dj-upload-${index}`} className="cursor-pointer flex-shrink-0">
+                                                        <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                                                            <Upload className="w-4 h-4 text-primary" />
+                                                        </div>
+                                                        <input
+                                                            id={`dj-upload-${index}`}
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleDjPhotoUpload(e, index)}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
+                                );
+                            })}
 
-                                    <Input
-                                        value={dj.name}
-                                        onChange={(e) => handleDjNameChange(e, index)}
-                                        placeholder="Enter DJ name..."
-                                        className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600"
-                                    />
-                                </div>
-                            ))}
+                            {/* Add More / Show Less Button */}
+                            <Button
+                                type="button"
+                                onClick={() => setShowAllDJs(!showAllDJs)}
+                                className="mt-2 bg-primary hover:bg-red-550 hover:cursor-pointer w-full"
+                            >
+                                {showAllDJs ? `Show Less (${djList.length}/4)` : `Add More (2/4)`}
+                            </Button>
                         </div>
 
                         {/* Host Section - 1 WITH PHOTO + 1 TEXT ONLY */}
@@ -316,50 +347,61 @@ const Photo10Form: React.FC<Photo10FormProps> = ({ flyer }) => {
 
                             {hostList.map((host, index) => (
                                 <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-semibold">
-                                            Host {index + 1} {host.hasPhoto && "(With Photo)"}
-                                        </Label>
-                                        {host.hasPhoto && (
-                                            <label htmlFor={`host-upload-${index}`} className="cursor-pointer">
-                                                <div className="flex items-center gap-2 text-primary">
-                                                    <span className="text-xs font-semibold">Upload</span>
-                                                    <Upload className="w-3 h-3" />
-                                                </div>
-                                                <input
-                                                    id={`host-upload-${index}`}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => handleHostPhotoUpload(e, index)}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                        )}
-                                    </div>
+                                    <Label className="text-sm font-semibold">
+                                        Host {index + 1} {host.hasPhoto && "(With Photo)"}
+                                    </Label>
 
-                                    {host.hasPhoto && host.image && (
-                                        <div className="flex items-center gap-3 bg-gray-950 border rounded-lg p-2">
-                                            <img
-                                                src={host.image}
-                                                alt="Host"
-                                                className="w-12 h-12 rounded-lg object-cover border-2 border-primary"
+                                    {/* Input field with inline upload button and preview */}
+                                    <div className="relative">
+                                        <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-lg shadow-md hover:border-primary hover:shadow-[0_0_15px_rgba(185,32,37,0.8)] transition-all duration-300 pr-3">
+                                            {/* Name input - takes full width */}
+                                            <Input
+                                                value={host.name}
+                                                onChange={(e) => handleHostNameChange(e, index)}
+                                                placeholder="Enter host name..."
+                                                className="bg-transparent border-none text-white placeholder:text-gray-600 
+                                                  focus-visible:ring-0 focus-visible:ring-offset-0 h-10 flex-1 pl-3"
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveHostPhoto(index)}
-                                                className="text-primary text-xs hover:underline"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    )}
 
-                                    <Input
-                                        value={host.name}
-                                        onChange={(e) => handleHostNameChange(e, index)}
-                                        placeholder="Enter host name..."
-                                        className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600"
-                                    />
+                                            {/* Image preview (if uploaded) */}
+                                            {host.hasPhoto && host.image && (
+                                                <>
+                                                    <div className="flex-shrink-0">
+                                                        <img
+                                                            src={host.image}
+                                                            alt="Host"
+                                                            className="w-8 h-8 rounded object-cover border border-primary"
+                                                        />
+                                                    </div>
+
+                                                    {/* Remove image button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveHostPhoto(index)}
+                                                        className="text-primary text-xs hover:underline font-semibold flex-shrink-0"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* Upload button (only show if hasPhoto and NO image) */}
+                                            {host.hasPhoto && !host.image && (
+                                                <label htmlFor={`host-upload-${index}`} className="cursor-pointer flex-shrink-0">
+                                                    <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 hover:bg-primary/20 transition-all">
+                                                        <Upload className="w-4 h-4 text-primary" />
+                                                    </div>
+                                                    <input
+                                                        id={`host-upload-${index}`}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleHostPhotoUpload(e, index)}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>

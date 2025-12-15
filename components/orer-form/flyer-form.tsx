@@ -403,43 +403,65 @@ const EventBookingForm = () => {
     return <BirthdayForm flyer={flyer} />;
   }
 
+
+
   // Detect form type based on price and category
   const flyerPrice = flyer?.price || priceFromQuery || 0;
   const flyerCategory = flyer?.category || categoryFromQuery || "";
-
-  // Check if it's a No-Photo form ($10, $15, or $40 No-Photo)
-  const isNoPhotoForm =
-    flyerCategory.toLowerCase().includes("no-photo") ||
-    flyerCategory.toLowerCase().includes("no photo") ||
-    flyerCategory.toLowerCase().includes("nophoto");
+  const flyerFormType = flyer?.form_type || "";
 
   // Check if it's a With Photo form
   const isWithPhotoForm =
+    flyerFormType === "With Photo" ||
     flyerCategory.toLowerCase().includes("with photo") ||
     flyerCategory.toLowerCase().includes("photo") ||
     (flyer as any)?.hasPhotos === true;
 
+  // Debug logging for form routing
+  console.log('📋 Form Routing Debug:', {
+    flyerPrice,
+    flyerPriceType: typeof flyerPrice,
+    flyerCategory,
+    flyerFormType,
+    hasPhotos: (flyer as any)?.hasPhotos,
+    isWithPhotoForm
+  });
+
+  // Check if it's a No-Photo form ($10, $15, or $40 No-Photo)
+  const isNoPhotoForm =
+    flyerFormType === "No Photo" ||
+    flyerCategory.toLowerCase().includes("no-photo") ||
+    flyerCategory.toLowerCase().includes("no photo") ||
+    flyerCategory.toLowerCase().includes("nophoto");
+
   // Route to No-Photo forms
   if (isNoPhotoForm) {
-    if (flyerPrice === 10) {
+    if (Number(flyerPrice) === 10) {
+      console.log('✅ Rendering NoPhotoForm $10');
       return <NoPhotoForm flyer={flyer} fixedPrice={10} />;
-    } else if (flyerPrice === 15) {
+    } else if (Number(flyerPrice) === 15) {
+      console.log('✅ Rendering NoPhotoForm $15');
       return <NoPhotoForm flyer={flyer} fixedPrice={15} />;
-    } else if (flyerPrice === 40 || flyerPrice >= 40) {
+    } else if (Number(flyerPrice) === 40 || Number(flyerPrice) >= 40) {
+      console.log('✅ Rendering NoPhotoForm $40');
       return <NoPhotoForm flyer={flyer} fixedPrice={40} />;
     }
   }
 
   // Route to $10 With Photo form (partial photo support)
-  if (isWithPhotoForm && flyerPrice === 10) {
+  if (isWithPhotoForm && Number(flyerPrice) === 10) {
+    console.log('✅ Rendering Photo10Form ($10 With Photo)');
     return <Photo10Form flyer={flyer} />;
   }
 
   // Route to $15 With Photo form (full photo support)
-  if (isWithPhotoForm && flyerPrice === 15) {
+  if (isWithPhotoForm && Number(flyerPrice) === 15) {
+    console.log('✅ Rendering Photo15Form ($15 With Photo)');
     return <Photo15Form flyer={flyer} />;
   }
 
+  // Default: Render regular form
+  console.log('⚠️ Rendering DEFAULT form (no specific form matched)');
 
   // submit function 
   // const handleSubmit = async (e: React.FormEvent) => {
