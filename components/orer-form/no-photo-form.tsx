@@ -435,7 +435,6 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
 
                     {/* Note for the Designer */}
                     <div className="space-y-2">
-                        <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
                         <Textarea
                             value={note}
                             rows={3}
@@ -443,7 +442,7 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
                                 setNote(e.target.value);
                                 flyerFormStore.updateCustomNote(e.target.value);
                             }}
-                            placeholder="Add any special instructions for the designer..."
+                            placeholder="Note for the Designer"
                             className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
