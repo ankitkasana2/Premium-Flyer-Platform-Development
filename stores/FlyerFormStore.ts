@@ -409,37 +409,26 @@ async fetchFlyer(id: string) {
     const errors: string[] = []
 
     const event = this.flyerFormDetail.eventDetails
-    const host = this.flyerFormDetail.host
-    const djs = this.flyerFormDetail.djsOrArtists
     const delivery = this.flyerFormDetail.deliveryTime
 
-    // ✅ Event Details
-    if (!event.presenting.trim()) errors.push("Presenting field is required.")
-    if (!event.mainTitle.trim()) errors.push("Event Title is required.")
-    if (!event.date) errors.push("Event date is required.")
-    if (!event.addressAndPhone?.trim()) errors.push("Address & Phone is required.")
-    
-    // ✅ Venue Logo OR Venue Text (at least one required)
-    if (!event.venueLogo && !event.venueText?.trim()) {
-      errors.push("Venue logo or venue text is required.")
+    // ✅ REQUIRED: Event Title
+    if (!event.mainTitle.trim()) {
+      errors.push("Event Title is required.")
     }
 
-    // ✅ DJs / Artists (at least 1 name required)
-    if (djs.length === 0 || !djs.some((dj) => dj.name.trim())) {
-      errors.push("At least one DJ or Artist name is required.")
-    }
-
-    // ✅ Host (at least 1 host name required)
-    if (!host || host.length === 0 || !host[0].name.trim()) {
-      errors.push("Host name is required.")
-    }
-
-    // ✅ Delivery Time (must not be empty)
+    // ✅ REQUIRED: Delivery Time
     if (!delivery || delivery.trim() === "") {
       errors.push("Please select a delivery time.")
     }
 
-
+    // ℹ️ All other fields are OPTIONAL:
+    // - Presenting
+    // - Date
+    // - Flyer Information
+    // - Address & Phone
+    // - Venue Logo/Text
+    // - DJs/Artists
+    // - Hosts
 
     return { valid: errors.length === 0, errors }
   }

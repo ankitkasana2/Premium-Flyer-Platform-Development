@@ -114,9 +114,8 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const validateBirthdayForm = () => {
         const errors: string[] = [];
 
-        if (!birthdayPersonPhoto) {
-            errors.push("Birthday person photo is required");
-        }
+        // Birthday Person Photo is OPTIONAL
+        // Only Event Title and Delivery Time are required (handled by base validation)
 
         const { valid: baseValid, errors: baseErrors } = flyerFormStore.validateForm();
         if (!baseValid) {
