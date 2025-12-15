@@ -384,12 +384,22 @@ const EventBookingForm = () => {
 
   // Detect if this is a Birthday category flyer
   const isBirthdayCategory =
+    flyer?.form_type === 'Birthday' ||
     flyer?.category === 'Birthday' ||
     (Array.isArray((flyer as any)?.categories) && (flyer as any).categories.includes('Birthday')) ||
     categoryFromQuery === 'Birthday';
 
+  // Debug logging
+  console.log('🎂 Birthday Form Detection:', {
+    form_type: flyer?.form_type,
+    category: flyer?.category,
+    categoryFromQuery,
+    isBirthdayCategory
+  });
+
   // If Birthday category, render Birthday form instead
   if (isBirthdayCategory) {
+    console.log('✅ Rendering Birthday Form');
     return <BirthdayForm flyer={flyer} />;
   }
 
