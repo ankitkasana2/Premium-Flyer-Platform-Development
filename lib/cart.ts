@@ -7,7 +7,7 @@ export interface FlyerFormDetails {
     date?: Date | null;
     flyerInfo?: string;
     addressAndPhone?: string;
-    venueLogo?: File;
+    venueLogo?: File | null;
     venueText?: string;
   };
   extras?: {
@@ -17,7 +17,7 @@ export interface FlyerFormDetails {
     instagramPostSize?: boolean;
   };
   djsOrArtists?: Array<{ name: string; image?: File | null }>;
-  host?: { name: string; image?: File | null } | null;
+  host?: Array<{ name: string; image?: File | null }> | null;
   sponsors?: {
     sponsor1?: File | null;
     sponsor2?: File | null;
@@ -54,7 +54,7 @@ export const createCartFormData = (
   };
 
   const djs = data?.djsOrArtists ?? [];
-  const host = data?.host ?? { name: '' };
+  const hosts = Array.isArray(data?.host) ? data.host : [];
   const sponsors = data?.sponsors ?? {};
 
   // Basic event information
@@ -98,10 +98,16 @@ export const createCartFormData = (
     formData.append('venue_logo', data.eventDetails.venueLogo);
   }
 
-  // Host file
-  if (host?.image) {
-    formData.append('host_file', host.image);
-  }
+  // Host files
+  hosts.forEach((h, index) => {
+    if (h.image) {
+      if (index === 0) {
+        formData.append('host_file', h.image);
+      } else {
+        formData.append(`host_file_${index}`, h.image);
+      }
+    }
+  });
 
   // DJ files (up to 2)
   djs.forEach((dj, index) => {
@@ -130,7 +136,7 @@ export const createCartFormData = (
   ];
 
   formData.append('djs', JSON.stringify(djData));
-  formData.append('host', JSON.stringify({ name: host.name || '' }));
+  formData.append('host', JSON.stringify(hosts.map(h => ({ name: h.name || '' }))));
   formData.append('sponsors', JSON.stringify(sponsorData));
 
   // Duplicate total_price field (as seen in Postman)

@@ -109,19 +109,31 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
         });
     };
 
+    // Ensure store has enough hosts for this form (2 hosts)
+    useEffect(() => { // Using explicit useEffect if needed, but since we are modifying state, let's just do it
+        if (!flyerFormStore.flyerFormDetail.host) {
+            flyerFormStore.addHost();
+            flyerFormStore.addHost();
+        } else {
+            while (flyerFormStore.flyerFormDetail.host.length < 2) {
+                flyerFormStore.addHost();
+            }
+        }
+    }, [flyerFormStore]);
+
     // Handle Host name change
     const handleHostNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Handle Host photo upload (all 2 Hosts)
     const handleHostPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const file = e.target.files?.[0];
         if (file) {
-            flyerFormStore.updateHost("image", file);
+            flyerFormStore.updateHost(index, "image", file);
 
             const reader = new FileReader();
             reader.onload = () => {
@@ -137,7 +149,7 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
 
     // Remove Host photo
     const handleRemoveHostPhoto = (index: number) => {
-        flyerFormStore.updateHost("image", null);
+        flyerFormStore.updateHost(index, "image", null);
         setHostList((prev) => {
             const newList = [...prev];
             newList[index].image = null;
@@ -164,10 +176,10 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
         const cartFormData = createCartFormData(flyerFormStore.flyerFormDetail, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: FIXED_PRICE,
-            subtotal: FIXED_PRICE,
+            totalPrice: String(FIXED_PRICE),
+            subtotal: String(FIXED_PRICE),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
@@ -360,7 +372,6 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
 
                     {/* Note for the Designer */}
                     <div className="space-y-2">
-                        <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
                         <Textarea
                             value={note}
                             rows={3}
@@ -368,7 +379,7 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
                                 setNote(e.target.value);
                                 flyerFormStore.updateCustomNote(e.target.value);
                             }}
-                            placeholder="Add any special instructions for the designer..."
+                            placeholder="Note for the Designer"
                             className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
@@ -378,13 +389,7 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
                         />
                     </div>
 
-                    {/* Similar Flyers */}
-                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-                        <div className="">
-                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-                        </div>
-                    </div>
+
 
                     {/* Submit Section */}
                     <div className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
@@ -427,6 +432,14 @@ const Photo15Form: React.FC<Photo15FormProps> = ({ flyer }) => {
                             <span className="text-primary font-bold text-lg">
                                 {formatCurrency(flyerFormStore.subtotal > 0 ? flyerFormStore.subtotal : FIXED_PRICE)}
                             </span>
+                        </div>
+                    </div>
+
+                    {/* Similar Flyers */}
+                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+                        <div className="">
+                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
                         </div>
                     </div>
                 </form>

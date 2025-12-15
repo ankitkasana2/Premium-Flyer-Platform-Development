@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, Music, Check, X } from "lucide-react";
+import { Upload, Check, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/stores/StoreProvider";
 import { toast } from "sonner";
-import SponsorsBlock from "./sponser";
+
 import ExtrasBlock from "./extra-block";
 import DeliveryTimeBlock from "./delivery-time-block";
 import { FlyersCarousel } from "../home/FlyersCarousel";
@@ -55,7 +55,6 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
 
     const [birthdayPersonPhoto, setBirthdayPersonPhoto] = useState<File | null>(null);
     const [birthdayPhotoPreview, setBirthdayPhotoPreview] = useState<string | null>(null);
-    const [djList, setDjList] = useState<{ name: string }[]>([{ name: "" }, { name: "" }]);
     const [hostList, setHostList] = useState<{ name: string }[]>([{ name: "" }]);
     const [note, setNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,6 +66,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
         const file = e.target.files?.[0];
         if (file) {
             setBirthdayPersonPhoto(file);
+            flyerFormStore.updateEventDetails("venueLogo", file);
 
             const reader = new FileReader();
             reader.onload = () => {
@@ -80,46 +80,23 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const handleRemoveBirthdayPhoto = () => {
         setBirthdayPersonPhoto(null);
         setBirthdayPhotoPreview(null);
+        flyerFormStore.updateEventDetails("venueLogo", null);
     };
 
-    // Handle DJ name change
-    const handleDjNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-        const newDjList = [...djList];
-        newDjList[index].name = e.target.value;
-        setDjList(newDjList);
-        flyerFormStore.updateDJ(index, "name", e.target.value);
-    };
-
-    // Add DJ field (max 4)
-    const handleAddDj = () => {
-        if (djList.length < 4) {
-            setDjList([...djList, { name: "" }]);
-            flyerFormStore.addDJ();
-        } else {
-            toast.error("Maximum 4 DJs allowed for Birthday forms");
-        }
-    };
-
-    // Remove DJ field
-    const handleRemoveDj = (index: number) => {
-        if (djList.length > 1) {
-            setDjList(djList.filter((_, i) => i !== index));
-            flyerFormStore.removeDJ(index);
-        }
-    };
 
     // Handle Host name change
     const handleHostNameChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Add Host field (max 2)
     const handleAddHost = () => {
         if (hostList.length < 2) {
             setHostList([...hostList, { name: "" }]);
+            flyerFormStore.addHost();
         } else {
             toast.error("Maximum 2 hosts allowed for Birthday forms");
         }
@@ -129,6 +106,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const handleRemoveHost = (index: number) => {
         if (hostList.length > 1) {
             setHostList(hostList.filter((_, i) => i !== index));
+            flyerFormStore.removeHost(index);
         }
     };
 
@@ -136,9 +114,8 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
     const validateBirthdayForm = () => {
         const errors: string[] = [];
 
-        if (!birthdayPersonPhoto) {
-            errors.push("Birthday person photo is required");
-        }
+        // Birthday Person Photo is OPTIONAL
+        // Only Event Title and Delivery Time are required (handled by base validation)
 
         const { valid: baseValid, errors: baseErrors } = flyerFormStore.validateForm();
         if (!baseValid) {
@@ -178,10 +155,10 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
         const cartFormData = createCartFormData(formDetailForCart, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: FIXED_BIRTHDAY_PRICE,
-            subtotal: FIXED_BIRTHDAY_PRICE,
+            totalPrice: String(FIXED_BIRTHDAY_PRICE),
+            subtotal: String(FIXED_BIRTHDAY_PRICE),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
@@ -294,92 +271,45 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
                     {/* Event Details */}
                     <EventDetails />
 
-                    {/* Split Layout: DJ/Artist (Left) + Host (Right) - TEXT ONLY */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* DJ/Artist Section - TEXT ONLY, MAX 4 */}
-                        <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                            <h2 className="text-xl font-bold">DJ or Artist (Text Only)</h2>
+                    {/* Host Section - FULL WIDTH, TEXT ONLY, MAX 2 */}
+                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+                        <h2 className="text-xl font-bold">Host (Text Only)</h2>
 
-                            {djList.map((dj, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-semibold flex items-center gap-2">
-                                            <Music className="w-4 h-4 text-primary" />
-                                            DJ/Artist {index + 1}
-                                        </Label>
-                                        {djList.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveDj(index)}
-                                                className="text-primary cursor-pointer text-xs hover:underline"
-                                            >
-                                                Remove
-                                            </button>
-                                        )}
-                                    </div>
-                                    <Input
-                                        value={dj.name}
-                                        onChange={(e) => handleDjNameChange(e, index)}
-                                        placeholder="Enter DJ name..."
-                                        className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600"
-                                    />
+                        {hostList.map((host, index) => (
+                            <div key={index} className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-sm font-semibold">
+                                        Host {index + 1}
+                                    </Label>
+                                    {hostList.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveHost(index)}
+                                            className="text-primary cursor-pointer text-xs hover:underline"
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
                                 </div>
-                            ))}
+                                <Input
+                                    value={host.name}
+                                    onChange={(e) => handleHostNameChange(e, index)}
+                                    placeholder="Enter host name..."
+                                    className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600"
+                                />
+                            </div>
+                        ))}
 
-                            {djList.length < 4 && (
-                                <Button
-                                    type="button"
-                                    onClick={handleAddDj}
-                                    className="mt-2 bg-primary hover:cursor-pointer w-full"
-                                >
-                                    Add DJ/Artist ({djList.length}/4)
-                                </Button>
-                            )}
-                        </div>
-
-                        {/* Host Section - TEXT ONLY, MAX 2 */}
-                        <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                            <h2 className="text-xl font-bold">Host (Text Only)</h2>
-
-                            {hostList.map((host, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-semibold">
-                                            Host {index + 1}
-                                        </Label>
-                                        {hostList.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveHost(index)}
-                                                className="text-primary cursor-pointer text-xs hover:underline"
-                                            >
-                                                Remove
-                                            </button>
-                                        )}
-                                    </div>
-                                    <Input
-                                        value={host.name}
-                                        onChange={(e) => handleHostNameChange(e, index)}
-                                        placeholder="Enter host name..."
-                                        className="bg-gray-950 border border-gray-800 text-white placeholder:text-gray-600"
-                                    />
-                                </div>
-                            ))}
-
-                            {hostList.length < 2 && (
-                                <Button
-                                    type="button"
-                                    onClick={handleAddHost}
-                                    className="mt-2 bg-primary hover:cursor-pointer w-full"
-                                >
-                                    Add Host ({hostList.length}/2)
-                                </Button>
-                            )}
-                        </div>
+                        {hostList.length < 2 && (
+                            <Button
+                                type="button"
+                                onClick={handleAddHost}
+                                className="mt-2 bg-primary hover:cursor-pointer w-full"
+                            >
+                                Add Host ({hostList.length}/2)
+                            </Button>
+                        )}
                     </div>
-
-                    {/* Sponsors Section */}
-                    <SponsorsBlock />
 
                     {/* Split Layout: Delivery Time (Left) + Extras (Right) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -389,7 +319,6 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
 
                     {/* Note for the Designer */}
                     <div className="space-y-2">
-                        <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
                         <Textarea
                             value={note}
                             rows={3}
@@ -397,7 +326,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
                                 setNote(e.target.value);
                                 flyerFormStore.updateCustomNote(e.target.value);
                             }}
-                            placeholder="Add any special instructions for the designer..."
+                            placeholder="Note for the Designer"
                             className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
@@ -407,13 +336,7 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
                         />
                     </div>
 
-                    {/* Similar Flyers */}
-                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-                        <div className="">
-                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-                        </div>
-                    </div>
+
 
                     {/* Submit Section */}
                     <div className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
@@ -456,6 +379,14 @@ const BirthdayForm: React.FC<BirthdayFormProps> = ({ flyer }) => {
                             <span className="text-primary font-bold text-lg">
                                 {formatCurrency(flyerFormStore.subtotal > 0 ? flyerFormStore.subtotal : FIXED_BIRTHDAY_PRICE)}
                             </span>
+                        </div>
+                    </div>
+
+                    {/* Similar Flyers */}
+                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+                        <div className="">
+                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
                         </div>
                     </div>
                 </form>

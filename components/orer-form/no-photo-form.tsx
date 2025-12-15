@@ -127,13 +127,14 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
         const newHostList = [...hostList];
         newHostList[index].name = e.target.value;
         setHostList(newHostList);
-        flyerFormStore.updateHost("name", e.target.value);
+        flyerFormStore.updateHost(index, "name", e.target.value);
     };
 
     // Add Host field (max 2)
     const handleAddHost = () => {
         if (hostList.length < 2) {
             setHostList([...hostList, { name: "" }]);
+            flyerFormStore.addHost();
         } else {
             toast.error("Maximum 2 hosts allowed");
         }
@@ -143,6 +144,7 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
     const handleRemoveHost = (index: number) => {
         if (hostList.length > 1) {
             setHostList(hostList.filter((_, i) => i !== index));
+            flyerFormStore.removeHost(index);
         }
     };
 
@@ -193,10 +195,10 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
         const cartFormData = createCartFormData(formDetailForCart, {
             flyerId: flyer?.id || "",
             categoryId: flyer?.category_id || flyer?.category || "",
-            totalPrice: fixedPrice,
-            subtotal: fixedPrice,
+            totalPrice: String(fixedPrice),
+            subtotal: String(fixedPrice),
             deliveryTime: flyerFormStore.flyerFormDetail.deliveryTime || "24 hours",
-            image_url: flyer?.image_url || flyer?.imageUrl || ""
+            imageUrl: flyer?.image_url || flyer?.imageUrl || ""
         });
 
         const finalFormData = setUserIdInFormData(cartFormData, authStore.user.id);
@@ -435,7 +437,6 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
 
                     {/* Note for the Designer */}
                     <div className="space-y-2">
-                        <Label className="text-lg font-semibold text-white">Note for the Designer</Label>
                         <Textarea
                             value={note}
                             rows={3}
@@ -443,7 +444,7 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
                                 setNote(e.target.value);
                                 flyerFormStore.updateCustomNote(e.target.value);
                             }}
-                            placeholder="Add any special instructions for the designer..."
+                            placeholder="Note for the Designer"
                             className="bg-gray-950 border border-gray-800 text-white
              placeholder:text-gray-600 rounded-lg 
              shadow-md
@@ -453,13 +454,7 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
                         />
                     </div>
 
-                    {/* Similar Flyers */}
-                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
-                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
-                        <div className="">
-                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
-                        </div>
-                    </div>
+
 
                     {/* Submit Section */}
                     <div className="bg-gradient-to-br from-red-950/30 to-black p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
@@ -502,6 +497,14 @@ const NoPhotoForm: React.FC<NoPhotoFormProps> = ({ flyer, fixedPrice }) => {
                             <span className="text-primary font-bold text-lg">
                                 {formatCurrency(flyerFormStore.subtotal > 0 ? flyerFormStore.subtotal : fixedPrice)}
                             </span>
+                        </div>
+                    </div>
+
+                    {/* Similar Flyers */}
+                    <div className="space-y-4 bg-gradient-to-br from-red-950/20 to-black p-4 rounded-2xl border border-gray-800">
+                        <h3 className="text-xl font-bold text-white">Similar Flyers</h3>
+                        <div className="">
+                            <FlyersCarousel flyers={flyerFormStore.similarFlyers} />
                         </div>
                     </div>
                 </form>

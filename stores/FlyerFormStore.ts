@@ -10,6 +10,8 @@ type Flyer = {
   priceType: "basic" | "regular" | "premium"
   hasPhotos: boolean
   imageUrl: string
+  image_url?: string
+  form_type?: string
   tags: string[]
   isRecentlyAdded?: boolean
   isFeatured?: boolean
@@ -38,7 +40,7 @@ export type FlyerFormDetails = {
   host: {
     name: string
     image?: File | null
-  } | null
+  }[]
 
   sponsors: {
     sponsor1?: File | null
@@ -86,7 +88,7 @@ export class FlyerFormStore {
       { name: "", image: null },
       { name: "", image: null },
     ],
-    host: { name: "", image: null },
+    host: [{ name: "", image: null }],
     sponsors: { sponsor1: null, sponsor2: null, sponsor3: null },
     extras: {
       storySizeVersion: false,
@@ -172,7 +174,7 @@ async fetchFlyer(id: string) {
         price: numericPrice || 0,        // Store parsed numeric price
       };
 
-      if (!Number.isNaN(numericPrice)) {
+      if (numericPrice !== null && !Number.isNaN(numericPrice)) {
         this.basePrice = numericPrice;
         console.log('✅ BasePrice set to:', this.basePrice);
       } else {
@@ -288,9 +290,28 @@ async fetchFlyer(id: string) {
   // -----------------------------
   // 4️⃣ Host
   // -----------------------------
-  updateHost(key: "name" | "image", value: string | File | null) {
-    if (this.flyerFormDetail.host)
-      this.flyerFormDetail.host[key] = value as any
+  updateHost(
+    index: number,
+    key: "name" | "image", 
+    value: string | File | null
+  ) {
+    if (this.flyerFormDetail.host && this.flyerFormDetail.host[index]) {
+      this.flyerFormDetail.host[index][key] = value as any
+    }
+  }
+
+  addHost() {
+    if (!this.flyerFormDetail.host) {
+      this.flyerFormDetail.host = [{ name: "", image: null }]
+    } else if (this.flyerFormDetail.host.length < 2) {
+      this.flyerFormDetail.host.push({ name: "", image: null })
+    }
+  }
+
+  removeHost(index: number) {
+    if (this.flyerFormDetail.host && this.flyerFormDetail.host.length > 1) {
+      this.flyerFormDetail.host.splice(index, 1)
+    }
   }
 
   // -----------------------------
@@ -388,35 +409,26 @@ async fetchFlyer(id: string) {
     const errors: string[] = []
 
     const event = this.flyerFormDetail.eventDetails
-    const host = this.flyerFormDetail.host
-    const djs = this.flyerFormDetail.djsOrArtists
     const delivery = this.flyerFormDetail.deliveryTime
 
-    // ✅ Event Details
-    if (!event.presenting.trim()) errors.push("Presenting field is required.")
-    if (!event.mainTitle.trim()) errors.push("Event Title is required.")
-    if (!event.date) errors.push("Event date is required.")
-    if (!event.addressAndPhone?.trim()) errors.push("Address & Phone is required.")
-    
-    // ✅ Venue Logo OR Venue Text (at least one required)
-    if (!event.venueLogo && !event.venueText?.trim()) {
-      errors.push("Venue logo or venue text is required.")
+    // ✅ REQUIRED: Event Title
+    if (!event.mainTitle.trim()) {
+      errors.push("Event Title is required.")
     }
 
-    // ✅ DJs / Artists (at least 1 name required)
-    if (djs.length === 0 || !djs.some((dj) => dj.name.trim())) {
-      errors.push("At least one DJ or Artist name is required.")
-    }
-
-    // ✅ Host
-    if (!host || !host.name.trim()) errors.push("Host name is required.")
-
-    // ✅ Delivery Time (must not be empty)
+    // ✅ REQUIRED: Delivery Time
     if (!delivery || delivery.trim() === "") {
       errors.push("Please select a delivery time.")
     }
 
-
+    // ℹ️ All other fields are OPTIONAL:
+    // - Presenting
+    // - Date
+    // - Flyer Information
+    // - Address & Phone
+    // - Venue Logo/Text
+    // - DJs/Artists
+    // - Hosts
 
     return { valid: errors.length === 0, errors }
   }
