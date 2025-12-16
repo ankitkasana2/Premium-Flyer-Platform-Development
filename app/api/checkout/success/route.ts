@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { readFile, unlink } from 'fs/promises'
+import { readFile, unlink, rm } from 'fs/promises'
 import { existsSync } from 'fs'
+import { join } from 'path'
 
 // Force Node.js runtime for filesystem access
 export const runtime = 'nodejs';
@@ -198,19 +199,34 @@ export async function GET(request: NextRequest) {
     const responseData = await response.json()
     console.log('🎉 Order created successfully:', responseData)
 
-    // CLEANUP: Delete temporary files
-    if (Object.keys(filePaths).length > 0) {
-      console.log('🧹 Cleaning up temporary files...');
-      for (const filePath of Object.values(filePaths)) {
-        try {
-          if (typeof filePath === 'string' && existsSync(filePath)) {
-            await unlink(filePath);
-            console.log(`✅ Deleted temp file: ${filePath}`);
-          }
-        } catch (cleanupError) {
-          console.error(`❌ Failed to delete temp file ${filePath}:`, cleanupError);
+    // CLEANUP: Delete temporary folder for this order
+    const uploadId = formDataObj.upload_id;
+    if (uploadId) {
+      console.log(`🧹 Cleaning up temporary folder for session: ${uploadId}`);
+      const folderPath = join(process.cwd(), 'tmp', 'uploads', uploadId);
+      
+      try {
+        if (existsSync(folderPath)) {
+          await rm(folderPath, { recursive: true, force: true });
+          console.log(`✅ Deleted temp folder: ${folderPath}`);
+        } else {
+          console.log(`ℹ️ Temp folder not found (already deleted?): ${folderPath}`);
         }
+      } catch (cleanupError) {
+        console.error(`❌ Failed to delete temp folder ${folderPath}:`, cleanupError);
       }
+    } else {
+       // Fallback for individual files if no upload_id (backward compatibility)
+       if (Object.keys(filePaths).length > 0) {
+         console.log('🧹 Cleaning up individual temporary files (no upload_id)...');
+         for (const filePath of Object.values(filePaths)) {
+           try {
+             if (typeof filePath === 'string' && existsSync(filePath)) {
+               await unlink(filePath);
+             }
+           } catch (e) { /* ignore */ }
+         }
+       }
     }
 
     // Get order ID from response

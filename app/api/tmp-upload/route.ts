@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const fieldName = formData.get('field') as string;
+    const uploadId = formData.get('uploadId') as string || 'default';
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -19,15 +20,15 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create temp directory if it doesn't exist
-    const tempDir = join(process.cwd(), 'tmp', 'uploads');
+    // Create temp directory with subfolder for this upload session
+    const tempDir = join(process.cwd(), 'tmp', 'uploads', uploadId);
     if (!existsSync(tempDir)) {
       await mkdir(tempDir, { recursive: true });
     }
 
-    // Generate unique filename to prevent collisions
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const filename = `${fieldName}-${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
+    // Generate filename (keep it simple inside the folder)
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
+    const filename = `${fieldName}-${safeName}`;
     const filepath = join(tempDir, filename);
 
     // Write file to temp storage
@@ -38,7 +39,8 @@ export async function POST(request: NextRequest) {
       success: true, 
       filepath,
       filename,
-      fieldName
+      fieldName,
+      uploadId
     });
 
   } catch (error: any) {

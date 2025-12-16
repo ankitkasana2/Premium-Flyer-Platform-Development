@@ -592,8 +592,9 @@ const EventBookingForm = () => {
 
       // Upload files first to get temp paths
       const filePaths: Record<string, string> = {};
+      const uploadId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      console.log('📤 Starting temporary file uploads...');
+      console.log(`📤 Starting temporary file uploads (Session: ${uploadId})...`);
 
       // Helper to upload a single file
       const uploadTempFile = async (file: File, fieldName: string) => {
@@ -601,6 +602,7 @@ const EventBookingForm = () => {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('field', fieldName);
+          formData.append('uploadId', uploadId);
 
           const res = await fetch('/api/tmp-upload', {
             method: 'POST',
@@ -662,7 +664,8 @@ const EventBookingForm = () => {
             userEmail: authStore.user.email || authStore.user.name || 'unknown@example.com',
             formData: {
               ...apiBody,
-              file_paths: filePaths // Pass file paths to metadata
+              file_paths: filePaths, // Pass file paths to metadata
+              upload_id: uploadId    // Pass upload ID for cleanup
             }
           }
         })
