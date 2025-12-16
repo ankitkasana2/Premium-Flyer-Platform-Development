@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { readFile, unlink } from 'fs/promises'
+import { existsSync } from 'fs'
+
+// Force Node.js runtime for filesystem access
+export const runtime = 'nodejs';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
@@ -88,41 +93,82 @@ export async function GET(request: NextRequest) {
     // Extract form data from the retrieved order data
     const formDataObj = orderData.formData || orderData
 
-    console.log('🚀 Creating REAL order with actual form data...')
+    console.log('🚀 Creating order with data matching Postman format...')
+    console.log('📦 Received order data:', {
+      presenting: formDataObj.presenting,
+      event_title: formDataObj.event_title,
+      event_date: formDataObj.event_date,
+      total_price: formDataObj.total_price,
+      email: formDataObj.email || orderData.userEmail,
+      web_user_id: formDataObj.user_id || orderData.userId
+    })
 
-    // Create FormData for the backend API with REAL data
+    // Create FormData matching EXACT Postman format
     const formData = new FormData()
 
-    // Add all fields from the actual order data
+    // Add fields in the EXACT order as Postman (this matches the working request)
     formData.append('presenting', formDataObj.presenting || '')
     formData.append('event_title', formDataObj.event_title || '')
     formData.append('event_date', formDataObj.event_date || '')
-    formData.append('flyer_info', formDataObj.flyer_info || '')
     formData.append('address_phone', formDataObj.address_phone || '')
+    formData.append('flyer_info', formDataObj.flyer_info || '')
+    formData.append('custom_notes', formDataObj.custom_notes || '')
+    formData.append('delivery_time', formDataObj.delivery_time || '24 hours')
+    formData.append('email', formDataObj.email || orderData.userEmail || 'user@example.com')
+    formData.append('web_user_id', formDataObj.user_id || orderData.userId || '')
+    
+    // Log the flyer_id being used
+    const flyerId = formDataObj.flyer_id || formDataObj.flyer_is || '26';
+    console.log('🎯 Using flyer_is:', flyerId, '(from flyer_id:', formDataObj.flyer_id, ', flyer_is:', formDataObj.flyer_is, ')');
+    
+    formData.append('flyer_is', flyerId.toString())
+    formData.append('total_price', (formDataObj.total_price || 0).toString())
+    
+    // Boolean fields as strings (matching Postman format)
     formData.append('story_size_version', (formDataObj.story_size_version || false).toString())
     formData.append('custom_flyer', (formDataObj.custom_flyer || false).toString())
     formData.append('animated_flyer', (formDataObj.animated_flyer || false).toString())
     formData.append('instagram_post_size', (formDataObj.instagram_post_size || true).toString())
-    formData.append('delivery_time', formDataObj.delivery_time || '24 hours')
-    formData.append('custom_notes', formDataObj.custom_notes || '')
-
-    // Log the flyer_id being used
-    const flyerId = formDataObj.flyer_id || formDataObj.flyer_is || 1;
-    console.log('🎯 Using flyer_id:', flyerId, '(from flyer_id:', formDataObj.flyer_id, ', flyer_is:', formDataObj.flyer_is, ')');
-
-    formData.append('flyer_is', flyerId.toString())
-    formData.append('category_id', (formDataObj.category_id || 1).toString())
-    formData.append('user_id', formDataObj.user_id || orderData.userId || '')
-    formData.append('web_user_id', formDataObj.user_id || orderData.userId || '')
-    formData.append('email', formDataObj.email || orderData.userEmail || 'user@example.com')
-    formData.append('total_price', (formDataObj.total_price || 0).toString())
-    formData.append('subtotal', (formDataObj.subtotal || 0).toString())
-    formData.append('image_url', formDataObj.image_url || '')
-
-    // Add JSON fields with actual data
+    
+    // JSON fields (matching Postman format exactly)
     formData.append('djs', JSON.stringify(formDataObj.djs || []))
     formData.append('host', JSON.stringify(formDataObj.host || {}))
     formData.append('sponsors', JSON.stringify(formDataObj.sponsors || []))
+    
+    // Handle File Uploads (retrieved from temp storage)
+    // The keys in file_paths should match the field names: venue_logo, host_file, dj_0, etc.
+    const filePaths = formDataObj.file_paths || {};
+    
+    if (Object.keys(filePaths).length > 0) {
+      console.log('📂 Processing file uploads from temp storage...');
+      
+      for (const [fieldName, filePath] of Object.entries(filePaths)) {
+        try {
+          // Verify file exists
+          if (typeof filePath === 'string' && existsSync(filePath)) {
+             console.log(`📎 Attaching file: ${fieldName} from ${filePath}`);
+             
+             // Read file buffer
+             const fileBuffer = await readFile(filePath);
+             
+             // Create a Blob-like object for FormData
+             // We need to infer the mime type or default to application/octet-stream
+             const blob = new Blob([fileBuffer]);
+             
+             // Append to formData
+             // Note: 3rd argument is filename, useful for backend to recognize it as a file
+             const originalName = filePath.split('-').pop() || 'upload.jpg';
+             formData.append(fieldName, blob, originalName);
+          } else {
+             console.warn(`⚠️ File not found for ${fieldName}: ${filePath}`);
+          }
+        } catch (fileError) {
+          console.error(`❌ Error attaching file ${fieldName}:`, fileError);
+        }
+      }
+    } else {
+      console.log('ℹ️ No file paths found in order data');
+    }
 
     console.log('📤 Submitting REAL order to backend API...')
     console.log('📋 Order details:', {
@@ -151,6 +197,21 @@ export async function GET(request: NextRequest) {
 
     const responseData = await response.json()
     console.log('🎉 Order created successfully:', responseData)
+
+    // CLEANUP: Delete temporary files
+    if (Object.keys(filePaths).length > 0) {
+      console.log('🧹 Cleaning up temporary files...');
+      for (const filePath of Object.values(filePaths)) {
+        try {
+          if (typeof filePath === 'string' && existsSync(filePath)) {
+            await unlink(filePath);
+            console.log(`✅ Deleted temp file: ${filePath}`);
+          }
+        } catch (cleanupError) {
+          console.error(`❌ Failed to delete temp file ${filePath}:`, cleanupError);
+        }
+      }
+    }
 
     // Get order ID from response
     const orderId = responseData.orderId || responseData.id || responseData._id

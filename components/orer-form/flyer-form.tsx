@@ -168,6 +168,7 @@ const mapToApiRequest = (
     flyer_id: options.flyerId ?? data?.flyerId ?? "",
     category_id: options.categoryId ?? data?.categoryId ?? "",
     user_id: options.userId ?? data?.userId ?? "",
+    email: "", // Will be set from authStore.user.email in the checkout flow
     subtotal: options.subtotal ?? 0,
     image_url: options.image_url || "",
     delivery_time: data?.deliveryTime || "24 hours",
@@ -589,6 +590,66 @@ const EventBookingForm = () => {
         flyer_id: apiBody.flyer_id
       });
 
+      // Upload files first to get temp paths
+      const filePaths: Record<string, string> = {};
+
+      console.log('📤 Starting temporary file uploads...');
+
+      // Helper to upload a single file
+      const uploadTempFile = async (file: File, fieldName: string) => {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('field', fieldName);
+
+          const res = await fetch('/api/tmp-upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          console.log(`✅ Uploaded ${fieldName}:`, data.filepath);
+          filePaths[fieldName] = data.filepath;
+        } catch (err) {
+          console.error(`❌ Failed to upload ${fieldName}:`, err);
+        }
+      };
+
+      // 1. Venue Logo
+      const venueLogo = flyerFormStore.flyerFormDetail.eventDetails.venueLogo;
+      if (venueLogo && venueLogo instanceof File) {
+        await uploadTempFile(venueLogo, 'venue_logo');
+      }
+
+      // 2. DJ Images
+      for (let i = 0; i < flyerFormStore.flyerFormDetail.djsOrArtists.length; i++) {
+        const dj = flyerFormStore.flyerFormDetail.djsOrArtists[i];
+        if (dj.image && dj.image instanceof File) {
+          await uploadTempFile(dj.image, `dj_${i}`);
+        }
+      }
+
+      // 3. Host Images
+      if (Array.isArray(flyerFormStore.flyerFormDetail.host)) {
+        for (let i = 0; i < flyerFormStore.flyerFormDetail.host.length; i++) {
+          const h = flyerFormStore.flyerFormDetail.host[i];
+          if (h.image && h.image instanceof File) {
+            // First host matches 'host_file' in Postman example, subsequent ones host_1 etc.
+            const fieldName = i === 0 ? 'host_file' : `host_${i}`;
+            await uploadTempFile(h.image, fieldName);
+          }
+        }
+      }
+
+      // 4. Sponsor Images
+      const sponsors = flyerFormStore.flyerFormDetail.sponsors;
+      if (sponsors.sponsor1 && sponsors.sponsor1 instanceof File) await uploadTempFile(sponsors.sponsor1, 'sponsor_0');
+      if (sponsors.sponsor2 && sponsors.sponsor2 instanceof File) await uploadTempFile(sponsors.sponsor2, 'sponsor_1');
+      if (sponsors.sponsor3 && sponsors.sponsor3 instanceof File) await uploadTempFile(sponsors.sponsor3, 'sponsor_2');
+
+      console.log('📦 File upload summary:', filePaths);
+
       // Create Stripe checkout session with order data
       console.log('📡 Creating Stripe checkout session...');
       const res = await fetch("/api/checkout/create-session", {
@@ -599,7 +660,10 @@ const EventBookingForm = () => {
           orderData: {
             userId: authStore.user.id,
             userEmail: authStore.user.email || authStore.user.name || 'unknown@example.com',
-            formData: apiBody
+            formData: {
+              ...apiBody,
+              file_paths: filePaths // Pass file paths to metadata
+            }
           }
         })
       });
